@@ -1,0 +1,567 @@
+{
+  "district_id": {
+    "description": "Unique district identifier",
+    "unit": "id",
+    "cluster": "identifier"
+  },
+  "district": {
+    "description": "District name",
+    "unit": "text",
+    "cluster": "identifier"
+  },
+  "state": {
+    "description": "State or Union Territory name",
+    "unit": "text",
+    "cluster": "identifier"
+  },
+  "households_surveyed": {
+    "description": "Number of households surveyed in NFHS-5",
+    "unit": "count",
+    "cluster": "sample"
+  },
+  "women_interviewed": {
+    "description": "Number of women aged 15-49 years interviewed",
+    "unit": "count",
+    "cluster": "sample"
+  },
+  "men_interviewed": {
+    "description": "Number of men aged 15-54 years interviewed",
+    "unit": "count",
+    "cluster": "sample"
+  },
+  "female_school_attendance_pct": {
+    "description": "% of female population age 6+ who ever attended school",
+    "unit": "percent",
+    "cluster": "women_empowerment"
+  },
+  "pop_below_15_pct": {
+    "description": "% of population below age 15 years",
+    "unit": "percent",
+    "cluster": "demography"
+  },
+  "sex_ratio": {
+    "description": "Females per 1,000 males in total population",
+    "unit": "ratio",
+    "cluster": "demography"
+  },
+  "sex_ratio_at_birth": {
+    "description": "Females per 1,000 males among children born in last 5 years",
+    "unit": "ratio",
+    "cluster": "demography"
+  },
+  "birth_registration_pct": {
+    "description": "% of children under 5 whose birth was registered",
+    "unit": "percent",
+    "cluster": "demography"
+  },
+  "death_registration_pct": {
+    "description": "death registration pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "electricity_access_pct": {
+    "description": "% of population with electricity access",
+    "unit": "percent",
+    "cluster": "sanitation",
+    "indicator_cluster": "sanitation"
+  },
+  "clean_water_access_pct": {
+    "description": "% with improved drinking water source",
+    "unit": "percent",
+    "cluster": "sanitation",
+    "indicator_cluster": "sanitation"
+  },
+  "improved_sanitation_pct": {
+    "description": "% using improved sanitation facility",
+    "unit": "percent",
+    "cluster": "sanitation",
+    "indicator_cluster": "sanitation"
+  },
+  "clean_cooking_fuel_pct": {
+    "description": "% using clean fuel for cooking",
+    "unit": "percent",
+    "cluster": "sanitation",
+    "indicator_cluster": "sanitation"
+  },
+  "iodized_salt_pct": {
+    "description": "% of households using iodized salt",
+    "unit": "percent",
+    "cluster": "nutrition"
+  },
+  "health_insurance_pct": {
+    "description": "% of households with health insurance coverage",
+    "unit": "percent",
+    "cluster": "healthcare_access"
+  },
+  "preprimary_school_pct": {
+    "description": "preprimary school pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "women_literacy_pct": {
+    "description": "% of women aged 15-49 who are literate",
+    "unit": "percent",
+    "cluster": "women_empowerment",
+    "indicator_cluster": "women_empowerment"
+  },
+  "women_10yr_school_pct": {
+    "description": "women 10yr school pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "child_marriage_pct": {
+    "description": "% of women aged 20-24 married before age 18 (child marriage rate)",
+    "unit": "percent",
+    "cluster": "women_empowerment"
+  },
+  "births_3rd_plus_order_pct": {
+    "description": "births 3rd plus order pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "teen_pregnancy_pct": {
+    "description": "% of women aged 15-19 who are already mothers or pregnant",
+    "unit": "percent",
+    "cluster": "maternal_health"
+  },
+  "menstrual_hygiene_pct": {
+    "description": "% of women 15-24 using hygienic menstrual protection methods",
+    "unit": "percent",
+    "cluster": "women_empowerment"
+  },
+  "fp_any_method_pct": {
+    "description": "fp any method pct",
+    "unit": "unknown",
+    "cluster": "other",
+    "indicator_cluster": "family_planning"
+  },
+  "fp_modern_method_pct": {
+    "description": "% of currently married women using modern family planning methods",
+    "unit": "percent",
+    "cluster": "family_planning",
+    "indicator_cluster": "family_planning"
+  },
+  "fp_female_sterilization_pct": {
+    "description": "fp female sterilization pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "fp_male_sterilization_pct": {
+    "description": "fp male sterilization pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "fp_iud_pct": {
+    "description": "fp iud pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "fp_pill_pct": {
+    "description": "fp pill pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "fp_condom_pct": {
+    "description": "fp condom pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "fp_injectables_pct": {
+    "description": "fp injectables pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "unmet_fp_need_pct": {
+    "description": "% of married women with unmet need for family planning",
+    "unit": "percent",
+    "cluster": "family_planning",
+    "indicator_cluster": "family_planning"
+  },
+  "unmet_fp_spacing_pct": {
+    "description": "unmet fp spacing pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "fp_counselling_pct": {
+    "description": "fp counselling pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "fp_side_effects_counselled_pct": {
+    "description": "fp side effects counselled pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "anc_first_trimester_pct": {
+    "description": "% of mothers with antenatal check-up in first trimester",
+    "unit": "percent",
+    "cluster": "maternal_health",
+    "indicator_cluster": "maternal_health"
+  },
+  "anc_4plus_visits_pct": {
+    "description": "% of mothers with 4 or more antenatal care visits",
+    "unit": "percent",
+    "cluster": "maternal_health",
+    "indicator_cluster": "maternal_health"
+  },
+  "tetanus_protection_pct": {
+    "description": "tetanus protection pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "ifa_100days_pct": {
+    "description": "% of mothers who consumed IFA tablets for 100+ days during pregnancy",
+    "unit": "percent",
+    "cluster": "maternal_health"
+  },
+  "ifa_180days_pct": {
+    "description": "ifa 180days pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "mcp_card_pct": {
+    "description": "mcp card pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "postnatal_care_mother_pct": {
+    "description": "% of mothers receiving postnatal care within 2 days",
+    "unit": "percent",
+    "cluster": "maternal_health",
+    "indicator_cluster": "maternal_health"
+  },
+  "oop_delivery_cost_rs": {
+    "description": "Average out-of-pocket delivery expenditure in public facility (Rs.)",
+    "unit": "rupees",
+    "cluster": "maternal_health"
+  },
+  "home_birth_facility_checkup_pct": {
+    "description": "home birth facility checkup pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "postnatal_care_child_pct": {
+    "description": "postnatal care child pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "institutional_delivery_pct": {
+    "description": "% of births occurring in a health facility (institutional delivery)",
+    "unit": "percent",
+    "cluster": "maternal_health",
+    "indicator_cluster": "maternal_health"
+  },
+  "institutional_delivery_public_pct": {
+    "description": "% of births in public health facilities",
+    "unit": "percent",
+    "cluster": "maternal_health",
+    "indicator_cluster": "maternal_health"
+  },
+  "skilled_home_birth_pct": {
+    "description": "skilled home birth pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "skilled_birth_attendant_pct": {
+    "description": "% of births attended by skilled health personnel",
+    "unit": "percent",
+    "cluster": "maternal_health",
+    "indicator_cluster": "maternal_health"
+  },
+  "csection_pct": {
+    "description": "% of births by caesarean section",
+    "unit": "percent",
+    "cluster": "maternal_health",
+    "indicator_cluster": "maternal_health"
+  },
+  "csection_private_pct": {
+    "description": "csection private pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "csection_public_pct": {
+    "description": "csection public pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "fully_vaccinated_recall_pct": {
+    "description": "% of children 12-23 months fully vaccinated (card or recall)",
+    "unit": "percent",
+    "cluster": "vaccination",
+    "indicator_cluster": "vaccination"
+  },
+  "fully_vaccinated_card_pct": {
+    "description": "% of children 12-23 months fully vaccinated (card only)",
+    "unit": "percent",
+    "cluster": "vaccination",
+    "indicator_cluster": "vaccination"
+  },
+  "bcg_pct": {
+    "description": "% of children 12-23 months who received BCG vaccine",
+    "unit": "percent",
+    "cluster": "vaccination",
+    "indicator_cluster": "vaccination"
+  },
+  "dpt3_pct": {
+    "description": "% of children 12-23 months who received 3 doses of DPT vaccine",
+    "unit": "percent",
+    "cluster": "vaccination",
+    "indicator_cluster": "vaccination"
+  },
+  "measles_pct": {
+    "description": "% of children 12-23 months who received measles vaccine",
+    "unit": "percent",
+    "cluster": "vaccination",
+    "indicator_cluster": "vaccination"
+  },
+  "hepb3_pct": {
+    "description": "% of children 12-23 months who received 3 doses of Hepatitis B vaccine",
+    "unit": "percent",
+    "cluster": "vaccination",
+    "indicator_cluster": "vaccination"
+  },
+  "vaccinated_in_public_pct": {
+    "description": "vaccinated in public pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "vaccinated_in_private_pct": {
+    "description": "vaccinated in private pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "early_breastfeed_pct": {
+    "description": "% of children breastfed within 1 hour of birth",
+    "unit": "percent",
+    "cluster": "child_nutrition"
+  },
+  "exclusive_breastfeed_pct": {
+    "description": "% of infants under 6 months exclusively breastfed",
+    "unit": "percent",
+    "cluster": "child_nutrition"
+  },
+  "complementary_feed_pct": {
+    "description": "complementary feed pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "adequate_diet_breastfed_pct": {
+    "description": "adequate diet breastfed pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "adequate_diet_nonbreastfed_pct": {
+    "description": "adequate diet nonbreastfed pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "adequate_diet_total_pct": {
+    "description": "adequate diet total pct",
+    "unit": "unknown",
+    "cluster": "other"
+  },
+  "stunting_pct": {
+    "description": "% of children under 5 who are stunted (low height-for-age, chronic malnutrition)",
+    "unit": "percent",
+    "cluster": "child_nutrition",
+    "indicator_cluster": "child_nutrition"
+  },
+  "wasting_pct": {
+    "description": "% of children under 5 who are wasted (low weight-for-height, acute malnutrition)",
+    "unit": "percent",
+    "cluster": "child_nutrition",
+    "indicator_cluster": "child_nutrition"
+  },
+  "severe_wasting_pct": {
+    "description": "% of children under 5 who are severely wasted",
+    "unit": "percent",
+    "cluster": "child_nutrition",
+    "indicator_cluster": "child_nutrition"
+  },
+  "underweight_pct": {
+    "description": "% of children under 5 who are underweight (low weight-for-age)",
+    "unit": "percent",
+    "cluster": "child_nutrition",
+    "indicator_cluster": "child_nutrition"
+  },
+  "overweight_children_pct": {
+    "description": "% of children under 5 who are overweight",
+    "unit": "percent",
+    "cluster": "child_nutrition",
+    "indicator_cluster": "child_nutrition"
+  },
+  "women_low_bmi_pct": {
+    "description": "% of women 15-49 with BMI below normal (<18.5)",
+    "unit": "percent",
+    "cluster": "adult_nutrition"
+  },
+  "anaemia_children_pct": {
+    "description": "% of children 6-59 months who are anaemic (<11.0 g/dl)",
+    "unit": "percent",
+    "cluster": "anaemia",
+    "indicator_cluster": "anaemia"
+  },
+  "anaemia_nonpregnant_women_pct": {
+    "description": "% of non-pregnant women 15-49 who are anaemic (<12.0 g/dl)",
+    "unit": "percent",
+    "cluster": "anaemia",
+    "indicator_cluster": "anaemia"
+  },
+  "anaemia_all_women_pct": {
+    "description": "% of all women 15-49 who are anaemic",
+    "unit": "percent",
+    "cluster": "anaemia",
+    "indicator_cluster": "anaemia"
+  },
+  "anaemia_men_pct": {
+    "description": "% of men 15-49 who are anaemic (<13.0 g/dl)",
+    "unit": "percent",
+    "cluster": "anaemia",
+    "indicator_cluster": "anaemia"
+  },
+  "stunting_pct_national_rank": {
+    "description": "National rank for stunting_pct (1=worst district)",
+    "unit": "rank",
+    "cluster": "derived"
+  },
+  "stunting_pct_national_percentile": {
+    "description": "National percentile for stunting_pct (100=best performing)",
+    "unit": "percentile",
+    "cluster": "derived"
+  },
+  "wasting_pct_national_rank": {
+    "description": "National rank for wasting_pct (1=worst district)",
+    "unit": "rank",
+    "cluster": "derived"
+  },
+  "wasting_pct_national_percentile": {
+    "description": "National percentile for wasting_pct (100=best performing)",
+    "unit": "percentile",
+    "cluster": "derived"
+  },
+  "underweight_pct_national_rank": {
+    "description": "National rank for underweight_pct (1=worst district)",
+    "unit": "rank",
+    "cluster": "derived"
+  },
+  "underweight_pct_national_percentile": {
+    "description": "National percentile for underweight_pct (100=best performing)",
+    "unit": "percentile",
+    "cluster": "derived"
+  },
+  "anaemia_children_pct_national_rank": {
+    "description": "National rank for anaemia_children_pct (1=worst district)",
+    "unit": "rank",
+    "cluster": "derived"
+  },
+  "anaemia_children_pct_national_percentile": {
+    "description": "National percentile for anaemia_children_pct (100=best performing)",
+    "unit": "percentile",
+    "cluster": "derived"
+  },
+  "anaemia_all_women_pct_national_rank": {
+    "description": "National rank for anaemia_all_women_pct (1=worst district)",
+    "unit": "rank",
+    "cluster": "derived"
+  },
+  "anaemia_all_women_pct_national_percentile": {
+    "description": "National percentile for anaemia_all_women_pct (100=best performing)",
+    "unit": "percentile",
+    "cluster": "derived"
+  },
+  "institutional_delivery_pct_national_rank": {
+    "description": "National rank for institutional_delivery_pct (1=worst district)",
+    "unit": "rank",
+    "cluster": "derived"
+  },
+  "institutional_delivery_pct_national_percentile": {
+    "description": "National percentile for institutional_delivery_pct (100=best performing)",
+    "unit": "percentile",
+    "cluster": "derived"
+  },
+  "fully_vaccinated_recall_pct_national_rank": {
+    "description": "National rank for fully_vaccinated_recall_pct (1=worst district)",
+    "unit": "rank",
+    "cluster": "derived"
+  },
+  "fully_vaccinated_recall_pct_national_percentile": {
+    "description": "National percentile for fully_vaccinated_recall_pct (100=best performing)",
+    "unit": "percentile",
+    "cluster": "derived"
+  },
+  "improved_sanitation_pct_national_rank": {
+    "description": "National rank for improved_sanitation_pct (1=worst district)",
+    "unit": "rank",
+    "cluster": "derived"
+  },
+  "improved_sanitation_pct_national_percentile": {
+    "description": "National percentile for improved_sanitation_pct (100=best performing)",
+    "unit": "percentile",
+    "cluster": "derived"
+  },
+  "anc_4plus_visits_pct_national_rank": {
+    "description": "National rank for anc_4plus_visits_pct (1=worst district)",
+    "unit": "rank",
+    "cluster": "derived"
+  },
+  "anc_4plus_visits_pct_national_percentile": {
+    "description": "National percentile for anc_4plus_visits_pct (100=best performing)",
+    "unit": "percentile",
+    "cluster": "derived"
+  },
+  "women_literacy_pct_national_rank": {
+    "description": "National rank for women_literacy_pct (1=worst district)",
+    "unit": "rank",
+    "cluster": "derived"
+  },
+  "women_literacy_pct_national_percentile": {
+    "description": "National percentile for women_literacy_pct (100=best performing)",
+    "unit": "percentile",
+    "cluster": "derived"
+  },
+  "child_marriage_pct_national_rank": {
+    "description": "National rank for child_marriage_pct (1=worst district)",
+    "unit": "rank",
+    "cluster": "derived"
+  },
+  "child_marriage_pct_national_percentile": {
+    "description": "National percentile for child_marriage_pct (100=best performing)",
+    "unit": "percentile",
+    "cluster": "derived"
+  },
+  "unmet_fp_need_pct_national_rank": {
+    "description": "National rank for unmet_fp_need_pct (1=worst district)",
+    "unit": "rank",
+    "cluster": "derived"
+  },
+  "unmet_fp_need_pct_national_percentile": {
+    "description": "National percentile for unmet_fp_need_pct (100=best performing)",
+    "unit": "percentile",
+    "cluster": "derived"
+  },
+  "stunting_pct_state_rank": {
+    "description": "National rank for stunting_pct (1=worst district)",
+    "unit": "rank",
+    "cluster": "derived"
+  },
+  "anaemia_children_pct_state_rank": {
+    "description": "National rank for anaemia_children_pct (1=worst district)",
+    "unit": "rank",
+    "cluster": "derived"
+  },
+  "institutional_delivery_pct_state_rank": {
+    "description": "National rank for institutional_delivery_pct (1=worst district)",
+    "unit": "rank",
+    "cluster": "derived"
+  },
+  "child_health_score": {
+    "description": "Composite child health score (0-100, 100=best)",
+    "unit": "score",
+    "cluster": "derived"
+  },
+  "maternal_health_score": {
+    "description": "Composite maternal health score (0-100, 100=best)",
+    "unit": "score",
+    "cluster": "derived"
+  }
+}

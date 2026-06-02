@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# Environment Variables
+.env
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project Specific
+charts_output/*.png
+charts_output/*.html
+logs/
+*.log
+
+# Large datasets (keep structure but not raw data)
+dataset/*.csv
+dataset/*.pdf
+dataset/*.xlsx
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Generated files
+backend/evaluation/eval_results.json
+*.cache

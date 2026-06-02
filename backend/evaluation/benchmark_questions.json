@@ -1,0 +1,2247 @@
+{
+  "metadata": {
+    "name": "BharatHealth-Bench",
+    "version": "1.0",
+    "description": "200-question evaluation benchmark for LLM agents on NFHS-5 India district health data",
+    "source_dataset": "NFHS-5 (2019-21), data.gov.in",
+    "created_by": "Mohammed Rayyan",
+    "license": "Apache 2.0",
+    "total_questions": 200,
+    "query_types": [
+      "factual_lookup",
+      "aggregation_ranking",
+      "state_comparison",
+      "trend_analysis",
+      "correlation"
+    ],
+    "domains": [
+      "child_nutrition",
+      "anaemia",
+      "maternal_health",
+      "vaccination",
+      "sanitation",
+      "women_empowerment"
+    ]
+  },
+  "questions": [
+    {
+      "id": 1,
+      "question": "What is the stunting rate in Bathinda district, Punjab?",
+      "ground_truth": "23.0%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Bathinda') & (df['state']=='Punjab')]['stunting_pct'].values[0]"
+    },
+    {
+      "id": 2,
+      "question": "What is the wasting rate in Darbhanga district, Bihar?",
+      "ground_truth": "19.3%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Darbhanga') & (df['state']=='Bihar')]['wasting_pct'].values[0]"
+    },
+    {
+      "id": 3,
+      "question": "What is the underweight rate in Purnia district, Bihar?",
+      "ground_truth": "47.1%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Purnia') & (df['state']=='Bihar')]['underweight_pct'].values[0]"
+    },
+    {
+      "id": 4,
+      "question": "What is the anaemia rate in children in Badgam district, Jammu & Kashmir?",
+      "ground_truth": "85.0%",
+      "query_type": "factual_lookup",
+      "domain": "anaemia",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Badgam') & (df['state']=='Jammu & Kashmir')]['anaemia_children_pct'].values[0]"
+    },
+    {
+      "id": 5,
+      "question": "What is the anaemia rate in women in Khargone (West Nimar) district, Madhya Pradesh?",
+      "ground_truth": "50.1%",
+      "query_type": "factual_lookup",
+      "domain": "anaemia",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Khargone (West Nimar)') & (df['state']=='Madhya Pradesh')]['anaemia_all_women_pct'].values[0]"
+    },
+    {
+      "id": 6,
+      "question": "What is the institutional delivery rate in Betul district, Madhya Pradesh?",
+      "ground_truth": "87.6%",
+      "query_type": "factual_lookup",
+      "domain": "maternal_health",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Betul') & (df['state']=='Madhya Pradesh')]['institutional_delivery_pct'].values[0]"
+    },
+    {
+      "id": 7,
+      "question": "What is the full vaccination rate in Simdega district, Jharkhand?",
+      "ground_truth": "79.3%",
+      "query_type": "factual_lookup",
+      "domain": "vaccination",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Simdega') & (df['state']=='Jharkhand')]['fully_vaccinated_recall_pct'].values[0]"
+    },
+    {
+      "id": 8,
+      "question": "What is the improved sanitation rate in Sehore district, Madhya Pradesh?",
+      "ground_truth": "75.2%",
+      "query_type": "factual_lookup",
+      "domain": "sanitation",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Sehore') & (df['state']=='Madhya Pradesh')]['improved_sanitation_pct'].values[0]"
+    },
+    {
+      "id": 9,
+      "question": "What is the ANC 4+ visit rate in Lucknow district, Uttar Pradesh?",
+      "ground_truth": "53.1%",
+      "query_type": "factual_lookup",
+      "domain": "maternal_health",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Lucknow') & (df['state']=='Uttar Pradesh')]['anc_4plus_visits_pct'].values[0]"
+    },
+    {
+      "id": 10,
+      "question": "What is the child marriage rate in Balod district, Chhattisgarh?",
+      "ground_truth": "3.3%",
+      "query_type": "factual_lookup",
+      "domain": "women_empowerment",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Balod') & (df['state']=='Chhattisgarh')]['child_marriage_pct'].values[0]"
+    },
+    {
+      "id": 11,
+      "question": "What is the stunting rate in Bhavnagar district, Gujarat?",
+      "ground_truth": "32.6%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Bhavnagar') & (df['state']=='Gujarat')]['stunting_pct'].values[0]"
+    },
+    {
+      "id": 12,
+      "question": "What is the wasting rate in Kheda district, Gujarat?",
+      "ground_truth": "30.9%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Kheda') & (df['state']=='Gujarat')]['wasting_pct'].values[0]"
+    },
+    {
+      "id": 13,
+      "question": "What is the underweight rate in East Khasi Hills district, Meghalaya?",
+      "ground_truth": "23.8%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='East Khasi Hills') & (df['state']=='Meghalaya')]['underweight_pct'].values[0]"
+    },
+    {
+      "id": 14,
+      "question": "What is the anaemia rate in children in Kolar district, Karnataka?",
+      "ground_truth": "57.9%",
+      "query_type": "factual_lookup",
+      "domain": "anaemia",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Kolar') & (df['state']=='Karnataka')]['anaemia_children_pct'].values[0]"
+    },
+    {
+      "id": 15,
+      "question": "What is the anaemia rate in women in Deoghar district, Jharkhand?",
+      "ground_truth": "70.2%",
+      "query_type": "factual_lookup",
+      "domain": "anaemia",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Deoghar') & (df['state']=='Jharkhand')]['anaemia_all_women_pct'].values[0]"
+    },
+    {
+      "id": 16,
+      "question": "What is the institutional delivery rate in Narayanpur district, Chhattisgarh?",
+      "ground_truth": "74.2%",
+      "query_type": "factual_lookup",
+      "domain": "maternal_health",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Narayanpur') & (df['state']=='Chhattisgarh')]['institutional_delivery_pct'].values[0]"
+    },
+    {
+      "id": 17,
+      "question": "What is the full vaccination rate in Surajpur district, Chhattisgarh?",
+      "ground_truth": "78.7%",
+      "query_type": "factual_lookup",
+      "domain": "vaccination",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Surajpur') & (df['state']=='Chhattisgarh')]['fully_vaccinated_recall_pct'].values[0]"
+    },
+    {
+      "id": 18,
+      "question": "What is the improved sanitation rate in Nizamabad district, Telangana?",
+      "ground_truth": "72.5%",
+      "query_type": "factual_lookup",
+      "domain": "sanitation",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Nizamabad') & (df['state']=='Telangana')]['improved_sanitation_pct'].values[0]"
+    },
+    {
+      "id": 19,
+      "question": "What is the ANC 4+ visit rate in Mandi district, Himachal Pradesh?",
+      "ground_truth": "70.3%",
+      "query_type": "factual_lookup",
+      "domain": "maternal_health",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Mandi') & (df['state']=='Himachal Pradesh')]['anc_4plus_visits_pct'].values[0]"
+    },
+    {
+      "id": 20,
+      "question": "What is the child marriage rate in Raipur district, Chhattisgarh?",
+      "ground_truth": "8.8%",
+      "query_type": "factual_lookup",
+      "domain": "women_empowerment",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Raipur') & (df['state']=='Chhattisgarh')]['child_marriage_pct'].values[0]"
+    },
+    {
+      "id": 21,
+      "question": "What is the stunting rate in Baksa district, Assam?",
+      "ground_truth": "41.2%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Baksa') & (df['state']=='Assam')]['stunting_pct'].values[0]"
+    },
+    {
+      "id": 22,
+      "question": "What is the wasting rate in Shamli district, Uttar Pradesh?",
+      "ground_truth": "24.3%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Shamli') & (df['state']=='Uttar Pradesh')]['wasting_pct'].values[0]"
+    },
+    {
+      "id": 23,
+      "question": "What is the underweight rate in Baghpat district, Uttar Pradesh?",
+      "ground_truth": "26.0%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Baghpat') & (df['state']=='Uttar Pradesh')]['underweight_pct'].values[0]"
+    },
+    {
+      "id": 24,
+      "question": "What is the anaemia rate in children in Wardha district, Maharastra?",
+      "ground_truth": "71.4%",
+      "query_type": "factual_lookup",
+      "domain": "anaemia",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Wardha') & (df['state']=='Maharastra')]['anaemia_children_pct'].values[0]"
+    },
+    {
+      "id": 25,
+      "question": "What is the anaemia rate in women in Bhojpur district, Bihar?",
+      "ground_truth": "73.6%",
+      "query_type": "factual_lookup",
+      "domain": "anaemia",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Bhojpur') & (df['state']=='Bihar')]['anaemia_all_women_pct'].values[0]"
+    },
+    {
+      "id": 26,
+      "question": "What is the institutional delivery rate in Garhwa district, Jharkhand?",
+      "ground_truth": "84.0%",
+      "query_type": "factual_lookup",
+      "domain": "maternal_health",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Garhwa') & (df['state']=='Jharkhand')]['institutional_delivery_pct'].values[0]"
+    },
+    {
+      "id": 27,
+      "question": "What is the full vaccination rate in East district, NCT of Delhi?",
+      "ground_truth": "74.6%",
+      "query_type": "factual_lookup",
+      "domain": "vaccination",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='East') & (df['state']=='NCT of Delhi')]['fully_vaccinated_recall_pct'].values[0]"
+    },
+    {
+      "id": 28,
+      "question": "What is the improved sanitation rate in Katihar district, Bihar?",
+      "ground_truth": "44.6%",
+      "query_type": "factual_lookup",
+      "domain": "sanitation",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Katihar') & (df['state']=='Bihar')]['improved_sanitation_pct'].values[0]"
+    },
+    {
+      "id": 29,
+      "question": "What is the ANC 4+ visit rate in Bidar district, Karnataka?",
+      "ground_truth": "55.3%",
+      "query_type": "factual_lookup",
+      "domain": "maternal_health",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Bidar') & (df['state']=='Karnataka')]['anc_4plus_visits_pct'].values[0]"
+    },
+    {
+      "id": 30,
+      "question": "What is the child marriage rate in Jashpur district, Chhattisgarh?",
+      "ground_truth": "21.9%",
+      "query_type": "factual_lookup",
+      "domain": "women_empowerment",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Jashpur') & (df['state']=='Chhattisgarh')]['child_marriage_pct'].values[0]"
+    },
+    {
+      "id": 31,
+      "question": "What is the stunting rate in Majuli district, Assam?",
+      "ground_truth": "35.4%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Majuli') & (df['state']=='Assam')]['stunting_pct'].values[0]"
+    },
+    {
+      "id": 32,
+      "question": "What is the wasting rate in Champhai district, Mizoram?",
+      "ground_truth": "12.1%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Champhai') & (df['state']=='Mizoram')]['wasting_pct'].values[0]"
+    },
+    {
+      "id": 33,
+      "question": "What is the underweight rate in Jalandhar district, Punjab?",
+      "ground_truth": "16.7%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Jalandhar') & (df['state']=='Punjab')]['underweight_pct'].values[0]"
+    },
+    {
+      "id": 34,
+      "question": "What is the anaemia rate in children in Bundi district, Rajasthan?",
+      "ground_truth": "74.9%",
+      "query_type": "factual_lookup",
+      "domain": "anaemia",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Bundi') & (df['state']=='Rajasthan')]['anaemia_children_pct'].values[0]"
+    },
+    {
+      "id": 35,
+      "question": "What is the anaemia rate in women in Mathura district, Uttar Pradesh?",
+      "ground_truth": "63.0%",
+      "query_type": "factual_lookup",
+      "domain": "anaemia",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Mathura') & (df['state']=='Uttar Pradesh')]['anaemia_all_women_pct'].values[0]"
+    },
+    {
+      "id": 36,
+      "question": "What is the institutional delivery rate in Amravati district, Maharastra?",
+      "ground_truth": "91.3%",
+      "query_type": "factual_lookup",
+      "domain": "maternal_health",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Amravati') & (df['state']=='Maharastra')]['institutional_delivery_pct'].values[0]"
+    },
+    {
+      "id": 37,
+      "question": "What is the full vaccination rate in Anuppur district, Madhya Pradesh?",
+      "ground_truth": "86.6%",
+      "query_type": "factual_lookup",
+      "domain": "vaccination",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Anuppur') & (df['state']=='Madhya Pradesh')]['fully_vaccinated_recall_pct'].values[0]"
+    },
+    {
+      "id": 38,
+      "question": "What is the improved sanitation rate in Kangra district, Himachal Pradesh?",
+      "ground_truth": "73.3%",
+      "query_type": "factual_lookup",
+      "domain": "sanitation",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Kangra') & (df['state']=='Himachal Pradesh')]['improved_sanitation_pct'].values[0]"
+    },
+    {
+      "id": 39,
+      "question": "What is the ANC 4+ visit rate in Uttarkashi district, Uttarakhand?",
+      "ground_truth": "66.8%",
+      "query_type": "factual_lookup",
+      "domain": "maternal_health",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Uttarkashi') & (df['state']=='Uttarakhand')]['anc_4plus_visits_pct'].values[0]"
+    },
+    {
+      "id": 40,
+      "question": "What is the child marriage rate in Fatehabad district, Haryana?",
+      "ground_truth": "11.7%",
+      "query_type": "factual_lookup",
+      "domain": "women_empowerment",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Fatehabad') & (df['state']=='Haryana')]['child_marriage_pct'].values[0]"
+    },
+    {
+      "id": 41,
+      "question": "Which 10 districts nationally have the worst stunting?",
+      "ground_truth": "[{\"district\": \"Pashchimi Singhbhum\", \"stunting_pct\": 60.6}, {\"district\": \"West Khasi Hills\", \"stunting_pct\": 59.0}, {\"district\": \"Yadgir\", \"stunting_pct\": 57.6}, {\"district\": \"Dohad\", \"stunting_pct\": 55.3}, {\"district\": \"Sitamarhi\", \"stunting_pct\": 54.2}, {\"district\": \"Bijapur\", \"stunting_pct\": 53.8}, {\"district\": \"Sheikhpura\", \"stunting_pct\": 53.6}, {\"district\": \"Bahraich\", \"stunting_pct\": 52.1}, {\"district\": \"Budaun\", \"stunting_pct\": 51.8}, {\"district\": \"Sambhal\", \"stunting_pct\": 51.6}]",
+      "query_type": "aggregation_ranking",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(10, 'stunting_pct')[['district','state','stunting_pct']]"
+    },
+    {
+      "id": 42,
+      "question": "Which 10 districts nationally have the worst wasting?",
+      "ground_truth": "[{\"district\": \"Karimganj\", \"wasting_pct\": 48.0}, {\"district\": \"The Dangs\", \"wasting_pct\": 40.9}, {\"district\": \"Dhule\", \"wasting_pct\": 38.9}, {\"district\": \"Chandrapur\", \"wasting_pct\": 38.5}, {\"district\": \"Arwal\", \"wasting_pct\": 36.8}, {\"district\": \"Jehanabad\", \"wasting_pct\": 36.6}, {\"district\": \"Tapi\", \"wasting_pct\": 36.6}, {\"district\": \"Panch Mahals\", \"wasting_pct\": 35.7}, {\"district\": \"Komaram Bheem Asifabad\", \"wasting_pct\": 35.7}, {\"district\": \"Sheohar\", \"wasting_pct\": 35.4}]",
+      "query_type": "aggregation_ranking",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(10, 'wasting_pct')[['district','state','wasting_pct']]"
+    },
+    {
+      "id": 43,
+      "question": "Which 10 districts nationally have the highest child anaemia?",
+      "ground_truth": "[{\"district\": \"Leh(Ladakh)\", \"anaemia_children_pct\": 95.5}, {\"district\": \"Narmada\", \"anaemia_children_pct\": 93.2}, {\"district\": \"Sukma\", \"anaemia_children_pct\": 91.4}, {\"district\": \"Panch Mahals\", \"anaemia_children_pct\": 91.0}, {\"district\": \"Lahul & Spiti\", \"anaemia_children_pct\": 91.0}, {\"district\": \"Dantewada\", \"anaemia_children_pct\": 89.9}, {\"district\": \"Ganderbal\", \"anaemia_children_pct\": 89.8}, {\"district\": \"Tawang\", \"anaemia_children_pct\": 89.6}, {\"district\": \"Aravali\", \"anaemia_children_pct\": 89.5}, {\"district\": \"Dibang Valley\", \"anaemia_children_pct\": 88.6}]",
+      "query_type": "aggregation_ranking",
+      "domain": "anaemia",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(10, 'anaemia_children_pct')[['district','state','anaemia_children_pct']]"
+    },
+    {
+      "id": 44,
+      "question": "Which 10 districts nationally have the highest anaemia in women?",
+      "ground_truth": "[{\"district\": \"Leh(Ladakh)\", \"anaemia_all_women_pct\": 93.5}, {\"district\": \"Kargil\", \"anaemia_all_women_pct\": 92.0}, {\"district\": \"Kishtwar\", \"anaemia_all_women_pct\": 84.8}, {\"district\": \"Lahul & Spiti\", \"anaemia_all_women_pct\": 82.1}, {\"district\": \"Dakshin Dinajpur\", \"anaemia_all_women_pct\": 82.0}, {\"district\": \"Udalguri\", \"anaemia_all_women_pct\": 81.5}, {\"district\": \"Paschim Medinipur\", \"anaemia_all_women_pct\": 81.5}, {\"district\": \"Kodagaon\", \"anaemia_all_women_pct\": 79.7}, {\"district\": \"Pakur\", \"anaemia_all_women_pct\": 79.7}, {\"district\": \"Chhota Udaipur\", \"anaemia_all_women_pct\": 78.9}]",
+      "query_type": "aggregation_ranking",
+      "domain": "anaemia",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(10, 'anaemia_all_women_pct')[['district','state','anaemia_all_women_pct']]"
+    },
+    {
+      "id": 45,
+      "question": "Which 10 districts nationally have the lowest institutional delivery?",
+      "ground_truth": "[{\"district\": \"Mon\", \"institutional_delivery_pct\": 21.4}, {\"district\": \"Phek\", \"institutional_delivery_pct\": 32.2}, {\"district\": \"Tuensang\", \"institutional_delivery_pct\": 34.8}, {\"district\": \"Kiphire\", \"institutional_delivery_pct\": 34.8}, {\"district\": \"Zunheboto\", \"institutional_delivery_pct\": 35.0}, {\"district\": \"Longleng\", \"institutional_delivery_pct\": 38.7}, {\"district\": \"South West Khasi Hills\", \"institutional_delivery_pct\": 41.7}, {\"district\": \"West Khasi Hills\", \"institutional_delivery_pct\": 41.7}, {\"district\": \"West Jaintia Hills\", \"institutional_delivery_pct\": 42.2}, {\"district\": \"Peren\", \"institutional_delivery_pct\": 43.5}]",
+      "query_type": "aggregation_ranking",
+      "domain": "maternal_health",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nsmallest(10, 'institutional_delivery_pct')[['district','state','institutional_delivery_pct']]"
+    },
+    {
+      "id": 46,
+      "question": "Which 10 districts nationally have the lowest full vaccination?",
+      "ground_truth": "[{\"district\": \"Udalguri\", \"fully_vaccinated_recall_pct\": 38.3}, {\"district\": \"Ukhrul\", \"fully_vaccinated_recall_pct\": 39.4}, {\"district\": \"Tuensang\", \"fully_vaccinated_recall_pct\": 39.9}, {\"district\": \"Wokha\", \"fully_vaccinated_recall_pct\": 42.8}, {\"district\": \"Kiphire\", \"fully_vaccinated_recall_pct\": 42.8}, {\"district\": \"Banas Kantha\", \"fully_vaccinated_recall_pct\": 43.5}, {\"district\": \"Jhansi\", \"fully_vaccinated_recall_pct\": 44.5}, {\"district\": \"North Garo Hills\", \"fully_vaccinated_recall_pct\": 47.5}, {\"district\": \"West Karbi Anglong\", \"fully_vaccinated_recall_pct\": 47.9}, {\"district\": \"South Tripura\", \"fully_vaccinated_recall_pct\": 48.5}]",
+      "query_type": "aggregation_ranking",
+      "domain": "vaccination",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nsmallest(10, 'fully_vaccinated_recall_pct')[['district','state','fully_vaccinated_recall_pct']]"
+    },
+    {
+      "id": 47,
+      "question": "Which 10 districts nationally have the worst sanitation?",
+      "ground_truth": "[{\"district\": \"Puruliya\", \"improved_sanitation_pct\": 29.2}, {\"district\": \"Bijapur\", \"improved_sanitation_pct\": 30.6}, {\"district\": \"Araria\", \"improved_sanitation_pct\": 32.2}, {\"district\": \"Madhepura\", \"improved_sanitation_pct\": 34.6}, {\"district\": \"Sukma\", \"improved_sanitation_pct\": 35.5}, {\"district\": \"Purnia\", \"improved_sanitation_pct\": 35.6}, {\"district\": \"Dohad\", \"improved_sanitation_pct\": 35.9}, {\"district\": \"Gulbarga\", \"improved_sanitation_pct\": 36.5}, {\"district\": \"Saran\", \"improved_sanitation_pct\": 37.2}, {\"district\": \"Yadgir\", \"improved_sanitation_pct\": 37.4}]",
+      "query_type": "aggregation_ranking",
+      "domain": "sanitation",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nsmallest(10, 'improved_sanitation_pct')[['district','state','improved_sanitation_pct']]"
+    },
+    {
+      "id": 48,
+      "question": "Which 10 districts nationally have the highest child marriage?",
+      "ground_truth": "[{\"district\": \"Purba Medinipur\", \"child_marriage_pct\": 57.6}, {\"district\": \"Lakhisarai\", \"child_marriage_pct\": 56.1}, {\"district\": \"Supaul\", \"child_marriage_pct\": 55.9}, {\"district\": \"Paschim Medinipur\", \"child_marriage_pct\": 55.7}, {\"district\": \"Murshidabad\", \"child_marriage_pct\": 55.4}, {\"district\": \"Araria\", \"child_marriage_pct\": 52.0}, {\"district\": \"Madhepura\", \"child_marriage_pct\": 52.0}, {\"district\": \"Jamui\", \"child_marriage_pct\": 51.9}, {\"district\": \"Sepahijala\", \"child_marriage_pct\": 51.9}, {\"district\": \"Shrawasti\", \"child_marriage_pct\": 51.9}]",
+      "query_type": "aggregation_ranking",
+      "domain": "women_empowerment",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(10, 'child_marriage_pct')[['district','state','child_marriage_pct']]"
+    },
+    {
+      "id": 49,
+      "question": "Which 10 districts nationally have the highest C-section rate?",
+      "ground_truth": "[{\"district\": \"Karimnagar\", \"csection_pct\": 82.4}, {\"district\": \"Jangoan\", \"csection_pct\": 79.1}, {\"district\": \"Nirmal\", \"csection_pct\": 77.3}, {\"district\": \"Rajanna Sircilla\", \"csection_pct\": 77.2}, {\"district\": \"Suryapet\", \"csection_pct\": 77.0}, {\"district\": \"Mahabubabad\", \"csection_pct\": 74.0}, {\"district\": \"Warangal Rural\", \"csection_pct\": 71.8}, {\"district\": \"Peddapalli\", \"csection_pct\": 71.6}, {\"district\": \"Warangal Urban\", \"csection_pct\": 69.3}, {\"district\": \"Khammam\", \"csection_pct\": 69.2}]",
+      "query_type": "aggregation_ranking",
+      "domain": "maternal_health",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(10, 'csection_pct')[['district','state','csection_pct']]"
+    },
+    {
+      "id": 50,
+      "question": "Which 10 districts nationally have the lowest ANC coverage?",
+      "ground_truth": "[{\"district\": \"Tuensang\", \"anc_4plus_visits_pct\": 4.4}, {\"district\": \"Kiphire\", \"anc_4plus_visits_pct\": 5.8}, {\"district\": \"Phek\", \"anc_4plus_visits_pct\": 9.5}, {\"district\": \"Mon\", \"anc_4plus_visits_pct\": 9.7}, {\"district\": \"Purnia\", \"anc_4plus_visits_pct\": 11.1}, {\"district\": \"Zunheboto\", \"anc_4plus_visits_pct\": 11.2}, {\"district\": \"Saharsa\", \"anc_4plus_visits_pct\": 11.7}, {\"district\": \"Peren\", \"anc_4plus_visits_pct\": 14.5}, {\"district\": \"Katihar\", \"anc_4plus_visits_pct\": 15.3}, {\"district\": \"Longleng\", \"anc_4plus_visits_pct\": 15.4}]",
+      "query_type": "aggregation_ranking",
+      "domain": "maternal_health",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nsmallest(10, 'anc_4plus_visits_pct')[['district','state','anc_4plus_visits_pct']]"
+    },
+    {
+      "id": 51,
+      "question": "Which 5 districts in Bihar have the highest stunting rates?",
+      "ground_truth": "[{\"district\": \"Sitamarhi\", \"stunting_pct\": 54.2}, {\"district\": \"Sheikhpura\", \"stunting_pct\": 53.6}, {\"district\": \"Araria\", \"stunting_pct\": 49.9}, {\"district\": \"Nawada\", \"stunting_pct\": 49.4}, {\"district\": \"Purba Champaran\", \"stunting_pct\": 49.1}]",
+      "query_type": "aggregation_ranking",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df[df['state']=='Bihar'].nlargest(5,'stunting_pct')[['district','state','stunting_pct']]"
+    },
+    {
+      "id": 52,
+      "question": "Which 5 districts in Uttar Pradesh have the highest stunting rates?",
+      "ground_truth": "[{\"district\": \"Bahraich\", \"stunting_pct\": 52.1}, {\"district\": \"Budaun\", \"stunting_pct\": 51.8}, {\"district\": \"Sambhal\", \"stunting_pct\": 51.6}, {\"district\": \"Fatehpur\", \"stunting_pct\": 51.1}, {\"district\": \"Banda\", \"stunting_pct\": 51.0}]",
+      "query_type": "aggregation_ranking",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df[df['state']=='Uttar Pradesh'].nlargest(5,'stunting_pct')[['district','state','stunting_pct']]"
+    },
+    {
+      "id": 53,
+      "question": "Which 5 districts in Rajasthan have the highest stunting rates?",
+      "ground_truth": "[{\"district\": \"Baran\", \"stunting_pct\": 46.0}, {\"district\": \"Dhaulpur\", \"stunting_pct\": 45.7}, {\"district\": \"Banswara\", \"stunting_pct\": 44.6}, {\"district\": \"Jalor\", \"stunting_pct\": 44.3}, {\"district\": \"Bharatpur\", \"stunting_pct\": 40.3}]",
+      "query_type": "aggregation_ranking",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df[df['state']=='Rajasthan'].nlargest(5,'stunting_pct')[['district','state','stunting_pct']]"
+    },
+    {
+      "id": 54,
+      "question": "Which 5 districts in Madhya Pradesh have the highest stunting rates?",
+      "ground_truth": "[{\"district\": \"Katni\", \"stunting_pct\": 49.5}, {\"district\": \"Satna\", \"stunting_pct\": 49.4}, {\"district\": \"Jhabua\", \"stunting_pct\": 49.3}, {\"district\": \"Sheopur\", \"stunting_pct\": 45.8}, {\"district\": \"Barwani\", \"stunting_pct\": 45.8}]",
+      "query_type": "aggregation_ranking",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df[df['state']=='Madhya Pradesh'].nlargest(5,'stunting_pct')[['district','state','stunting_pct']]"
+    },
+    {
+      "id": 55,
+      "question": "Which 5 districts in Kerala have the highest stunting rates?",
+      "ground_truth": "[{\"district\": \"Wayanad\", \"stunting_pct\": 31.3}, {\"district\": \"Palakkad\", \"stunting_pct\": 29.7}, {\"district\": \"Malappuram\", \"stunting_pct\": 29.4}, {\"district\": \"Kasaragod\", \"stunting_pct\": 25.3}, {\"district\": \"Idukki\", \"stunting_pct\": 24.3}]",
+      "query_type": "aggregation_ranking",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df[df['state']=='Kerala'].nlargest(5,'stunting_pct')[['district','state','stunting_pct']]"
+    },
+    {
+      "id": 56,
+      "question": "Which 5 districts in Tamil Nadu have the highest stunting rates?",
+      "ground_truth": "[{\"district\": \"Karur\", \"stunting_pct\": 33.6}, {\"district\": \"Madurai\", \"stunting_pct\": 32.4}, {\"district\": \"Nagapattinam\", \"stunting_pct\": 32.3}, {\"district\": \"Pudukkottai\", \"stunting_pct\": 32.2}, {\"district\": \"Tiruvannamalai\", \"stunting_pct\": 30.6}]",
+      "query_type": "aggregation_ranking",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df[df['state']=='Tamil Nadu'].nlargest(5,'stunting_pct')[['district','state','stunting_pct']]"
+    },
+    {
+      "id": 57,
+      "question": "Which 5 districts in Telangana have the highest stunting rates?",
+      "ground_truth": "[{\"district\": \"Jogulamba Gadwal\", \"stunting_pct\": 49.7}, {\"district\": \"Adilabad\", \"stunting_pct\": 45.7}, {\"district\": \"Mahabubnagar\", \"stunting_pct\": 42.6}, {\"district\": \"Wanaparthy\", \"stunting_pct\": 40.4}, {\"district\": \"Yadadri Bhuvanagiri\", \"stunting_pct\": 38.3}]",
+      "query_type": "aggregation_ranking",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df[df['state']=='Telangana'].nlargest(5,'stunting_pct')[['district','state','stunting_pct']]"
+    },
+    {
+      "id": 58,
+      "question": "Which 5 districts in Karnataka have the highest stunting rates?",
+      "ground_truth": "[{\"district\": \"Yadgir\", \"stunting_pct\": 57.6}, {\"district\": \"Koppal\", \"stunting_pct\": 49.1}, {\"district\": \"Bagalkot\", \"stunting_pct\": 48.3}, {\"district\": \"Bijapur\", \"stunting_pct\": 45.9}, {\"district\": \"Gadag\", \"stunting_pct\": 45.2}]",
+      "query_type": "aggregation_ranking",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df[df['state']=='Karnataka'].nlargest(5,'stunting_pct')[['district','state','stunting_pct']]"
+    },
+    {
+      "id": 59,
+      "question": "Which 5 districts in West Bengal have the highest stunting rates?",
+      "ground_truth": "[{\"district\": \"Uttar Dinajpur\", \"stunting_pct\": 44.8}, {\"district\": \"Maldah\", \"stunting_pct\": 40.5}, {\"district\": \"Murshidabad\", \"stunting_pct\": 39.8}, {\"district\": \"Paschim Barddhaman\", \"stunting_pct\": 39.7}, {\"district\": \"Birbhum\", \"stunting_pct\": 37.0}]",
+      "query_type": "aggregation_ranking",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df[df['state']=='West Bengal'].nlargest(5,'stunting_pct')[['district','state','stunting_pct']]"
+    },
+    {
+      "id": 60,
+      "question": "What is the national average stunting rate across all 706 districts in NFHS-5?",
+      "ground_truth": "33.5%",
+      "query_type": "aggregation_ranking",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df['stunting_pct'].mean()"
+    },
+    {
+      "id": 61,
+      "question": "What is the national average anaemia rate in women across all 706 districts in NFHS-5?",
+      "ground_truth": "55.9%",
+      "query_type": "aggregation_ranking",
+      "domain": "anaemia",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df['anaemia_all_women_pct'].mean()"
+    },
+    {
+      "id": 62,
+      "question": "What is the national average institutional delivery rate across all 706 districts in NFHS-5?",
+      "ground_truth": "88.7%",
+      "query_type": "aggregation_ranking",
+      "domain": "maternal_health",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df['institutional_delivery_pct'].mean()"
+    },
+    {
+      "id": 63,
+      "question": "What is the national average full vaccination coverage across all 706 districts in NFHS-5?",
+      "ground_truth": "77.7%",
+      "query_type": "aggregation_ranking",
+      "domain": "vaccination",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df['fully_vaccinated_recall_pct'].mean()"
+    },
+    {
+      "id": 64,
+      "question": "What is the national average improved sanitation coverage across all 706 districts in NFHS-5?",
+      "ground_truth": "71.9%",
+      "query_type": "aggregation_ranking",
+      "domain": "sanitation",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df['improved_sanitation_pct'].mean()"
+    },
+    {
+      "id": 65,
+      "question": "Compare the average stunting rates across Bihar, Uttar Pradesh, and Kerala.",
+      "ground_truth": "{\"Bihar\": 42.6, \"Kerala\": 23.3, \"Uttar Pradesh\": 39.6}",
+      "query_type": "state_comparison",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Bihar', 'Uttar Pradesh', 'Kerala'])].groupby('state')['stunting_pct'].mean().round(1)"
+    },
+    {
+      "id": 66,
+      "question": "Compare the average institutional delivery rates across Bihar, Uttar Pradesh, and Kerala.",
+      "ground_truth": "{\"Bihar\": 77.8, \"Kerala\": 99.7, \"Uttar Pradesh\": 84.0}",
+      "query_type": "state_comparison",
+      "domain": "maternal_health",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Bihar', 'Uttar Pradesh', 'Kerala'])].groupby('state')['institutional_delivery_pct'].mean().round(1)"
+    },
+    {
+      "id": 67,
+      "question": "Compare the average child anaemia rates across Rajasthan, Madhya Pradesh, and Gujarat.",
+      "ground_truth": "{\"Gujarat\": 79.8, \"Madhya Pradesh\": 71.7, \"Rajasthan\": 72.2}",
+      "query_type": "state_comparison",
+      "domain": "anaemia",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Rajasthan', 'Madhya Pradesh', 'Gujarat'])].groupby('state')['anaemia_children_pct'].mean().round(1)"
+    },
+    {
+      "id": 68,
+      "question": "Compare the average vaccination coverage across Karnataka, and Tamil Nadu.",
+      "ground_truth": "{\"Karnataka\": 86.4, \"Tamil Nadu\": 89.3}",
+      "query_type": "state_comparison",
+      "domain": "vaccination",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Karnataka', 'Tamil Nadu'])].groupby('state')['fully_vaccinated_recall_pct'].mean().round(1)"
+    },
+    {
+      "id": 69,
+      "question": "Compare the average child marriage rates across Uttar Pradesh, Bihar, Jharkhand, and Odisha.",
+      "ground_truth": "{\"Bihar\": 41.1, \"Jharkhand\": 32.3, \"Odisha\": 20.4, \"Uttar Pradesh\": 16.8}",
+      "query_type": "state_comparison",
+      "domain": "women_empowerment",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Uttar Pradesh', 'Bihar', 'Jharkhand', 'Odisha'])].groupby('state')['child_marriage_pct'].mean().round(1)"
+    },
+    {
+      "id": 70,
+      "question": "Compare the average women literacy rates across Kerala, Goa, and Tamil Nadu.",
+      "ground_truth": "{\"Goa\": 93.1, \"Kerala\": 97.9, \"Tamil Nadu\": 85.7}",
+      "query_type": "state_comparison",
+      "domain": "women_empowerment",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Kerala', 'Goa', 'Tamil Nadu'])].groupby('state')['women_literacy_pct'].mean().round(1)"
+    },
+    {
+      "id": 71,
+      "question": "Compare the average sanitation coverage across Bihar, Jharkhand, and Odisha.",
+      "ground_truth": "{\"Bihar\": 49.5, \"Jharkhand\": 55.3, \"Odisha\": 59.6}",
+      "query_type": "state_comparison",
+      "domain": "sanitation",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Bihar', 'Jharkhand', 'Odisha'])].groupby('state')['improved_sanitation_pct'].mean().round(1)"
+    },
+    {
+      "id": 72,
+      "question": "Compare the average ANC 4+ visit rates across Kerala, and Tamil Nadu.",
+      "ground_truth": "{\"Kerala\": 78.0, \"Tamil Nadu\": 90.6}",
+      "query_type": "state_comparison",
+      "domain": "maternal_health",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Kerala', 'Tamil Nadu'])].groupby('state')['anc_4plus_visits_pct'].mean().round(1)"
+    },
+    {
+      "id": 73,
+      "question": "Compare the average anaemia in women across Rajasthan, Haryana, and Punjab.",
+      "ground_truth": "{\"Haryana\": 60.7, \"Punjab\": 58.8, \"Rajasthan\": 55.4}",
+      "query_type": "state_comparison",
+      "domain": "anaemia",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Rajasthan', 'Haryana', 'Punjab'])].groupby('state')['anaemia_all_women_pct'].mean().round(1)"
+    },
+    {
+      "id": 74,
+      "question": "Compare the average wasting rates across Bihar, Uttar Pradesh, and West Bengal.",
+      "ground_truth": "{\"Bihar\": 24.2, \"Uttar Pradesh\": 17.7, \"West Bengal\": 21.4}",
+      "query_type": "state_comparison",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Bihar', 'Uttar Pradesh', 'West Bengal'])].groupby('state')['wasting_pct'].mean().round(1)"
+    },
+    {
+      "id": 75,
+      "question": "Which states have the highest and lowest average stunting rates?",
+      "ground_truth": "{\"top_3_states\": {\"Meghalaya\": 43.0, \"Bihar\": 42.6, \"Jharkhand\": 40.2}, \"bottom_3_states\": {\"Manipur\": 24.6, \"Kerala\": 23.3, \"Andaman & Nicobar Islands\": 23.2}}",
+      "query_type": "state_comparison",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df.groupby('state')['stunting_pct'].mean().round(1).sort_values(ascending=False)"
+    },
+    {
+      "id": 76,
+      "question": "Which states have the highest and lowest average anaemia in women rates?",
+      "ground_truth": "{\"top_3_states\": {\"Ladakh\": 92.8, \"West Bengal\": 71.5, \"Tripura\": 67.0}, \"bottom_3_states\": {\"Nagaland\": 29.2, \"Manipur\": 28.7, \"Lakshadweep\": 25.8}}",
+      "query_type": "state_comparison",
+      "domain": "anaemia",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df.groupby('state')['anaemia_all_women_pct'].mean().round(1).sort_values(ascending=False)"
+    },
+    {
+      "id": 77,
+      "question": "Which states have the highest and lowest average institutional delivery rates?",
+      "ground_truth": "{\"top_3_states\": {\"Puducherry\": 99.8, \"Goa\": 99.8, \"Kerala\": 99.7}, \"bottom_3_states\": {\"Manipur\": 71.2, \"Meghalaya\": 62.8, \"Nagaland\": 43.3}}",
+      "query_type": "state_comparison",
+      "domain": "maternal_health",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df.groupby('state')['institutional_delivery_pct'].mean().round(1).sort_values(ascending=False)"
+    },
+    {
+      "id": 78,
+      "question": "Which states have the highest and lowest average sanitation rates?",
+      "ground_truth": "{\"top_3_states\": {\"Lakshadweep\": 99.8, \"Kerala\": 98.6, \"Mizoram\": 94.2}, \"bottom_3_states\": {\"Jharkhand\": 55.3, \"Bihar\": 49.5, \"Ladakh\": 42.3}}",
+      "query_type": "state_comparison",
+      "domain": "sanitation",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df.groupby('state')['improved_sanitation_pct'].mean().round(1).sort_values(ascending=False)"
+    },
+    {
+      "id": 79,
+      "question": "What is the distribution of stunting across all districts? Which states perform best and worst?",
+      "ground_truth": "{\"national_mean\": 33.5, \"national_min\": 13.2, \"national_max\": 60.6, \"best_performing_state\": \"Andaman & Nicobar Islands\", \"worst_performing_state\": \"Meghalaya\", \"interstate_gap\": 19.7}",
+      "query_type": "trend_analysis",
+      "domain": "child_nutrition",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "state_avg = df.groupby('state')['stunting_pct'].mean().sort_values(ascending=False); result = state_avg"
+    },
+    {
+      "id": 80,
+      "question": "What is the distribution of child anaemia across all districts? Which states perform best and worst?",
+      "ground_truth": "{\"national_mean\": 65.8, \"national_min\": 24.9, \"national_max\": 95.5, \"best_performing_state\": \"Andaman & Nicobar Islands\", \"worst_performing_state\": \"Ladakh\", \"interstate_gap\": 54.5}",
+      "query_type": "trend_analysis",
+      "domain": "anaemia",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "state_avg = df.groupby('state')['anaemia_children_pct'].mean().sort_values(ascending=False); result = state_avg"
+    },
+    {
+      "id": 81,
+      "question": "What is the distribution of women anaemia across all districts? Which states perform best and worst?",
+      "ground_truth": "{\"national_mean\": 55.9, \"national_min\": 14.9, \"national_max\": 93.5, \"best_performing_state\": \"Lakshadweep\", \"worst_performing_state\": \"Ladakh\", \"interstate_gap\": 67.0}",
+      "query_type": "trend_analysis",
+      "domain": "anaemia",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "state_avg = df.groupby('state')['anaemia_all_women_pct'].mean().sort_values(ascending=False); result = state_avg"
+    },
+    {
+      "id": 82,
+      "question": "What is the distribution of institutional delivery across all districts? Which states perform best and worst?",
+      "ground_truth": "{\"national_mean\": 88.7, \"national_min\": 21.4, \"national_max\": 100.0, \"best_performing_state\": \"Goa\", \"worst_performing_state\": \"Nagaland\", \"interstate_gap\": 56.5}",
+      "query_type": "trend_analysis",
+      "domain": "maternal_health",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "state_avg = df.groupby('state')['institutional_delivery_pct'].mean().sort_values(ascending=False); result = state_avg"
+    },
+    {
+      "id": 83,
+      "question": "What is the distribution of vaccination coverage across all districts? Which states perform best and worst?",
+      "ground_truth": "{\"national_mean\": 77.7, \"national_min\": 38.3, \"national_max\": 100.0, \"best_performing_state\": \"Odisha\", \"worst_performing_state\": \"Nagaland\", \"interstate_gap\": 32.7}",
+      "query_type": "trend_analysis",
+      "domain": "vaccination",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "state_avg = df.groupby('state')['fully_vaccinated_recall_pct'].mean().sort_values(ascending=False); result = state_avg"
+    },
+    {
+      "id": 84,
+      "question": "What is the distribution of sanitation across all districts? Which states perform best and worst?",
+      "ground_truth": "{\"national_mean\": 71.9, \"national_min\": 29.2, \"national_max\": 99.9, \"best_performing_state\": \"Lakshadweep\", \"worst_performing_state\": \"Ladakh\", \"interstate_gap\": 57.4}",
+      "query_type": "trend_analysis",
+      "domain": "sanitation",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "state_avg = df.groupby('state')['improved_sanitation_pct'].mean().sort_values(ascending=False); result = state_avg"
+    },
+    {
+      "id": 85,
+      "question": "What is the distribution of women literacy across all districts? Which states perform best and worst?",
+      "ground_truth": "{\"national_mean\": 74.3, \"national_min\": 38.6, \"national_max\": 99.7, \"best_performing_state\": \"Kerala\", \"worst_performing_state\": \"Bihar\", \"interstate_gap\": 40.2}",
+      "query_type": "trend_analysis",
+      "domain": "women_empowerment",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "state_avg = df.groupby('state')['women_literacy_pct'].mean().sort_values(ascending=False); result = state_avg"
+    },
+    {
+      "id": 86,
+      "question": "What is the distribution of child marriage across all districts? Which states perform best and worst?",
+      "ground_truth": "{\"national_mean\": 20.4, \"national_min\": 0.0, \"national_max\": 57.6, \"best_performing_state\": \"Lakshadweep\", \"worst_performing_state\": \"Bihar\", \"interstate_gap\": 39.8}",
+      "query_type": "trend_analysis",
+      "domain": "women_empowerment",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "state_avg = df.groupby('state')['child_marriage_pct'].mean().sort_values(ascending=False); result = state_avg"
+    },
+    {
+      "id": 87,
+      "question": "What is the distribution of C-section rate across all districts? Which states perform best and worst?",
+      "ground_truth": "{\"national_mean\": 22.8, \"national_min\": 1.4, \"national_max\": 82.4, \"best_performing_state\": \"Nagaland\", \"worst_performing_state\": \"Telangana\", \"interstate_gap\": 56.8}",
+      "query_type": "trend_analysis",
+      "domain": "maternal_health",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "state_avg = df.groupby('state')['csection_pct'].mean().sort_values(ascending=False); result = state_avg"
+    },
+    {
+      "id": 88,
+      "question": "What is the distribution of ANC 4+ visits across all districts? Which states perform best and worst?",
+      "ground_truth": "{\"national_mean\": 60.5, \"national_min\": 4.4, \"national_max\": 98.7, \"best_performing_state\": \"Goa\", \"worst_performing_state\": \"Nagaland\", \"interstate_gap\": 75.3}",
+      "query_type": "trend_analysis",
+      "domain": "maternal_health",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "state_avg = df.groupby('state')['anc_4plus_visits_pct'].mean().sort_values(ascending=False); result = state_avg"
+    },
+    {
+      "id": 89,
+      "question": "What is the range of stunting across districts in Bihar? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"Bihar\", \"indicator\": \"stunting\", \"mean\": 42.6, \"best_district\": \"Gopalganj\", \"best_value\": 34.2, \"worst_district\": \"Sitamarhi\", \"worst_value\": 54.2}",
+      "query_type": "trend_analysis",
+      "domain": "child_nutrition",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='Bihar']; result = df_s[['district','stunting_pct']].sort_values('stunting_pct')"
+    },
+    {
+      "id": 90,
+      "question": "What is the range of child anaemia across districts in Bihar? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"Bihar\", \"indicator\": \"child anaemia\", \"mean\": 70.1, \"best_district\": \"Gopalganj\", \"best_value\": 56.1, \"worst_district\": \"Jamui\", \"worst_value\": 81.9}",
+      "query_type": "trend_analysis",
+      "domain": "anaemia",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='Bihar']; result = df_s[['district','anaemia_children_pct']].sort_values('anaemia_children_pct')"
+    },
+    {
+      "id": 91,
+      "question": "What is the range of institutional delivery across districts in Bihar? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"Bihar\", \"indicator\": \"institutional delivery\", \"mean\": 77.8, \"best_district\": \"Munger\", \"best_value\": 93.2, \"worst_district\": \"Kishanganj\", \"worst_value\": 54.6}",
+      "query_type": "trend_analysis",
+      "domain": "maternal_health",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='Bihar']; result = df_s[['district','institutional_delivery_pct']].sort_values('institutional_delivery_pct')"
+    },
+    {
+      "id": 92,
+      "question": "What is the range of sanitation across districts in Bihar? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"Bihar\", \"indicator\": \"sanitation\", \"mean\": 49.5, \"best_district\": \"Rohtas\", \"best_value\": 69.0, \"worst_district\": \"Araria\", \"worst_value\": 32.2}",
+      "query_type": "trend_analysis",
+      "domain": "sanitation",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='Bihar']; result = df_s[['district','improved_sanitation_pct']].sort_values('improved_sanitation_pct')"
+    },
+    {
+      "id": 93,
+      "question": "What is the range of stunting across districts in Uttar Pradesh? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"Uttar Pradesh\", \"indicator\": \"stunting\", \"mean\": 39.6, \"best_district\": \"Mau\", \"best_value\": 25.4, \"worst_district\": \"Bahraich\", \"worst_value\": 52.1}",
+      "query_type": "trend_analysis",
+      "domain": "child_nutrition",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='Uttar Pradesh']; result = df_s[['district','stunting_pct']].sort_values('stunting_pct')"
+    },
+    {
+      "id": 94,
+      "question": "What is the range of child anaemia across districts in Uttar Pradesh? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"Uttar Pradesh\", \"indicator\": \"child anaemia\", \"mean\": 66.4, \"best_district\": \"Allahabad\", \"best_value\": 50.5, \"worst_district\": \"Banda\", \"worst_value\": 82.2}",
+      "query_type": "trend_analysis",
+      "domain": "anaemia",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='Uttar Pradesh']; result = df_s[['district','anaemia_children_pct']].sort_values('anaemia_children_pct')"
+    },
+    {
+      "id": 95,
+      "question": "What is the range of institutional delivery across districts in Uttar Pradesh? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"Uttar Pradesh\", \"indicator\": \"institutional delivery\", \"mean\": 84.0, \"best_district\": \"Hamirpur\", \"best_value\": 96.3, \"worst_district\": \"Shahjahanpur\", \"worst_value\": 63.3}",
+      "query_type": "trend_analysis",
+      "domain": "maternal_health",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='Uttar Pradesh']; result = df_s[['district','institutional_delivery_pct']].sort_values('institutional_delivery_pct')"
+    },
+    {
+      "id": 96,
+      "question": "What is the range of sanitation across districts in Uttar Pradesh? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"Uttar Pradesh\", \"indicator\": \"sanitation\", \"mean\": 69.0, \"best_district\": \"Baghpat\", \"best_value\": 87.0, \"worst_district\": \"Siddharthnagar\", \"worst_value\": 42.8}",
+      "query_type": "trend_analysis",
+      "domain": "sanitation",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='Uttar Pradesh']; result = df_s[['district','improved_sanitation_pct']].sort_values('improved_sanitation_pct')"
+    },
+    {
+      "id": 97,
+      "question": "What is the range of stunting across districts in Rajasthan? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"Rajasthan\", \"indicator\": \"stunting\", \"mean\": 31.7, \"best_district\": \"Jhunjhunun\", \"best_value\": 20.9, \"worst_district\": \"Baran\", \"worst_value\": 46.0}",
+      "query_type": "trend_analysis",
+      "domain": "child_nutrition",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='Rajasthan']; result = df_s[['district','stunting_pct']].sort_values('stunting_pct')"
+    },
+    {
+      "id": 98,
+      "question": "What is the range of child anaemia across districts in Rajasthan? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"Rajasthan\", \"indicator\": \"child anaemia\", \"mean\": 72.2, \"best_district\": \"Jaisalmer\", \"best_value\": 58.6, \"worst_district\": \"Rajsamand\", \"worst_value\": 84.3}",
+      "query_type": "trend_analysis",
+      "domain": "anaemia",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='Rajasthan']; result = df_s[['district','anaemia_children_pct']].sort_values('anaemia_children_pct')"
+    },
+    {
+      "id": 99,
+      "question": "What is the range of institutional delivery across districts in Rajasthan? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"Rajasthan\", \"indicator\": \"institutional delivery\", \"mean\": 95.3, \"best_district\": \"Pali\", \"best_value\": 98.8, \"worst_district\": \"Churu\", \"worst_value\": 87.8}",
+      "query_type": "trend_analysis",
+      "domain": "maternal_health",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='Rajasthan']; result = df_s[['district','institutional_delivery_pct']].sort_values('institutional_delivery_pct')"
+    },
+    {
+      "id": 100,
+      "question": "What is the range of sanitation across districts in Rajasthan? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"Rajasthan\", \"indicator\": \"sanitation\", \"mean\": 68.6, \"best_district\": \"Hanumangarh\", \"best_value\": 83.8, \"worst_district\": \"Banswara\", \"worst_value\": 40.8}",
+      "query_type": "trend_analysis",
+      "domain": "sanitation",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='Rajasthan']; result = df_s[['district','improved_sanitation_pct']].sort_values('improved_sanitation_pct')"
+    },
+    {
+      "id": 101,
+      "question": "What is the range of stunting across districts in Tamil Nadu? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"Tamil Nadu\", \"indicator\": \"stunting\", \"mean\": 25.3, \"best_district\": \"Kanniyakumari\", \"best_value\": 17.3, \"worst_district\": \"Karur\", \"worst_value\": 33.6}",
+      "query_type": "trend_analysis",
+      "domain": "child_nutrition",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='Tamil Nadu']; result = df_s[['district','stunting_pct']].sort_values('stunting_pct')"
+    },
+    {
+      "id": 102,
+      "question": "What is the range of child anaemia across districts in Tamil Nadu? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"Tamil Nadu\", \"indicator\": \"child anaemia\", \"mean\": 57.4, \"best_district\": \"Coimbatore\", \"best_value\": 37.8, \"worst_district\": \"Tiruchirappalli\", \"worst_value\": 82.3}",
+      "query_type": "trend_analysis",
+      "domain": "anaemia",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='Tamil Nadu']; result = df_s[['district','anaemia_children_pct']].sort_values('anaemia_children_pct')"
+    },
+    {
+      "id": 103,
+      "question": "What is the range of institutional delivery across districts in Tamil Nadu? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"Tamil Nadu\", \"indicator\": \"institutional delivery\", \"mean\": 99.6, \"best_district\": \"Thiruvallur\", \"best_value\": 100.0, \"worst_district\": \"Dindigul\", \"worst_value\": 97.0}",
+      "query_type": "trend_analysis",
+      "domain": "maternal_health",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='Tamil Nadu']; result = df_s[['district','institutional_delivery_pct']].sort_values('institutional_delivery_pct')"
+    },
+    {
+      "id": 104,
+      "question": "What is the range of sanitation across districts in Tamil Nadu? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"Tamil Nadu\", \"indicator\": \"sanitation\", \"mean\": 71.6, \"best_district\": \"Kanniyakumari\", \"best_value\": 96.2, \"worst_district\": \"Viluppuram\", \"worst_value\": 53.8}",
+      "query_type": "trend_analysis",
+      "domain": "sanitation",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='Tamil Nadu']; result = df_s[['district','improved_sanitation_pct']].sort_values('improved_sanitation_pct')"
+    },
+    {
+      "id": 105,
+      "question": "What is the range of stunting across districts in West Bengal? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"West Bengal\", \"indicator\": \"stunting\", \"mean\": 33.2, \"best_district\": \"Purba Medinipur\", \"best_value\": 25.8, \"worst_district\": \"Uttar Dinajpur\", \"worst_value\": 44.8}",
+      "query_type": "trend_analysis",
+      "domain": "child_nutrition",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='West Bengal']; result = df_s[['district','stunting_pct']].sort_values('stunting_pct')"
+    },
+    {
+      "id": 106,
+      "question": "What is the range of child anaemia across districts in West Bengal? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"West Bengal\", \"indicator\": \"child anaemia\", \"mean\": 69.7, \"best_district\": \"North Twenty Four Pargana\", \"best_value\": 57.9, \"worst_district\": \"Puruliya\", \"worst_value\": 77.9}",
+      "query_type": "trend_analysis",
+      "domain": "anaemia",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='West Bengal']; result = df_s[['district','anaemia_children_pct']].sort_values('anaemia_children_pct')"
+    },
+    {
+      "id": 107,
+      "question": "What is the range of institutional delivery across districts in West Bengal? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"West Bengal\", \"indicator\": \"institutional delivery\", \"mean\": 92.0, \"best_district\": \"Darjiling\", \"best_value\": 98.4, \"worst_district\": \"Uttar Dinajpur\", \"worst_value\": 76.9}",
+      "query_type": "trend_analysis",
+      "domain": "maternal_health",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='West Bengal']; result = df_s[['district','institutional_delivery_pct']].sort_values('institutional_delivery_pct')"
+    },
+    {
+      "id": 108,
+      "question": "What is the range of sanitation across districts in West Bengal? Which district performs best and worst?",
+      "ground_truth": "{\"state\": \"West Bengal\", \"indicator\": \"sanitation\", \"mean\": 67.3, \"best_district\": \"Darjiling\", \"best_value\": 83.0, \"worst_district\": \"Puruliya\", \"worst_value\": 29.2}",
+      "query_type": "trend_analysis",
+      "domain": "sanitation",
+      "difficulty": "hard",
+      "answer_type": "distribution",
+      "gold_pandas_code": "df_s = df[df['state']=='West Bengal']; result = df_s[['district','improved_sanitation_pct']].sort_values('improved_sanitation_pct')"
+    },
+    {
+      "id": 109,
+      "question": "Is improved sanitation correlated with lower stunting rates at district level?",
+      "ground_truth": "{\"pearson_r\": -0.5067, \"pearson_p\": 0.0, \"spearman_r\": -0.4998, \"n_districts\": 706, \"direction\": \"negative\", \"significance\": \"statistically significant (p < 0.05)\"}",
+      "query_type": "correlation",
+      "domain": "sanitation/child_nutrition",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "from scipy import stats; pair = df[['improved_sanitation_pct','stunting_pct']].dropna(); result = stats.pearsonr(pair['improved_sanitation_pct'], pair['stunting_pct'])"
+    },
+    {
+      "id": 110,
+      "question": "Is there a relationship between open defecation (lack of sanitation) and wasting?",
+      "ground_truth": "{\"pearson_r\": -0.3391, \"pearson_p\": 0.0, \"spearman_r\": -0.3571, \"n_districts\": 706, \"direction\": \"negative\", \"significance\": \"statistically significant (p < 0.05)\"}",
+      "query_type": "correlation",
+      "domain": "sanitation/child_nutrition",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "from scipy import stats; pair = df[['improved_sanitation_pct','wasting_pct']].dropna(); result = stats.pearsonr(pair['improved_sanitation_pct'], pair['wasting_pct'])"
+    },
+    {
+      "id": 111,
+      "question": "Is women's literacy correlated with institutional delivery rates?",
+      "ground_truth": "{\"pearson_r\": 0.2796, \"pearson_p\": 0.0, \"spearman_r\": 0.4014, \"n_districts\": 706, \"direction\": \"positive\", \"significance\": \"statistically significant (p < 0.05)\"}",
+      "query_type": "correlation",
+      "domain": "women_empowerment/maternal_health",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "from scipy import stats; pair = df[['women_literacy_pct','institutional_delivery_pct']].dropna(); result = stats.pearsonr(pair['women_literacy_pct'], pair['institutional_delivery_pct'])"
+    },
+    {
+      "id": 112,
+      "question": "Is women's literacy associated with lower child marriage rates?",
+      "ground_truth": "{\"pearson_r\": -0.6087, \"pearson_p\": 0.0, \"spearman_r\": -0.6174, \"n_districts\": 706, \"direction\": \"negative\", \"significance\": \"statistically significant (p < 0.05)\"}",
+      "query_type": "correlation",
+      "domain": "women_empowerment/women_empowerment",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "from scipy import stats; pair = df[['women_literacy_pct','child_marriage_pct']].dropna(); result = stats.pearsonr(pair['women_literacy_pct'], pair['child_marriage_pct'])"
+    },
+    {
+      "id": 113,
+      "question": "Are districts with higher ANC coverage associated with lower stunting?",
+      "ground_truth": "{\"pearson_r\": -0.3597, \"pearson_p\": 0.0, \"spearman_r\": -0.3543, \"n_districts\": 706, \"direction\": \"negative\", \"significance\": \"statistically significant (p < 0.05)\"}",
+      "query_type": "correlation",
+      "domain": "maternal_health/child_nutrition",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "from scipy import stats; pair = df[['anc_4plus_visits_pct','stunting_pct']].dropna(); result = stats.pearsonr(pair['anc_4plus_visits_pct'], pair['stunting_pct'])"
+    },
+    {
+      "id": 114,
+      "question": "Is clean cooking fuel access correlated with lower anaemia in women?",
+      "ground_truth": "{\"pearson_r\": -0.2256, \"pearson_p\": 0.0, \"spearman_r\": -0.2731, \"n_districts\": 706, \"direction\": \"negative\", \"significance\": \"statistically significant (p < 0.05)\"}",
+      "query_type": "correlation",
+      "domain": "sanitation/anaemia",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "from scipy import stats; pair = df[['clean_cooking_fuel_pct','anaemia_all_women_pct']].dropna(); result = stats.pearsonr(pair['clean_cooking_fuel_pct'], pair['anaemia_all_women_pct'])"
+    },
+    {
+      "id": 115,
+      "question": "Is health insurance coverage associated with higher institutional delivery rates?",
+      "ground_truth": "{\"pearson_r\": 0.1812, \"pearson_p\": 1e-06, \"spearman_r\": 0.2465, \"n_districts\": 706, \"direction\": \"positive\", \"significance\": \"statistically significant (p < 0.05)\"}",
+      "query_type": "correlation",
+      "domain": "healthcare_access/maternal_health",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "from scipy import stats; pair = df[['health_insurance_pct','institutional_delivery_pct']].dropna(); result = stats.pearsonr(pair['health_insurance_pct'], pair['institutional_delivery_pct'])"
+    },
+    {
+      "id": 116,
+      "question": "Is women's literacy correlated with anaemia prevalence?",
+      "ground_truth": "{\"pearson_r\": -0.3638, \"pearson_p\": 0.0, \"spearman_r\": -0.3347, \"n_districts\": 706, \"direction\": \"negative\", \"significance\": \"statistically significant (p < 0.05)\"}",
+      "query_type": "correlation",
+      "domain": "women_empowerment/anaemia",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "from scipy import stats; pair = df[['women_literacy_pct','anaemia_all_women_pct']].dropna(); result = stats.pearsonr(pair['women_literacy_pct'], pair['anaemia_all_women_pct'])"
+    },
+    {
+      "id": 117,
+      "question": "Is electricity access associated with better vaccination coverage?",
+      "ground_truth": "{\"pearson_r\": 0.3039, \"pearson_p\": 0.0, \"spearman_r\": 0.3068, \"n_districts\": 693, \"direction\": \"positive\", \"significance\": \"statistically significant (p < 0.05)\"}",
+      "query_type": "correlation",
+      "domain": "sanitation/vaccination",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "from scipy import stats; pair = df[['electricity_access_pct','fully_vaccinated_recall_pct']].dropna(); result = stats.pearsonr(pair['electricity_access_pct'], pair['fully_vaccinated_recall_pct'])"
+    },
+    {
+      "id": 118,
+      "question": "Do districts with clean cooking fuel have lower child stunting rates?",
+      "ground_truth": "{\"pearson_r\": -0.4164, \"pearson_p\": 0.0, \"spearman_r\": -0.4128, \"n_districts\": 706, \"direction\": \"negative\", \"significance\": \"statistically significant (p < 0.05)\"}",
+      "query_type": "correlation",
+      "domain": "sanitation/child_nutrition",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "from scipy import stats; pair = df[['clean_cooking_fuel_pct','stunting_pct']].dropna(); result = stats.pearsonr(pair['clean_cooking_fuel_pct'], pair['stunting_pct'])"
+    },
+    {
+      "id": 119,
+      "question": "Are districts with more ANC visits also more likely to have institutional deliveries?",
+      "ground_truth": "{\"pearson_r\": 0.599, \"pearson_p\": 0.0, \"spearman_r\": 0.6543, \"n_districts\": 706, \"direction\": \"positive\", \"significance\": \"statistically significant (p < 0.05)\"}",
+      "query_type": "correlation",
+      "domain": "maternal_health/maternal_health",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "from scipy import stats; pair = df[['anc_4plus_visits_pct','institutional_delivery_pct']].dropna(); result = stats.pearsonr(pair['anc_4plus_visits_pct'], pair['institutional_delivery_pct'])"
+    },
+    {
+      "id": 120,
+      "question": "What is the anaemia children pct in Jamtara district, Jharkhand?",
+      "ground_truth": "72.8%",
+      "query_type": "factual_lookup",
+      "domain": "anaemia",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Jamtara') & (df['state']=='Jharkhand')]['anaemia_children_pct'].values[0]"
+    },
+    {
+      "id": 121,
+      "question": "What is the improved sanitation pct in Dindori district, Madhya Pradesh?",
+      "ground_truth": "47.9%",
+      "query_type": "factual_lookup",
+      "domain": "sanitation",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Dindori') & (df['state']=='Madhya Pradesh')]['improved_sanitation_pct'].values[0]"
+    },
+    {
+      "id": 122,
+      "question": "What is the underweight pct in Komaram Bheem Asifabad district, Telangana?",
+      "ground_truth": "41.1%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Komaram Bheem Asifabad') & (df['state']=='Telangana')]['underweight_pct'].values[0]"
+    },
+    {
+      "id": 123,
+      "question": "What is the measles pct in North  District district, Sikkim?",
+      "ground_truth": "90.8%",
+      "query_type": "factual_lookup",
+      "domain": "vaccination",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='North  District') & (df['state']=='Sikkim')]['measles_pct'].values[0]"
+    },
+    {
+      "id": 124,
+      "question": "What is the anaemia children pct in Doda district, Jammu & Kashmir?",
+      "ground_truth": "80.7%",
+      "query_type": "factual_lookup",
+      "domain": "anaemia",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Doda') & (df['state']=='Jammu & Kashmir')]['anaemia_children_pct'].values[0]"
+    },
+    {
+      "id": 125,
+      "question": "What is the anaemia children pct in Malappuram district, Kerala?",
+      "ground_truth": "47.2%",
+      "query_type": "factual_lookup",
+      "domain": "anaemia",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Malappuram') & (df['state']=='Kerala')]['anaemia_children_pct'].values[0]"
+    },
+    {
+      "id": 126,
+      "question": "What is the clean water access pct in Dakshina Kannada district, Karnataka?",
+      "ground_truth": "88.6%",
+      "query_type": "factual_lookup",
+      "domain": "sanitation",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Dakshina Kannada') & (df['state']=='Karnataka')]['clean_water_access_pct'].values[0]"
+    },
+    {
+      "id": 127,
+      "question": "What is the bcg pct in Sepahijala district, Tripura?",
+      "ground_truth": "97.6%",
+      "query_type": "factual_lookup",
+      "domain": "vaccination",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Sepahijala') & (df['state']=='Tripura')]['bcg_pct'].values[0]"
+    },
+    {
+      "id": 128,
+      "question": "What is the women literacy pct in Jharsuguda district, Odisha?",
+      "ground_truth": "81.0%",
+      "query_type": "factual_lookup",
+      "domain": "women_empowerment",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Jharsuguda') & (df['state']=='Odisha')]['women_literacy_pct'].values[0]"
+    },
+    {
+      "id": 129,
+      "question": "What is the measles pct in Mewat district, Haryana?",
+      "ground_truth": "57.8%",
+      "query_type": "factual_lookup",
+      "domain": "vaccination",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Mewat') & (df['state']=='Haryana')]['measles_pct'].values[0]"
+    },
+    {
+      "id": 130,
+      "question": "What is the underweight pct in Bid district, Maharastra?",
+      "ground_truth": "36.8%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Bid') & (df['state']=='Maharastra')]['underweight_pct'].values[0]"
+    },
+    {
+      "id": 131,
+      "question": "What is the bcg pct in Banswara district, Rajasthan?",
+      "ground_truth": "98.9%",
+      "query_type": "factual_lookup",
+      "domain": "vaccination",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Banswara') & (df['state']=='Rajasthan')]['bcg_pct'].values[0]"
+    },
+    {
+      "id": 132,
+      "question": "What is the stunting pct in Durg district, Chhattisgarh?",
+      "ground_truth": "38.9%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Durg') & (df['state']=='Chhattisgarh')]['stunting_pct'].values[0]"
+    },
+    {
+      "id": 133,
+      "question": "What is the women literacy pct in North East district, NCT of Delhi?",
+      "ground_truth": "85.1%",
+      "query_type": "factual_lookup",
+      "domain": "women_empowerment",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='North East') & (df['state']=='NCT of Delhi')]['women_literacy_pct'].values[0]"
+    },
+    {
+      "id": 134,
+      "question": "What is the wasting pct in Kheda district, Gujarat?",
+      "ground_truth": "30.9%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Kheda') & (df['state']=='Gujarat')]['wasting_pct'].values[0]"
+    },
+    {
+      "id": 135,
+      "question": "What is the women literacy pct in Jogulamba Gadwal district, Telangana?",
+      "ground_truth": "45.0%",
+      "query_type": "factual_lookup",
+      "domain": "women_empowerment",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Jogulamba Gadwal') & (df['state']=='Telangana')]['women_literacy_pct'].values[0]"
+    },
+    {
+      "id": 136,
+      "question": "What is the women 10yr school pct in Lalitpur district, Uttar Pradesh?",
+      "ground_truth": "23.8%",
+      "query_type": "factual_lookup",
+      "domain": "women_empowerment",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Lalitpur') & (df['state']=='Uttar Pradesh')]['women_10yr_school_pct'].values[0]"
+    },
+    {
+      "id": 137,
+      "question": "What is the wasting pct in Moradabad district, Uttar Pradesh?",
+      "ground_truth": "19.1%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Moradabad') & (df['state']=='Uttar Pradesh')]['wasting_pct'].values[0]"
+    },
+    {
+      "id": 138,
+      "question": "What is the underweight pct in Mandla district, Madhya Pradesh?",
+      "ground_truth": "33.0%",
+      "query_type": "factual_lookup",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[(df['district']=='Mandla') & (df['state']=='Madhya Pradesh')]['underweight_pct'].values[0]"
+    },
+    {
+      "id": 139,
+      "question": "Which 5 districts have the highest csection pct nationally?",
+      "ground_truth": [
+        "Karimnagar, Telangana",
+        "Jangoan, Telangana",
+        "Nirmal, Telangana",
+        "Rajanna Sircilla, Telangana",
+        "Suryapet, Telangana"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "maternal_health",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(5, 'csection_pct')[['district', 'state', 'csection_pct']].to_dict('records')"
+    },
+    {
+      "id": 140,
+      "question": "Which 10 districts have the highest measles pct nationally?",
+      "ground_truth": [
+        "Dadra & Nagar Haveli, Dadra and Nagar Haveli & Daman and Diu",
+        "Tapi, Gujarat",
+        "Chamba, Himachal Pradesh",
+        "Bilaspur, Himachal Pradesh",
+        "Kathua, Jammu & Kashmir"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "vaccination",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(10, 'measles_pct')[['district', 'state', 'measles_pct']].to_dict('records')"
+    },
+    {
+      "id": 141,
+      "question": "Which 5 districts have the lowest anaemia children pct nationally?",
+      "ground_truth": [
+        "Siang, Arunachal Pradesh",
+        "East Garo Hills, Meghalaya",
+        "North Garo Hills, Meghalaya",
+        "West Garo Hills, Meghalaya",
+        "Alappuzha, Kerala"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "anaemia",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nsmallest(5, 'anaemia_children_pct')[['district', 'state', 'anaemia_children_pct']].to_dict('records')"
+    },
+    {
+      "id": 142,
+      "question": "Which 10 districts have the lowest women 10yr school pct nationally?",
+      "ground_truth": [
+        "Pakur, Jharkhand",
+        "Mewat, Haryana",
+        "Dhalai, Tripura",
+        "Malkangiri, Odisha",
+        "Bahraich, Uttar Pradesh"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "women_empowerment",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nsmallest(10, 'women_10yr_school_pct')[['district', 'state', 'women_10yr_school_pct']].to_dict('records')"
+    },
+    {
+      "id": 143,
+      "question": "Which 10 districts have the highest anc 4plus visits pct nationally?",
+      "ground_truth": [
+        "Theni, Tamil Nadu",
+        "Namakkal, Tamil Nadu",
+        "Tiruvannamalai, Tamil Nadu",
+        "Pulwama, Jammu & Kashmir",
+        "Samba, Jammu & Kashmir"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "maternal_health",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(10, 'anc_4plus_visits_pct')[['district', 'state', 'anc_4plus_visits_pct']].to_dict('records')"
+    },
+    {
+      "id": 144,
+      "question": "Which 10 districts have the highest bcg pct nationally?",
+      "ground_truth": [
+        "South Andaman, Andaman & Nicobar Islands",
+        "Vizianagaram, Andhra Pradesh",
+        "Kurung Kumey, Arunachal Pradesh",
+        "Jorhat, Assam",
+        "Jehanabad, Bihar"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "vaccination",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(10, 'bcg_pct')[['district', 'state', 'bcg_pct']].to_dict('records')"
+    },
+    {
+      "id": 145,
+      "question": "Which 10 districts have the highest fully vaccinated recall pct nationally?",
+      "ground_truth": [
+        "Dadra & Nagar Haveli, Dadra and Nagar Haveli & Daman and Diu",
+        "Chamba, Himachal Pradesh",
+        "Bilaspur, Himachal Pradesh",
+        "Kathua, Jammu & Kashmir",
+        "Ramanagara, Karnataka"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "vaccination",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(10, 'fully_vaccinated_recall_pct')[['district', 'state', 'fully_vaccinated_recall_pct']].to_dict('records')"
+    },
+    {
+      "id": 146,
+      "question": "Which 15 districts have the lowest fully vaccinated recall pct nationally?",
+      "ground_truth": [
+        "Udalguri, Assam",
+        "Ukhrul, Manipur",
+        "Tuensang, Nagaland",
+        "Wokha, Nagaland",
+        "Kiphire, Nagaland"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "vaccination",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nsmallest(15, 'fully_vaccinated_recall_pct')[['district', 'state', 'fully_vaccinated_recall_pct']].to_dict('records')"
+    },
+    {
+      "id": 147,
+      "question": "Which 5 districts have the highest women literacy pct nationally?",
+      "ground_truth": [
+        "Kottayam, Kerala",
+        "Alappuzha, Kerala",
+        "Pathanamthitta, Kerala",
+        "Serchhip, Mizoram",
+        "Mahe, Puducherry"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "women_empowerment",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(5, 'women_literacy_pct')[['district', 'state', 'women_literacy_pct']].to_dict('records')"
+    },
+    {
+      "id": 148,
+      "question": "Which 5 districts have the lowest measles pct nationally?",
+      "ground_truth": [
+        "Tuensang, Nagaland",
+        "Udalguri, Assam",
+        "Ukhrul, Manipur",
+        "Banas Kantha, Gujarat",
+        "Wokha, Nagaland"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "vaccination",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nsmallest(5, 'measles_pct')[['district', 'state', 'measles_pct']].to_dict('records')"
+    },
+    {
+      "id": 149,
+      "question": "Which 5 districts have the lowest institutional delivery pct nationally?",
+      "ground_truth": [
+        "Mon, Nagaland",
+        "Phek, Nagaland",
+        "Tuensang, Nagaland",
+        "Kiphire, Nagaland",
+        "Zunheboto, Nagaland"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "maternal_health",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nsmallest(5, 'institutional_delivery_pct')[['district', 'state', 'institutional_delivery_pct']].to_dict('records')"
+    },
+    {
+      "id": 150,
+      "question": "Which 15 districts have the highest bcg pct nationally?",
+      "ground_truth": [
+        "South Andaman, Andaman & Nicobar Islands",
+        "Vizianagaram, Andhra Pradesh",
+        "Kurung Kumey, Arunachal Pradesh",
+        "Jorhat, Assam",
+        "Jehanabad, Bihar"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "vaccination",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(15, 'bcg_pct')[['district', 'state', 'bcg_pct']].to_dict('records')"
+    },
+    {
+      "id": 151,
+      "question": "Which 15 districts have the lowest csection pct nationally?",
+      "ground_truth": [
+        "Mon, Nagaland",
+        "Tuensang, Nagaland",
+        "Phek, Nagaland",
+        "Dindori, Madhya Pradesh",
+        "Kiphire, Nagaland"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "maternal_health",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nsmallest(15, 'csection_pct')[['district', 'state', 'csection_pct']].to_dict('records')"
+    },
+    {
+      "id": 152,
+      "question": "Which 15 districts have the highest women 10yr school pct nationally?",
+      "ground_truth": [
+        "Mahe, Puducherry",
+        "Kottayam, Kerala",
+        "Pathanamthitta, Kerala",
+        "Kozhikode, Kerala",
+        "Ernakulam, Kerala"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "women_empowerment",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(15, 'women_10yr_school_pct')[['district', 'state', 'women_10yr_school_pct']].to_dict('records')"
+    },
+    {
+      "id": 153,
+      "question": "Which 15 districts have the lowest fully vaccinated recall pct nationally?",
+      "ground_truth": [
+        "Udalguri, Assam",
+        "Ukhrul, Manipur",
+        "Tuensang, Nagaland",
+        "Wokha, Nagaland",
+        "Kiphire, Nagaland"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "vaccination",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nsmallest(15, 'fully_vaccinated_recall_pct')[['district', 'state', 'fully_vaccinated_recall_pct']].to_dict('records')"
+    },
+    {
+      "id": 154,
+      "question": "Which 5 districts have the highest anaemia children pct nationally?",
+      "ground_truth": [
+        "Leh(Ladakh), Ladakh",
+        "Narmada, Gujarat",
+        "Sukma, Chhattisgarh",
+        "Panch Mahals, Gujarat",
+        "Lahul & Spiti, Himachal Pradesh"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "anaemia",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(5, 'anaemia_children_pct')[['district', 'state', 'anaemia_children_pct']].to_dict('records')"
+    },
+    {
+      "id": 155,
+      "question": "Which 5 districts have the lowest underweight pct nationally?",
+      "ground_truth": [
+        "South District, Sikkim",
+        "Lower Subansiri, Arunachal Pradesh",
+        "Siang, Arunachal Pradesh",
+        "Tawang, Arunachal Pradesh",
+        "Aizawl, Mizoram"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nsmallest(5, 'underweight_pct')[['district', 'state', 'underweight_pct']].to_dict('records')"
+    },
+    {
+      "id": 156,
+      "question": "Which 5 districts have the highest women literacy pct nationally?",
+      "ground_truth": [
+        "Kottayam, Kerala",
+        "Alappuzha, Kerala",
+        "Pathanamthitta, Kerala",
+        "Serchhip, Mizoram",
+        "Mahe, Puducherry"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "women_empowerment",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(5, 'women_literacy_pct')[['district', 'state', 'women_literacy_pct']].to_dict('records')"
+    },
+    {
+      "id": 157,
+      "question": "Which 5 districts have the lowest measles pct nationally?",
+      "ground_truth": [
+        "Tuensang, Nagaland",
+        "Udalguri, Assam",
+        "Ukhrul, Manipur",
+        "Banas Kantha, Gujarat",
+        "Wokha, Nagaland"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "vaccination",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nsmallest(5, 'measles_pct')[['district', 'state', 'measles_pct']].to_dict('records')"
+    },
+    {
+      "id": 158,
+      "question": "Which 5 districts have the lowest institutional delivery pct nationally?",
+      "ground_truth": [
+        "Mon, Nagaland",
+        "Phek, Nagaland",
+        "Tuensang, Nagaland",
+        "Kiphire, Nagaland",
+        "Zunheboto, Nagaland"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "maternal_health",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nsmallest(5, 'institutional_delivery_pct')[['district', 'state', 'institutional_delivery_pct']].to_dict('records')"
+    },
+    {
+      "id": 159,
+      "question": "Which 15 districts have the highest csection pct nationally?",
+      "ground_truth": [
+        "Karimnagar, Telangana",
+        "Jangoan, Telangana",
+        "Nirmal, Telangana",
+        "Rajanna Sircilla, Telangana",
+        "Suryapet, Telangana"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "maternal_health",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(15, 'csection_pct')[['district', 'state', 'csection_pct']].to_dict('records')"
+    },
+    {
+      "id": 160,
+      "question": "Which 5 districts have the highest wasting pct nationally?",
+      "ground_truth": [
+        "Karimganj, Assam",
+        "The Dangs, Gujarat",
+        "Dhule, Maharastra",
+        "Chandrapur, Maharastra",
+        "Arwal, Bihar"
+      ],
+      "query_type": "aggregation_ranking",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df.nlargest(5, 'wasting_pct')[['district', 'state', 'wasting_pct']].to_dict('records')"
+    },
+    {
+      "id": 161,
+      "question": "Compare underweight pct across Puducherry, Assam, Maharastra",
+      "ground_truth": [
+        "Puducherry: 21.0%",
+        "Assam: 31.6%",
+        "Maharastra: 36.4%"
+      ],
+      "query_type": "state_comparison",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Puducherry', 'Assam', 'Maharastra'])].groupby('state')['underweight_pct'].mean().to_dict()"
+    },
+    {
+      "id": 162,
+      "question": "Compare stunting pct across Uttar Pradesh, Haryana, Madhya Pradesh",
+      "ground_truth": [
+        "Uttar Pradesh: 39.6%",
+        "Haryana: 26.5%",
+        "Madhya Pradesh: 35.4%"
+      ],
+      "query_type": "state_comparison",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Uttar Pradesh', 'Haryana', 'Madhya Pradesh'])].groupby('state')['stunting_pct'].mean().to_dict()"
+    },
+    {
+      "id": 163,
+      "question": "Compare anc 4plus visits pct across NCT of Delhi, Puducherry, Mizoram",
+      "ground_truth": [
+        "NCT of Delhi: 79.4%",
+        "Puducherry: 85.0%",
+        "Mizoram: 58.4%"
+      ],
+      "query_type": "state_comparison",
+      "domain": "maternal_health",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['NCT of Delhi', 'Puducherry', 'Mizoram'])].groupby('state')['anc_4plus_visits_pct'].mean().to_dict()"
+    },
+    {
+      "id": 164,
+      "question": "Compare women 10yr school pct across Andhra Pradesh, Goa, Lakshadweep",
+      "ground_truth": [
+        "Andhra Pradesh: 39.4%",
+        "Goa: 71.5%",
+        "Lakshadweep: 67.8%"
+      ],
+      "query_type": "state_comparison",
+      "domain": "women_empowerment",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Andhra Pradesh', 'Goa', 'Lakshadweep'])].groupby('state')['women_10yr_school_pct'].mean().to_dict()"
+    },
+    {
+      "id": 165,
+      "question": "Compare measles pct across Bihar, Jammu & Kashmir, Chhattisgarh",
+      "ground_truth": [
+        "Bihar: 76.6%",
+        "Jammu & Kashmir: 88.6%",
+        "Chhattisgarh: 84.5%"
+      ],
+      "query_type": "state_comparison",
+      "domain": "vaccination",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Bihar', 'Jammu & Kashmir', 'Chhattisgarh'])].groupby('state')['measles_pct'].mean().to_dict()"
+    },
+    {
+      "id": 166,
+      "question": "Compare anaemia children pct across Meghalaya, Andhra Pradesh, Punjab",
+      "ground_truth": [
+        "Meghalaya: 42.0%",
+        "Andhra Pradesh: 63.5%",
+        "Punjab: 69.7%"
+      ],
+      "query_type": "state_comparison",
+      "domain": "anaemia",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Meghalaya', 'Andhra Pradesh', 'Punjab'])].groupby('state')['anaemia_children_pct'].mean().to_dict()"
+    },
+    {
+      "id": 167,
+      "question": "Compare stunting pct across Mizoram, Tamil Nadu, Telangana",
+      "ground_truth": [
+        "Mizoram: 29.3%",
+        "Tamil Nadu: 25.3%",
+        "Telangana: 33.2%"
+      ],
+      "query_type": "state_comparison",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Mizoram', 'Tamil Nadu', 'Telangana'])].groupby('state')['stunting_pct'].mean().to_dict()"
+    },
+    {
+      "id": 168,
+      "question": "Compare institutional delivery pct across Punjab, Madhya Pradesh, Odisha",
+      "ground_truth": [
+        "Punjab: 94.9%",
+        "Madhya Pradesh: 90.7%",
+        "Odisha: 92.4%"
+      ],
+      "query_type": "state_comparison",
+      "domain": "maternal_health",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Punjab', 'Madhya Pradesh', 'Odisha'])].groupby('state')['institutional_delivery_pct'].mean().to_dict()"
+    },
+    {
+      "id": 169,
+      "question": "Compare underweight pct across Assam, Himachal Pradesh, Andhra Pradesh",
+      "ground_truth": [
+        "Assam: 31.6%",
+        "Himachal Pradesh: 24.7%",
+        "Andhra Pradesh: 28.8%"
+      ],
+      "query_type": "state_comparison",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Assam', 'Himachal Pradesh', 'Andhra Pradesh'])].groupby('state')['underweight_pct'].mean().to_dict()"
+    },
+    {
+      "id": 170,
+      "question": "Compare bcg pct across Chandigarh, Odisha, Andaman & Nicobar Islands",
+      "ground_truth": [
+        "Chandigarh: 96.8%",
+        "Odisha: 97.7%",
+        "Andaman & Nicobar Islands: 90.2%"
+      ],
+      "query_type": "state_comparison",
+      "domain": "vaccination",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Chandigarh', 'Odisha', 'Andaman & Nicobar Islands'])].groupby('state')['bcg_pct'].mean().to_dict()"
+    },
+    {
+      "id": 171,
+      "question": "Compare anaemia children pct across Madhya Pradesh, Arunachal Pradesh, Andaman & Nicobar Islands",
+      "ground_truth": [
+        "Madhya Pradesh: 71.7%",
+        "Arunachal Pradesh: 56.6%",
+        "Andaman & Nicobar Islands: 37.2%"
+      ],
+      "query_type": "state_comparison",
+      "domain": "anaemia",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Madhya Pradesh', 'Arunachal Pradesh', 'Andaman & Nicobar Islands'])].groupby('state')['anaemia_children_pct'].mean().to_dict()"
+    },
+    {
+      "id": 172,
+      "question": "Compare bcg pct across Kerala, Himachal Pradesh, Haryana",
+      "ground_truth": [
+        "Kerala: 97.6%",
+        "Himachal Pradesh: 97.7%",
+        "Haryana: 94.7%"
+      ],
+      "query_type": "state_comparison",
+      "domain": "vaccination",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Kerala', 'Himachal Pradesh', 'Haryana'])].groupby('state')['bcg_pct'].mean().to_dict()"
+    },
+    {
+      "id": 173,
+      "question": "Compare underweight pct across Assam, Andaman & Nicobar Islands, Nagaland",
+      "ground_truth": [
+        "Assam: 31.6%",
+        "Andaman & Nicobar Islands: 28.3%",
+        "Nagaland: 26.5%"
+      ],
+      "query_type": "state_comparison",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Assam', 'Andaman & Nicobar Islands', 'Nagaland'])].groupby('state')['underweight_pct'].mean().to_dict()"
+    },
+    {
+      "id": 174,
+      "question": "Compare bcg pct across Haryana, Bihar, Uttar Pradesh",
+      "ground_truth": [
+        "Haryana: 94.7%",
+        "Bihar: 96.0%",
+        "Uttar Pradesh: 93.5%"
+      ],
+      "query_type": "state_comparison",
+      "domain": "vaccination",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Haryana', 'Bihar', 'Uttar Pradesh'])].groupby('state')['bcg_pct'].mean().to_dict()"
+    },
+    {
+      "id": 175,
+      "question": "Which districts in Bihar have the worst women 10yr school pct?",
+      "ground_truth": [
+        "Kishanganj: 15.0%",
+        "Supaul: 16.2%",
+        "Araria: 16.8%"
+      ],
+      "query_type": "trend_analysis",
+      "domain": "women_empowerment",
+      "difficulty": "hard",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df[df['state']=='Bihar'].nsmallest(3, 'women_10yr_school_pct')[['district', 'women_10yr_school_pct']].to_dict('records')"
+    },
+    {
+      "id": 176,
+      "question": "Which districts in Assam have the best measles pct?",
+      "ground_truth": [
+        "Karimganj: 84.2%",
+        "Majuli: 84.3%",
+        "Dhemaji: 95.3%"
+      ],
+      "query_type": "trend_analysis",
+      "domain": "vaccination",
+      "difficulty": "hard",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df[df['state']=='Assam'].nlargest(3, 'measles_pct')[['district', 'measles_pct']].to_dict('records')"
+    },
+    {
+      "id": 177,
+      "question": "Which districts in Rajasthan have the worst women literacy pct?",
+      "ground_truth": [
+        "Karauli: 54.8%",
+        "Banswara: 54.8%",
+        "Pratapgarh: 55.4%"
+      ],
+      "query_type": "trend_analysis",
+      "domain": "women_empowerment",
+      "difficulty": "hard",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df[df['state']=='Rajasthan'].nsmallest(3, 'women_literacy_pct')[['district', 'women_literacy_pct']].to_dict('records')"
+    },
+    {
+      "id": 178,
+      "question": "Which districts in Sikkim have the worst women 10yr school pct?",
+      "ground_truth": [
+        "North  District: 37.7%",
+        "West District: 43.9%",
+        "South District: 45.7%"
+      ],
+      "query_type": "trend_analysis",
+      "domain": "women_empowerment",
+      "difficulty": "hard",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df[df['state']=='Sikkim'].nsmallest(3, 'women_10yr_school_pct')[['district', 'women_10yr_school_pct']].to_dict('records')"
+    },
+    {
+      "id": 179,
+      "question": "Which districts in Jharkhand have the best women 10yr school pct?",
+      "ground_truth": [
+        "Bokaro: 45.0%",
+        "Purbi Singhbhum: 46.8%",
+        "Ranchi: 49.5%"
+      ],
+      "query_type": "trend_analysis",
+      "domain": "women_empowerment",
+      "difficulty": "hard",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df[df['state']=='Jharkhand'].nlargest(3, 'women_10yr_school_pct')[['district', 'women_10yr_school_pct']].to_dict('records')"
+    },
+    {
+      "id": 180,
+      "question": "Which districts in West Bengal have the best improved sanitation pct?",
+      "ground_truth": [
+        "Dakshin Dinajpur: 79.0%",
+        "North Twenty Four Pargana: 80.4%",
+        "Darjiling: 83.0%"
+      ],
+      "query_type": "trend_analysis",
+      "domain": "sanitation",
+      "difficulty": "hard",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df[df['state']=='West Bengal'].nlargest(3, 'improved_sanitation_pct')[['district', 'improved_sanitation_pct']].to_dict('records')"
+    },
+    {
+      "id": 181,
+      "question": "Which districts in Odisha have the worst improved sanitation pct?",
+      "ground_truth": [
+        "Koraput: 39.4%",
+        "Malkangiri: 41.4%",
+        "Nabarangapur: 44.1%"
+      ],
+      "query_type": "trend_analysis",
+      "domain": "sanitation",
+      "difficulty": "hard",
+      "answer_type": "ranking",
+      "gold_pandas_code": "result = df[df['state']=='Odisha'].nsmallest(3, 'improved_sanitation_pct')[['district', 'improved_sanitation_pct']].to_dict('records')"
+    },
+    {
+      "id": 182,
+      "question": "Is there a correlation between improved sanitation pct and anc 4plus visits pct across districts?",
+      "ground_truth": "Correlation: 0.252",
+      "query_type": "correlation",
+      "domain": "sanitation_vs_maternal_health",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "result = df[['improved_sanitation_pct', 'anc_4plus_visits_pct']].corr().iloc[0,1]"
+    },
+    {
+      "id": 183,
+      "question": "Is there a correlation between women 10yr school pct and clean water access pct across districts?",
+      "ground_truth": "Correlation: 0.229",
+      "query_type": "correlation",
+      "domain": "women_empowerment_vs_sanitation",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "result = df[['women_10yr_school_pct', 'clean_water_access_pct']].corr().iloc[0,1]"
+    },
+    {
+      "id": 184,
+      "question": "Is there a correlation between women 10yr school pct and anaemia children pct across districts?",
+      "ground_truth": "Correlation: -0.374",
+      "query_type": "correlation",
+      "domain": "women_empowerment_vs_anaemia",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "result = df[['women_10yr_school_pct', 'anaemia_children_pct']].corr().iloc[0,1]"
+    },
+    {
+      "id": 185,
+      "question": "Is there a correlation between stunting pct and csection pct across districts?",
+      "ground_truth": "Correlation: -0.456",
+      "query_type": "correlation",
+      "domain": "child_nutrition_vs_maternal_health",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "result = df[['stunting_pct', 'csection_pct']].corr().iloc[0,1]"
+    },
+    {
+      "id": 186,
+      "question": "Is there a correlation between anaemia children pct and csection pct across districts?",
+      "ground_truth": "Correlation: -0.083",
+      "query_type": "correlation",
+      "domain": "anaemia_vs_maternal_health",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "result = df[['anaemia_children_pct', 'csection_pct']].corr().iloc[0,1]"
+    },
+    {
+      "id": 187,
+      "question": "Is there a correlation between measles pct and underweight pct across districts?",
+      "ground_truth": "Correlation: -0.060",
+      "query_type": "correlation",
+      "domain": "vaccination_vs_child_nutrition",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "result = df[['measles_pct', 'underweight_pct']].corr().iloc[0,1]"
+    },
+    {
+      "id": 188,
+      "question": "Is there a correlation between measles pct and clean water access pct across districts?",
+      "ground_truth": "Correlation: 0.105",
+      "query_type": "correlation",
+      "domain": "vaccination_vs_sanitation",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "result = df[['measles_pct', 'clean_water_access_pct']].corr().iloc[0,1]"
+    },
+    {
+      "id": 189,
+      "question": "Is there a correlation between underweight pct and measles pct across districts?",
+      "ground_truth": "Correlation: -0.060",
+      "query_type": "correlation",
+      "domain": "child_nutrition_vs_vaccination",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "result = df[['underweight_pct', 'measles_pct']].corr().iloc[0,1]"
+    },
+    {
+      "id": 190,
+      "question": "Is there a correlation between women literacy pct and stunting pct across districts?",
+      "ground_truth": "Correlation: -0.548",
+      "query_type": "correlation",
+      "domain": "women_empowerment_vs_child_nutrition",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "result = df[['women_literacy_pct', 'stunting_pct']].corr().iloc[0,1]"
+    },
+    {
+      "id": 191,
+      "question": "What is the national average stunting rate across all districts?",
+      "ground_truth": "33.5%",
+      "query_type": "aggregation_ranking",
+      "domain": "child_nutrition",
+      "difficulty": "easy",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df['stunting_pct'].mean()"
+    },
+    {
+      "id": 192,
+      "question": "Which state has the highest average institutional delivery rate?",
+      "ground_truth": "Goa",
+      "query_type": "aggregation_ranking",
+      "domain": "maternal_health",
+      "difficulty": "medium",
+      "answer_type": "categorical",
+      "gold_pandas_code": "result = df.groupby('state')['institutional_delivery_pct'].mean().idxmax()"
+    },
+    {
+      "id": 193,
+      "question": "How many districts have stunting rate above 40%?",
+      "ground_truth": "160",
+      "query_type": "aggregation_ranking",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = len(df[df['stunting_pct'] > 40])"
+    },
+    {
+      "id": 194,
+      "question": "What is the median anaemia rate in children across all districts?",
+      "ground_truth": "67.7%",
+      "query_type": "aggregation_ranking",
+      "domain": "anaemia",
+      "difficulty": "medium",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df['anaemia_children_pct'].median()"
+    },
+    {
+      "id": 195,
+      "question": "What is the average wasting rate in Uttar Pradesh?",
+      "ground_truth": "17.7%",
+      "query_type": "state_comparison",
+      "domain": "child_nutrition",
+      "difficulty": "medium",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df[df['state'] == 'Uttar Pradesh']['wasting_pct'].mean()"
+    },
+    {
+      "id": 196,
+      "question": "Is vaccination coverage positively correlated with institutional delivery rates?",
+      "ground_truth": "Correlation: 0.443",
+      "query_type": "correlation",
+      "domain": "vaccination_vs_maternal_health",
+      "difficulty": "hard",
+      "answer_type": "correlation",
+      "gold_pandas_code": "result = df[['fully_vaccinated_recall_pct', 'institutional_delivery_pct']].corr().iloc[0,1]"
+    },
+    {
+      "id": 197,
+      "question": "What percentage of districts have clean water access above 90%?",
+      "ground_truth": "79.7%",
+      "query_type": "aggregation_ranking",
+      "domain": "sanitation",
+      "difficulty": "medium",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = len(df[df['clean_water_access_pct'] > 90]) / len(df) * 100"
+    },
+    {
+      "id": 198,
+      "question": "Compare women's literacy rates between Kerala and Bihar",
+      "ground_truth": [
+        "Kerala: 97.9%",
+        "Bihar: 57.6%"
+      ],
+      "query_type": "state_comparison",
+      "domain": "women_empowerment",
+      "difficulty": "medium",
+      "answer_type": "comparison",
+      "gold_pandas_code": "result = df[df['state'].isin(['Kerala', 'Bihar'])].groupby('state')['women_literacy_pct'].mean().to_dict()"
+    },
+    {
+      "id": 199,
+      "question": "What is the standard deviation of stunting rates across all districts?",
+      "ground_truth": "8.47",
+      "query_type": "aggregation_ranking",
+      "domain": "child_nutrition",
+      "difficulty": "hard",
+      "answer_type": "numeric",
+      "gold_pandas_code": "result = df['stunting_pct'].std()"
+    },
+    {
+      "id": 200,
+      "question": "Which 3 districts have the most balanced health profile (low stunting, high vaccination, high delivery)?",
+      "ground_truth": "Requires composite scoring analysis",
+      "query_type": "trend_analysis",
+      "domain": "composite_health",
+      "difficulty": "hard",
+      "answer_type": "ranking",
+      "gold_pandas_code": "df['composite_score'] = (100-df['stunting_pct']) + df['fully_vaccinated_recall_pct'] + df['institutional_delivery_pct']; result = df.nlargest(3, 'composite_score')[['district', 'state']].to_dict('records')"
+    }
+  ]
+}
