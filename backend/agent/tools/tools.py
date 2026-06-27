@@ -453,3 +453,78 @@ def _interpret_correlation(r: float, p: float) -> str:
     else:
         strength = "very weak or no"
     return f"{strength.capitalize()} {direction} correlation (r={r:.3f}, p={p:.4f}) — {sig}."
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TOOL 7: SQL Query
+# ─────────────────────────────────────────────────────────────────────────────
+def sql_query(query: str) -> dict:
+    """
+    Execute SQL queries on the NFHS-5 dataset using SQLite.
+    Supports SELECT queries for data analysis and aggregation.
+    """
+    try:
+        import sqlite3
+        import tempfile
+        
+        df = get_df()
+        
+        # Create temporary SQLite database
+        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp_file:
+            db_path = tmp_file.name
+        
+        # Load data into SQLite
+        conn = sqlite3.connect(db_path)
+        df.to_sql('nfhs5', conn, index=False, if_exists='replace')
+        
+        # Security check - only allow SELECT statements
+        query_upper = query.upper().strip()
+        if not query_upper.startswith('SELECT'):
+            return {
+                "status": "error",
+                "error": "Only SELECT queries are allowed for security reasons"
+            }
+        
+        # Check for dangerous keywords
+        dangerous_keywords = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'CREATE', 'ALTER']
+        for keyword in dangerous_keywords:
+            if keyword in query_upper:
+                return {
+                    "status": "error", 
+                    "error": f"Query contains forbidden keyword: {keyword}"
+                }
+        
+        # Execute query
+        cursor = conn.execute(query)
+        columns = [description[0] for description in cursor.description]
+        results = cursor.fetchall()
+        
+        # Convert to list of dictionaries
+        data = []
+        for row in results[:100]:  # Limit results
+            data.append(dict(zip(columns, row)))
+        
+        conn.close()
+        
+        # Clean up temp file
+        import os
+        try:
+            os.unlink(db_path)
+        except:
+            pass
+        
+        return {
+            "status": "success",
+            "query": query,
+            "row_count": len(data),
+            "columns": columns,
+            "data": data,
+            "truncated": len(results) > 100
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": f"SQL query failed: {str(e)}",
+            "traceback": traceback.format_exc()
+        }

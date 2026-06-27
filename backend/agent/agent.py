@@ -101,6 +101,7 @@ def get_tool_registry():
     from backend.agent.tools.tools import (
         semantic_search,
         pandas_query,
+        sql_query,
         chart_generator,
         insight_writer,
         trend_analyser,
@@ -108,7 +109,8 @@ def get_tool_registry():
     )
     return {
         "semantic_search": semantic_search,
-        "pandas_query": pandas_query,
+        "pandas_query": pandas_query, 
+        "sql_query": sql_query,
         "chart_generator": chart_generator,
         "insight_writer": insight_writer,
         "trend_analyser": trend_analyser,
@@ -122,6 +124,7 @@ def build_langchain_tools():
     from backend.agent.tools.tools import (
         semantic_search as _semantic_search,
         pandas_query as _pandas_query,
+        sql_query as _sql_query,
         chart_generator as _chart_generator,
         insight_writer as _insight_writer,
         trend_analyser as _trend_analyser,
@@ -172,7 +175,13 @@ def build_langchain_tools():
         result = _correlation_finder(indicator_a, indicator_b, state_filter or None)
         return json.dumps(result, default=str)
 
-    return [semantic_search, pandas_query, chart_generator, insight_writer, trend_analyser, correlation_finder]
+    @tool
+    def sql_query(query: str) -> str:
+        """Execute SQL SELECT queries on NFHS-5 dataset. Use standard SQL syntax with table name 'nfhs5'. Only SELECT queries allowed. query: SQL SELECT statement."""
+        result = _sql_query(query)
+        return json.dumps(result, default=str)
+
+    return [semantic_search, pandas_query, sql_query, chart_generator, insight_writer, trend_analyser, correlation_finder]
 
 
 # ── Agent Factory ─────────────────────────────────────────────────────────────

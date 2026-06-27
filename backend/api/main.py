@@ -144,13 +144,14 @@ async def direct_tool_query(req: DirectQueryRequest):
     Useful for the frontend's indicator explorer, correlation view, etc.
     """
     from backend.agent.tools.tools import (
-        semantic_search, pandas_query, trend_analyser,
+        semantic_search, pandas_query, sql_query, trend_analyser,
         correlation_finder, chart_generator,
     )
 
     tool_map = {
         "semantic_search": semantic_search,
         "pandas_query": pandas_query,
+        "sql_query": sql_query,
         "trend_analyser": trend_analyser,
         "correlation_finder": correlation_finder,
         "chart_generator": chart_generator,

@@ -47,6 +47,64 @@ def compute_ea(predicted: Any, ground_truth: str, answer_type: str) -> float:
     """
     try:
         gt = json.loads(ground_truth) if ground_truth.startswith("{") or ground_truth.startswith("[") else ground_truth
+        
+        if answer_type == "numeric":
+            pred_val = extract_numeric(str(predicted))
+            gt_val = extract_numeric(str(gt))
+            if pred_val is None or gt_val is None:
+                return 0.0
+            return 1.0 if abs(pred_val - gt_val) <= 0.5 else 0.0
+
+        elif answer_type == "ranking":
+            pred_districts = extract_district_list(str(predicted))
+            gt_districts = extract_district_list(str(gt)) if isinstance(gt, list) else []
+            if not pred_districts or not gt_districts:
+                return 0.0
+            # Compute Kendall's Tau between ordinal positions
+            pred_rank = {d: i for i, d in enumerate(pred_districts)}
+            gt_rank = {d: i for i, d in enumerate(gt_districts)}
+            common = [d for d in gt_districts if d in pred_rank]
+            if len(common) < 3:
+                return float(len(common)) / max(len(gt_districts), 1)
+            x = [gt_rank[d] for d in common]
+            y = [pred_rank[d] for d in common]
+            tau, _ = kendalltau(x, y)
+            return max(0.0, float(tau))
+
+        elif answer_type == "correlation":
+            pred_r = extract_numeric(str(predicted))
+            gt_r = float(gt.get("pearson_r", 0)) if isinstance(gt, dict) else extract_numeric(str(gt))
+            if pred_r is None or gt_r is None:
+                return 0.0
+            # Same direction + within 0.1
+            same_dir = (pred_r * gt_r) >= 0
+            close = abs(pred_r - gt_r) <= 0.1
+            return 1.0 if (same_dir and close) else (0.5 if same_dir else 0.0)
+
+        elif answer_type in ("comparison", "distribution"):
+            if isinstance(gt, dict) and "best_performing_state" in gt:
+                best_state = gt["best_performing_state"]
+                return 1.0 if best_state.lower() in str(predicted).lower() else 0.0
+            return 0.5  # Partial credit for comparison questions
+
+        return 0.0
+    except Exception:
+        return 0.0
+# ── METRIC 2: Answer Faithfulness ─────────────────────────────────────────────
+def compute_af(agent_response: str, ground_truth: str, question: str) -> float:
+    """
+    Answer Faithfulness: are factual claims in the response grounded in actual data?
+    Uses claim extraction + dataset verification to measure truthfulness.
+    """
+    try:
+        from backend.evaluation.answer_faithfulness import compute_answer_faithfulness
+        
+        af_result = compute_answer_faithfulness(agent_response, question)
+        return af_result["af_score"]
+        
+    except Exception as e:
+        print(f"AF computation failed: {e}")
+        return 0.0
 
         if answer_type == "numeric":
             pred_val = extract_numeric(str(predicted))
@@ -195,6 +253,7 @@ def run_evaluation(
 
     results = []
     total_ea = []
+    total_af = []
     total_hr = []
     total_rcq = []
     total_latency = []
@@ -215,11 +274,22 @@ def run_evaluation(
 
         # Compute metrics
         ea = compute_ea(agent_result.get("answer", ""), q["ground_truth"], q["answer_type"])
+        af = compute_af(agent_result.get("answer", ""), q["ground_truth"], q["question"])
         hal = check_hallucination(agent_result.get("answer", ""), df)
         rcq = compute_rcq(agent_result.get("tool_call_sequence", []), q["query_type"])
         latency = agent_result.get("latency_ms", 0)
 
+        # Add failure analysis for poor performance
+        failure_info = None
+        if ea < 0.8:  # Low execution accuracy
+            from backend.evaluation.failure_analysis import categorize_failure
+            failure_info = categorize_failure(
+                q["question"], agent_result.get("answer", ""), q["ground_truth"], 
+                ea, af, hal
+            )
+
         total_ea.append(ea)
+        total_af.append(af)
         total_hr.append(1 if hal["has_hallucination"] else 0)
         total_rcq.append(rcq)
         total_latency.append(latency)
@@ -234,10 +304,12 @@ def run_evaluation(
             "predicted_answer": agent_result.get("answer", "")[:500],
             "metrics": {
                 "ea": ea,
+                "af": af,
                 "hallucination": hal["has_hallucination"],
                 "hallucination_details": hal["hallucinations"],
                 "rcq": rcq,
                 "latency_ms": latency,
+                "failure_analysis": failure_info,
             },
             "tool_call_sequence": agent_result.get("tool_call_sequence", []),
             "status": agent_result.get("status"),
@@ -252,8 +324,9 @@ def run_evaluation(
     for r in results:
         qt = r["query_type"]
         if qt not in by_type:
-            by_type[qt] = {"ea": [], "hr": [], "rcq": []}
+            by_type[qt] = {"ea": [], "af": [], "hr": [], "rcq": []}
         by_type[qt]["ea"].append(r["metrics"]["ea"])
+        by_type[qt]["af"].append(r["metrics"]["af"])
         by_type[qt]["hr"].append(1 if r["metrics"]["hallucination"] else 0)
         by_type[qt]["rcq"].append(r["metrics"]["rcq"])
 
@@ -262,6 +335,7 @@ def run_evaluation(
         "n_questions": len(questions),
         "overall": {
             "EA": round(float(np.mean(total_ea)), 4),
+            "AF": round(float(np.mean(total_af)), 4),
             "HR": round(float(np.mean(total_hr)), 4),
             "RCQ": round(float(np.mean(total_rcq)), 4),
             "mean_latency_ms": round(float(np.mean(total_latency)), 0),
@@ -270,6 +344,7 @@ def run_evaluation(
         "by_query_type": {
             qt: {
                 "EA": round(float(np.mean(v["ea"])), 4),
+                "AF": round(float(np.mean(v["af"])), 4),
                 "HR": round(float(np.mean(v["hr"])), 4),
                 "RCQ": round(float(np.mean(v["rcq"])), 4),
                 "n": len(v["ea"]),
@@ -284,17 +359,50 @@ def run_evaluation(
         json.dump(summary, f, indent=2, ensure_ascii=False, default=str)
 
     # Print summary table
-    print(f"\n{'─'*60}")
+    print(f"\n{'-'*60}")
     print(f"{'OVERALL RESULTS':^60}")
-    print(f"{'─'*60}")
+    print(f"{'-'*60}")
     print(f"  Execution Accuracy (EA) : {summary['overall']['EA']:.1%}")
+    print(f"  Answer Faithfulness (AF): {summary['overall']['AF']:.1%}")
     print(f"  Hallucination Rate (HR) : {summary['overall']['HR']:.1%}")
     print(f"  Reasoning Chain (RCQ)   : {summary['overall']['RCQ']:.1%}")
     print(f"  Mean Latency            : {summary['overall']['mean_latency_ms']:.0f} ms")
     print(f"\n  By Query Type:")
     for qt, metrics in summary["by_query_type"].items():
-        print(f"    {qt:<22} EA={metrics['EA']:.1%}  HR={metrics['HR']:.1%}  n={metrics['n']}")
+        print(f"    {qt:<22} EA={metrics['EA']:.1%}  AF={metrics['AF']:.1%}  HR={metrics['HR']:.1%}  n={metrics['n']}")
     print(f"\n[OK] Results saved: {RESULTS_PATH}")
+
+    # Generate failure analysis report
+    if any(r["metrics"]["ea"] < 0.8 for r in results):
+        from backend.evaluation.failure_analysis import generate_failure_report
+        failure_report = generate_failure_report([
+            {
+                "question_id": r["id"],
+                "question": r["question"],
+                "agent_response": r["predicted_answer"],
+                "ground_truth": r["ground_truth"],
+                "ea_score": r["metrics"]["ea"],
+                "af_score": r["metrics"]["af"],
+                "hr_result": {"has_hallucination": r["metrics"]["hallucination"]}
+            }
+            for r in results
+        ])
+        
+        print(f"\n{'-'*60}")
+        print(f"{'FAILURE ANALYSIS':^60}")
+        print(f"{'-'*60}")
+        print(f"  Failed Questions: {failure_report['summary']['failed_questions']}/{failure_report['summary']['total_questions']}")
+        print(f"  Failure Rate: {failure_report['summary']['failure_rate']:.1f}%")
+        
+        if failure_report.get('top_issues'):
+            print(f"\n  Top Issues:")
+            for issue in failure_report['top_issues'][:3]:
+                print(f"    • {issue['issue_type']}: {issue['frequency']} cases")
+        
+        if failure_report.get('recommendations'):
+            print(f"\n  Recommendations:")
+            for rec in failure_report['recommendations'][:3]:
+                print(f"    {rec}")
 
     return summary
 
