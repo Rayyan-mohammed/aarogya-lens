@@ -34,7 +34,16 @@ OUTPUT_CSV = DATA_DIR / "nfhs5_clean.csv"
 OUTPUT_TRENDS_PARQUET = DATA_DIR / "nfhs5_with_trends.parquet"  # kept as an alias/back-compat copy
 OUTPUT_TRENDS_CSV = DATA_DIR / "nfhs5_with_trends.csv"
 OUTPUT_SCHEMA = DATA_DIR / "schema.json"
+OUTPUT_SUMMARIES = DATA_DIR / "district_summaries.json"
 TREND_SUMMARY_PATH = DATA_DIR / "trend_analysis_summary.json"
+
+# Indicators that get a trend sentence appended to each district's natural-language summary
+SUMMARY_TREND_INDICATORS = [
+    ("stunting_pct", "stunting"),
+    ("anaemia_children_pct", "child anaemia"),
+    ("institutional_delivery_pct", "institutional delivery"),
+    ("fully_vaccinated_recall_pct", "full vaccination coverage"),
+]
 
 
 # ─── NFHS-4 raw column → NFHS-5 short column name (only genuinely overlapping indicators) ──
@@ -259,8 +268,9 @@ def integrate_nfhs4_with_nfhs5() -> pd.DataFrame:
     df4 = load_nfhs4_state_data()
     df5 = pd.read_parquet(NFHS5_PARQUET)
 
-    # Drop any previously-added (fabricated) trend columns before re-merging
-    df5 = df5[[c for c in df5.columns if not re.search(r"(_nfhs4$|_change$|_change_pct$|_improvement_rank$)", c)]]
+    # Drop any previously-added trend columns before re-merging (makes this script idempotent)
+    df5 = df5[[c for c in df5.columns
+               if not re.search(r"(_nfhs4_state$|_change_from_nfhs4$|_change_pct_from_nfhs4$)", c)]]
 
     nfhs5_states = sorted(df5["state"].unique().tolist())
     baseline = build_state_baseline(df4, nfhs5_states)
@@ -303,8 +313,50 @@ def integrate_nfhs4_with_nfhs5() -> pd.DataFrame:
 
     update_schema_with_trends(indicator_cols)
     generate_trend_summary(merged, indicator_cols)
+    enrich_district_summaries(merged)
 
     return merged
+
+
+def enrich_district_summaries(merged: pd.DataFrame) -> None:
+    """Append a real trend sentence + trend metadata to each district's ChromaDB summary."""
+    if not OUTPUT_SUMMARIES.exists():
+        print("  [WARN] district_summaries.json not found — skipping summary enrichment")
+        return
+
+    with open(OUTPUT_SUMMARIES, "r", encoding="utf-8") as f:
+        summaries = json.load(f)
+
+    by_district_id = {s["metadata"]["district_id"]: s for s in summaries}
+    # Strip any stale trend sentence from a previous run before re-appending
+    trend_marker = " Trend vs NFHS-4 (2015-16 state baseline):"
+    for s in summaries:
+        idx = s["text"].find(trend_marker)
+        if idx != -1:
+            s["text"] = s["text"][:idx]
+
+    for _, row in merged.iterrows():
+        district_id = int(row["district_id"])
+        s = by_district_id.get(district_id)
+        if s is None:
+            continue
+
+        parts = []
+        for col, label in SUMMARY_TREND_INDICATORS:
+            change_col = f"{col}_change_from_nfhs4"
+            if change_col not in row or pd.isna(row[change_col]):
+                continue
+            change = row[change_col]
+            direction = "up" if change > 0 else ("down" if change < 0 else "unchanged")
+            parts.append(f"{label} {direction} {abs(change):.1f}pp")
+            s["metadata"][change_col] = float(change)
+
+        if parts:
+            s["text"] += f"{trend_marker} " + ", ".join(parts) + "."
+
+    with open(OUTPUT_SUMMARIES, "w", encoding="utf-8") as f:
+        json.dump(summaries, f, indent=2, ensure_ascii=False)
+    print(f"[OK] Enriched district_summaries.json with real trend sentences ({len(summaries)} districts)")
 
 
 def update_schema_with_trends(indicator_cols: list):
@@ -316,9 +368,9 @@ def update_schema_with_trends(indicator_cols: list):
     with open(OUTPUT_SCHEMA, "r", encoding="utf-8") as f:
         schema = json.load(f)
 
-    # Drop any stale fabricated-trend schema entries from a previous run
+    # Drop any stale trend schema entries from a previous run
     schema = {k: v for k, v in schema.items()
-              if not re.search(r"(_nfhs4$|_change$|_change_pct$|_improvement_rank$)", k)}
+              if not re.search(r"(_nfhs4_state$|_change_from_nfhs4$|_change_pct_from_nfhs4$)", k)}
 
     for col in indicator_cols:
         base_desc = schema.get(col, {}).get("description", col.replace("_", " "))
