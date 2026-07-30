@@ -1,0 +1,21 @@
+{
+  "data_source_note": "NFHS-4 (2015-16) is only available as a STATE-level factsheet in this project's dataset. Trend columns compare each NFHS-5 district to its own state's NFHS-4 baseline, not to a true district-level NFHS-4 figure.",
+  "districts_analyzed": 706,
+  "indicators_with_trend_data": 62,
+  "survey_gap": "~4-5 years (2015-16 to 2019-21)",
+  "national_stunting_change_from_nfhs4_state_baseline": -2.29,
+  "states_with_largest_stunting_reduction": {
+    "Haryana": -7.45,
+    "Rajasthan": -7.36,
+    "Uttar Pradesh": -6.67,
+    "Madhya Pradesh": -6.63,
+    "Uttarakhand": -6.21
+  },
+  "states_with_largest_stunting_increase": {
+    "Puducherry": 5.23,
+    "Himachal Pradesh": 5.25,
+    "Goa": 6.15,
+    "Tripura": 8.66,
+    "Ladakh": NaN
+  }
+}
