@@ -277,16 +277,21 @@ def chart_generator(
 # ─────────────────────────────────────────────────────────────────────────────
 # TOOL 4: Insight Writer
 # ─────────────────────────────────────────────────────────────────────────────
-def insight_writer(data_result: dict, question: str, llm_client=None) -> dict:
+def insight_writer(data_result: Any, question: str, llm_client=None) -> dict:
     """
     Generate a plain-English insight from a data result.
     ONLY uses facts present in data_result — no external knowledge added.
     Returns structured insight with citations.
     """
-    if data_result.get("status") != "success":
+    if isinstance(data_result, list):
+        data_result = {"status": "success", "data": data_result}
+    elif isinstance(data_result, dict) and "status" not in data_result:
+        data_result = {"status": "success", "data": data_result}
+
+    if not isinstance(data_result, dict) or data_result.get("status") != "success":
         return {"status": "error", "error": "Cannot write insight from failed data result"}
 
-    data = data_result.get("data", data_result.get("value", data_result.get("data")))
+    data = data_result.get("data", data_result.get("value"))
 
     # Build a fact summary string directly from data (no hallucination risk)
     facts = []
@@ -316,21 +321,26 @@ def insight_writer(data_result: dict, question: str, llm_client=None) -> dict:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TOOL 5: Trend Analyser (NFHS-4 vs NFHS-5 delta within dataset)
+# TOOL 5: Trend Analyser (within-NFHS-5 ranking + real NFHS-4 vs NFHS-5 trend)
 # ─────────────────────────────────────────────────────────────────────────────
 def trend_analyser(indicator: str, state_filter: Optional[str] = None, top_n: int = 10) -> dict:
     """
-    Analyse improvement or decline in an indicator across districts.
-    Since we only have NFHS-5 district data, this computes intra-NFHS5 distribution
-    and ranks districts within a state/nationally by their indicator value.
-    For true NFHS-4 vs NFHS-5 comparison, highlights states with best/worst status.
+    Analyse an indicator across districts: current best/worst ranking, plus a real
+    NFHS-4 (2015-16) vs NFHS-5 (2019-21) trend when trend data exists for that indicator.
+
+    NFHS-4 in this dataset is only available at STATE level, so the trend compares each
+    NFHS-5 district to its own state's NFHS-4 baseline — not a true district-to-district
+    comparison. This limitation is reported in the output via `trend_data_available` and
+    `trend_data_note`, and every trend figure comes from a real merged column, never a
+    fabricated or synthetic estimate.
     """
     try:
         df = get_df()
 
         # Fuzzy match column name
         schema = get_schema()
-        cols = [c for c in df.columns if c not in ["district", "state", "district_id"]]
+        cols = [c for c in df.columns if c not in ["district", "state", "district_id"]
+                and not c.endswith(("_nfhs4_state", "_change_from_nfhs4", "_change_pct_from_nfhs4"))]
 
         from rapidfuzz import process, fuzz
         match, score, _ = process.extractOne(indicator, cols, scorer=fuzz.token_sort_ratio)
@@ -338,7 +348,11 @@ def trend_analyser(indicator: str, state_filter: Optional[str] = None, top_n: in
             return {"status": "error", "error": f"Indicator '{indicator}' not found. Best match: '{match}' (score: {score})"}
 
         col = match
-        df_work = df[["district", "state", col]].dropna(subset=[col])
+        change_col = f"{col}_change_from_nfhs4"
+        has_trend = change_col in df.columns and df[change_col].notna().any()
+
+        select_cols = ["district", "state", col] + ([change_col] if has_trend else [])
+        df_work = df[select_cols].dropna(subset=[col])
 
         if state_filter:
             states = df["state"].unique().tolist()
@@ -356,7 +370,7 @@ def trend_analyser(indicator: str, state_filter: Optional[str] = None, top_n: in
 
         col_desc = schema.get(col, {}).get("description", col)
 
-        return {
+        result = {
             "status": "success",
             "indicator": col,
             "indicator_description": col_desc,
@@ -368,7 +382,34 @@ def trend_analyser(indicator: str, state_filter: Optional[str] = None, top_n: in
             "national_max": round(df[col].max(), 2),
             f"worst_{top_n}_districts": df_worst[["district", "state", col]].to_dict(orient="records"),
             f"best_{top_n}_districts": df_best[["district", "state", col]].to_dict(orient="records"),
+            "trend_data_available": has_trend,
         }
+
+        if has_trend:
+            df_trend = df_work.dropna(subset=[change_col])
+            # "Improved" = moved in the good direction since NFHS-4
+            df_most_improved = (df_trend.nlargest(top_n, change_col) if is_lower_better is False
+                                 else df_trend.nsmallest(top_n, change_col))
+            df_most_declined = (df_trend.nsmallest(top_n, change_col) if is_lower_better is False
+                                 else df_trend.nlargest(top_n, change_col))
+
+            result["trend_data_note"] = (
+                "NFHS-4 is state-level only in this dataset; change is each district's NFHS-5 "
+                "value minus its OWN STATE's NFHS-4 (2015-16) baseline, not a true district-level trend."
+            )
+            result["national_mean_change_from_nfhs4"] = round(float(df_trend[change_col].mean()), 2)
+            result[f"most_improved_{top_n}_districts_since_nfhs4"] = (
+                df_most_improved[["district", "state", col, change_col]].to_dict(orient="records")
+            )
+            result[f"most_declined_{top_n}_districts_since_nfhs4"] = (
+                df_most_declined[["district", "state", col, change_col]].to_dict(orient="records")
+            )
+        else:
+            result["trend_data_note"] = (
+                "No NFHS-4 baseline available for this indicator — ranking reflects NFHS-5 only."
+            )
+
+        return result
 
     except Exception as e:
         return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
