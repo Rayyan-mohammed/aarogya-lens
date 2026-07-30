@@ -349,7 +349,7 @@ def trend_analyser(indicator: str, state_filter: Optional[str] = None, top_n: in
 
         col = match
         change_col = f"{col}_change_from_nfhs4"
-        has_trend = change_col in df.columns and df[change_col].notna().any()
+        has_trend = bool(change_col in df.columns and df[change_col].notna().any())
 
         select_cols = ["district", "state", col] + ([change_col] if has_trend else [])
         df_work = df[select_cols].dropna(subset=[col])

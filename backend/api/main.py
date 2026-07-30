@@ -4,12 +4,32 @@ All endpoints for the agent API.
 """
 
 import json
+import math
 import os
 import time
 from pathlib import Path
 from typing import Any, Optional
 
 import pandas as pd
+from dotenv import load_dotenv
+load_dotenv()
+
+
+def _json_safe_records(df: pd.DataFrame) -> list[dict]:
+    """Convert a DataFrame to records with NaN/inf replaced by None.
+
+    df.where(pd.notnull(df), None) does NOT work for this on numeric columns —
+    pandas silently converts None back to NaN to keep the column's float dtype,
+    so the NaN survives into the JSON response and crashes Starlette's
+    allow_nan=False encoder. Fix it after converting to plain Python objects.
+    """
+    records = df.to_dict(orient="records")
+    for row in records:
+        for k, v in row.items():
+            if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
+                row[k] = None
+    return records
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -212,11 +232,11 @@ async def get_districts_by_state(state: str):
             "institutional_delivery_pct", "fully_vaccinated_recall_pct",
             "improved_sanitation_pct", "women_literacy_pct", "child_health_score"]
     available = [c for c in cols if c in df_state.columns]
-    result = df_state[available].where(pd.notnull(df_state[available]), None)
+    records = _json_safe_records(df_state[available])
     return {
         "state": match,
-        "districts": result.to_dict(orient="records"),
-        "count": len(result),
+        "districts": records,
+        "count": len(records),
     }
 
 
@@ -229,7 +249,7 @@ async def get_district_detail(district_id: int):
     if row.empty:
         raise HTTPException(status_code=404, detail=f"District ID {district_id} not found")
 
-    row_dict = row.iloc[0].where(pd.notnull(row.iloc[0]), None).to_dict()
+    row_dict = _json_safe_records(row)[0]
     # Annotate with schema info
     annotated = {}
     for col, val in row_dict.items():
@@ -279,7 +299,8 @@ async def state_comparison(indicator: str):
     df = get_df()
     schema = get_schema()
 
-    cols = [c for c in df.columns if c not in ["district", "state", "district_id"]]
+    cols = [c for c in df.columns if c not in ["district", "state", "district_id"]
+            and not c.endswith(("_nfhs4_state", "_change_from_nfhs4", "_change_pct_from_nfhs4"))]
     match, score, _ = process.extractOne(indicator, cols, scorer=fuzz.token_sort_ratio)
     if score < 50:
         raise HTTPException(status_code=404, detail=f"Indicator '{indicator}' not found. Best match: '{match}'")
@@ -288,13 +309,13 @@ async def state_comparison(indicator: str):
     state_avg.columns = ["state", "mean_value"]
     state_avg["mean_value"] = state_avg["mean_value"].round(2)
     state_avg = state_avg.sort_values("mean_value", ascending=False)
-    result = state_avg.where(pd.notnull(state_avg), None)
+    result = _json_safe_records(state_avg)
 
     return {
         "indicator": match,
         "description": schema.get(match, {}).get("description", match),
         "unit": schema.get(match, {}).get("unit", "percent"),
-        "data": result.to_dict(orient="records"),
+        "data": result,
     }
 
 
