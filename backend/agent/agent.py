@@ -1,6 +1,6 @@
 """
 BharatHealth Analyst — Agent Core
-LangChain ReAct agent wiring all 6 tools together.
+LangChain ReAct agent wiring all 7 tools together.
 Supports Claude (Anthropic) and GPT-4o (OpenAI) as LLM backends.
 Falls back to a rule-based router when no API key is set (demo mode).
 """
@@ -11,6 +11,8 @@ import time
 import traceback
 from pathlib import Path
 from typing import Any, Optional
+from dotenv import load_dotenv
+load_dotenv()
 
 ROOT = Path(__file__).parent.parent.parent
 DATA_DIR = ROOT / "backend" / "data"
@@ -31,7 +33,7 @@ def _load_schema_summary() -> str:
                 f"  - `{col}`: {meta.get('description', '')} [{meta.get('unit', '')}]"
             )
 
-    lines = ["## NFHS-5 Dataset Schema (706 districts × 107 columns)\n"]
+    lines = [f"## NFHS-5 Dataset Schema (706 districts × {len(schema)} columns, incl. NFHS-4 trend columns)\n"]
     for cluster, cols in sorted(clusters.items()):
         lines.append(f"### {cluster.replace('_', ' ').title()}")
         lines.extend(cols[:15])  # cap per cluster to keep prompt manageable
@@ -58,8 +60,9 @@ You help policymakers, NGO workers, and researchers extract precise, grounded in
 2. **pandas_query(code)** — Execute pandas code on `df` (the NFHS-5 dataframe). Assign output to `result`. Use exact column names from schema.
 3. **chart_generator(chart_type, title, data, x_col, y_col, color_col, filename)** — Create interactive charts. chart_type: 'bar', 'scatter', 'heatmap', 'box'.
 4. **insight_writer(data_result, question)** — Synthesise grounded plain-English insights from data results.
-5. **trend_analyser(indicator, state_filter, top_n)** — Rank districts by an indicator, find best/worst performers.
+5. **trend_analyser(indicator, state_filter, top_n)** — Rank districts by an indicator, find best/worst performers. When the indicator has real NFHS-4 (2015-16) trend data, also returns most-improved/most-declined districts since NFHS-4 — check `trend_data_available` in the result before making any "since NFHS-4" claim.
 6. **correlation_finder(indicator_a, indicator_b, state_filter)** — Compute Pearson/Spearman correlation between two indicators.
+7. **sql_query(query)** — Run a read-only SQL SELECT over the dataset for aggregation-style questions.
 
 ## Critical Rules
 1. **Ground every claim** — cite the specific district name, indicator value, and "NFHS-5 (2019-21)" for every statistic.
@@ -68,6 +71,7 @@ You help policymakers, NGO workers, and researchers extract precise, grounded in
 4. **For ranking questions**: use pandas_query with nlargest/nsmallest, then chart_generator for top-10 bar chart.
 5. **For correlation questions**: always use correlation_finder, then chart_generator with chart_type='scatter'.
 6. **For state comparisons**: use pandas_query to groupby state, then chart_generator with chart_type='bar'.
+7. **For "since NFHS-4" / trend questions**: use trend_analyser and read `trend_data_available` and `trend_data_note` from its result before answering. NFHS-4 in this dataset is STATE-level only — always disclose that any "change since NFHS-4" figure compares a district's NFHS-5 value to its OWN STATE's NFHS-4 baseline, not a true district-level NFHS-4 figure. If `trend_data_available` is false, say plainly that no NFHS-4 comparison exists for that indicator instead of guessing.
 7. **Output format**: always end with a structured JSON block:
 ```json
 {{
@@ -229,8 +233,21 @@ def create_agent(model_name: str = "claude", api_key: Optional[str] = None):
             max_tokens=4096,
         )
 
+    elif model_name in ["openrouter", "gemini"]:
+        from langchain_openai import ChatOpenAI
+        openrouter_key = api_key or os.getenv("OPENROUTER_API_KEY", "")
+        if not openrouter_key:
+            raise ValueError("OPENROUTER_API_KEY not set")
+        llm = ChatOpenAI(
+            model="google/gemini-2.5-flash",
+            api_key=openrouter_key,
+            base_url="https://openrouter.ai/api/v1",
+            temperature=0,
+            max_tokens=2048,
+        )
+
     else:
-        raise ValueError(f"Unsupported model: {model_name}. Use 'claude', 'gpt4o', or 'groq'")
+        raise ValueError(f"Unsupported model: {model_name}. Use 'claude', 'gpt4o', 'groq', 'openrouter', or 'gemini'")
 
     from langgraph.prebuilt import create_react_agent
     from langchain_core.messages import SystemMessage
