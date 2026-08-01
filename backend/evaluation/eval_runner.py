@@ -7,6 +7,7 @@ RCQ (Reasoning Chain Quality), LC (Latency/Cost).
 
 import json
 import re
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,11 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 from scipy.stats import kendalltau
+
+# Some recommendation strings use emoji — Windows consoles default to cp1252 and
+# crash on encode. Force stdout to UTF-8 so the run doesn't die on the last line.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = Path(__file__).parent.parent.parent
 DATA_DIR = ROOT / "backend" / "data"
@@ -151,21 +157,64 @@ def compute_af(agent_response: str, ground_truth: str, question: str) -> float:
 
 
 def extract_numeric(text: str):
-    """Extract the first numeric value from text."""
-    matches = re.findall(r"\d+\.?\d*", text.replace(",", ""))
+    """Extract the answer's numeric value from text.
+
+    Prefers numbers immediately followed by '%' — the agent's prose almost always
+    states other numbers first (age ranges like "15-49", "12-23 months", or
+    question phrasing like "ANC 4+"), so blindly taking the first number in the
+    text was picking those up instead of the actual answer value.
+    """
+    cleaned = text.replace(",", "")
+    percent_matches = re.findall(r"\d+\.?\d*(?=\s*%)", cleaned)
+    if percent_matches:
+        return float(percent_matches[0])
+    matches = re.findall(r"\d+\.?\d*", cleaned)
     return float(matches[0]) if matches else None
 
 
+_known_districts_cache = None
+
+
+def _get_known_districts() -> list:
+    global _known_districts_cache
+    if _known_districts_cache is None:
+        _known_districts_cache = load_data()["district"].unique().tolist()
+    return _known_districts_cache
+
+
 def extract_district_list(text: str) -> list:
-    """Extract district names from a JSON string or text."""
+    """Extract district names, in order of first mention, from a JSON string or prose text.
+
+    Real agent answers are prose ("**Pashchimi Singhbhum** (Jharkhand) with 60.6%..."),
+    not JSON — json.loads always failed on those and this returned [] unconditionally,
+    which meant every ranking question scored EA=0 regardless of whether the answer
+    was right. Fall back to matching known district names against the text.
+    """
     try:
         data = json.loads(text)
         if isinstance(data, list):
             return [d.get("district", "") for d in data if isinstance(d, dict)]
     except Exception:
         pass
-    # Fallback: look for district patterns
-    return []
+
+    # Longest-district-name first, so "West Khasi Hills" claims its span before the
+    # real (separate) district named "West" can match the same substring inside it.
+    claimed = []  # list of (start, end) spans already matched
+    matches = []  # list of (start, district)
+    for district in sorted(_get_known_districts(), key=len, reverse=True):
+        start = 0
+        while True:
+            idx = text.find(district, start)
+            if idx == -1:
+                break
+            end = idx + len(district)
+            if not any(idx < c_end and end > c_start for c_start, c_end in claimed):
+                claimed.append((idx, end))
+                matches.append((idx, district))
+            start = idx + 1
+
+    matches.sort(key=lambda x: x[0])
+    return [d for _, d in matches]
 
 
 # ── METRIC 2: Hallucination Rate ─────────────────────────────────────────────
@@ -317,7 +366,7 @@ def run_evaluation(
         results.append(result)
 
         if not dry_run:
-            time.sleep(0.5)  # Rate limiting
+            time.sleep(3)  # pace requests to stay under free-tier TPM limits
 
     # ── Aggregate metrics ─────────────────────────────────────────────────────
     by_type = {}
