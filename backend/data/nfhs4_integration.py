@@ -270,7 +270,7 @@ def integrate_nfhs4_with_nfhs5() -> pd.DataFrame:
 
     # Drop any previously-added trend columns before re-merging (makes this script idempotent)
     df5 = df5[[c for c in df5.columns
-               if not re.search(r"(_nfhs4_state$|_change_from_nfhs4$|_change_pct_from_nfhs4$)", c)]]
+               if not re.search(r"(_nfhs4_state$|_change_from_nfhs4$|_change_pct_from_nfhs4$|_filled$|_is_imputed$)", c)]]
 
     nfhs5_states = sorted(df5["state"].unique().tolist())
     baseline = build_state_baseline(df4, nfhs5_states)
@@ -298,12 +298,25 @@ def integrate_nfhs4_with_nfhs5() -> pd.DataFrame:
             ),
             index=merged.index,
         )
+
+        # Blueprint asks to use NFHS-4 as a fallback where NFHS-5 has gaps. Never overwrite
+        # the original column (every existing tool/query reads it) — add a separate
+        # `_filled` column plus an `_is_imputed` flag so a fallback value is never
+        # mistaken for a real NFHS-5 district measurement.
+        filled_col = f"{col}_filled"
+        imputed_flag_col = f"{col}_is_imputed"
+        new_cols[filled_col] = merged[col].where(merged[col].notna(), merged[nfhs4_col])
+        new_cols[imputed_flag_col] = merged[col].isna() & merged[nfhs4_col].notna()
+
         n_trend_indicators += 1
 
     merged = pd.concat([merged, pd.DataFrame(new_cols, index=merged.index)], axis=1)
 
+    n_imputed_cells = sum(int(new_cols[f"{c}_is_imputed"].sum()) for c in indicator_cols
+                           if f"{c}_is_imputed" in new_cols)
     print(f"  Added real trend columns for {n_trend_indicators} indicators "
-          f"({n_trend_indicators * 3} new columns: baseline, change, change_pct)")
+          f"({n_trend_indicators * 5} new columns: baseline, change, change_pct, filled, is_imputed)")
+    print(f"  Filled {n_imputed_cells} missing NFHS-5 cells using NFHS-4 state baseline as fallback")
 
     merged.to_parquet(OUTPUT_PARQUET, index=False)
     merged.to_csv(OUTPUT_CSV, index=False, encoding="utf-8")
@@ -370,7 +383,7 @@ def update_schema_with_trends(indicator_cols: list):
 
     # Drop any stale trend schema entries from a previous run
     schema = {k: v for k, v in schema.items()
-              if not re.search(r"(_nfhs4_state$|_change_from_nfhs4$|_change_pct_from_nfhs4$)", k)}
+              if not re.search(r"(_nfhs4_state$|_change_from_nfhs4$|_change_pct_from_nfhs4$|_filled$|_is_imputed$)", k)}
 
     for col in indicator_cols:
         base_desc = schema.get(col, {}).get("description", col.replace("_", " "))
@@ -392,6 +405,19 @@ def update_schema_with_trends(indicator_cols: list):
         schema[f"{col}_change_pct_from_nfhs4"] = {
             "description": f"{base_desc} — relative % change from NFHS-4 state baseline to NFHS-5 district value",
             "unit": "percent_change",
+            "cluster": "trend",
+        }
+        schema[f"{col}_filled"] = {
+            "description": f"{base_desc} — same as `{col}`, but missing NFHS-5 values are filled with the "
+                            f"NFHS-4 state baseline as a fallback. Check `{col}_is_imputed` before treating "
+                            f"a value here as a real district-level measurement.",
+            "unit": unit,
+            "cluster": "trend",
+        }
+        schema[f"{col}_is_imputed"] = {
+            "description": f"True if `{col}_filled` is a fallback (NFHS-4 state baseline), not a real NFHS-5 "
+                            f"district value — i.e. `{col}` was missing for this district.",
+            "unit": "boolean",
             "cluster": "trend",
         }
 
