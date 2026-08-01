@@ -36,6 +36,8 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from backend.api.middleware import RateLimitMiddleware, RequestLoggingMiddleware
+
 ROOT = Path(__file__).parent.parent.parent
 DATA_DIR = ROOT / "backend" / "data"
 CHARTS_DIR = ROOT / "charts_output"
@@ -56,6 +58,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
 
 # Mount charts directory for file serving
 CHARTS_DIR.mkdir(parents=True, exist_ok=True)
