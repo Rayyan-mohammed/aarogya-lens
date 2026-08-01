@@ -28,7 +28,10 @@ def _load_schema_summary() -> str:
     clusters: dict[str, list] = {}
     for col, meta in schema.items():
         cluster = meta.get("cluster", "other")
-        if cluster not in ["identifier", "derived", "sample"]:
+        # "trend" columns are excluded here — trend_analyser takes a plain indicator
+        # name and looks up the right _change_from_nfhs4 column itself, so the model
+        # doesn't need all 186 individual trend column names in its prompt
+        if cluster not in ["identifier", "derived", "sample", "trend"]:
             clusters.setdefault(cluster, []).append(
                 f"  - `{col}`: {meta.get('description', '')} [{meta.get('unit', '')}]"
             )
@@ -36,7 +39,7 @@ def _load_schema_summary() -> str:
     lines = [f"## NFHS-5 Dataset Schema (706 districts × {len(schema)} columns, incl. NFHS-4 trend columns)\n"]
     for cluster, cols in sorted(clusters.items()):
         lines.append(f"### {cluster.replace('_', ' ').title()}")
-        lines.extend(cols[:15])  # cap per cluster to keep prompt manageable
+        lines.extend(cols[:3])  # cap per cluster — keeps prompt small enough for free-tier TPM limits
         lines.append("")
 
     return "\n".join(lines)
@@ -49,9 +52,7 @@ SYSTEM_PROMPT_TEMPLATE = """You are BharatHealth Analyst, an expert AI data anal
 You help policymakers, NGO workers, and researchers extract precise, grounded insights from NFHS-5 data covering 706 districts across 36 states/UTs, with ~100 health indicators per district.
 
 ## Dataset Overview
-- Survey: NFHS-5 (2019–21), Government of India
-- Coverage: 706 districts, 36 states/UTs
-- Indicators: Child nutrition (stunting, wasting, underweight), Maternal health (institutional delivery, ANC visits, C-section), Anaemia (children, women, men), Vaccination (BCG, DPT, polio, measles), Sanitation (improved toilet, clean water, cooking fuel), NCDs (hypertension, blood sugar, obesity), Family planning, Women's empowerment, and more.
+- Survey: NFHS-5 (2019-21), Government of India — 706 districts, 36 states/UTs
 
 {schema_summary}
 
@@ -65,33 +66,13 @@ You help policymakers, NGO workers, and researchers extract precise, grounded in
 7. **sql_query(query)** — Run a read-only SQL SELECT over the dataset for aggregation-style questions.
 
 ## Critical Rules
-1. **Ground every claim** — cite the specific district name, indicator value, and "NFHS-5 (2019-21)" for every statistic.
-2. **Use exact column names** — never guess or invent column names. Use only names from the schema above.
-3. **Never hallucinate** — if a district or indicator is not in the dataset, say so explicitly.
-4. **For ranking questions**: use pandas_query with nlargest/nsmallest, then chart_generator for top-10 bar chart.
-5. **For correlation questions**: always use correlation_finder, then chart_generator with chart_type='scatter'.
-6. **For state comparisons**: use pandas_query to groupby state, then chart_generator with chart_type='bar'.
-7. **For "since NFHS-4" / trend questions**: use trend_analyser and read `trend_data_available` and `trend_data_note` from its result before answering. NFHS-4 in this dataset is STATE-level only — always disclose that any "change since NFHS-4" figure compares a district's NFHS-5 value to its OWN STATE's NFHS-4 baseline, not a true district-level NFHS-4 figure. If `trend_data_available` is false, say plainly that no NFHS-4 comparison exists for that indicator instead of guessing.
-7. **Output format**: always end with a structured JSON block:
-```json
-{{
-  "answer": "...",
-  "key_facts": ["fact1 [NFHS-5]", "fact2 [NFHS-5]"],
-  "chart_generated": true/false,
-  "confidence": "high/medium/low",
-  "data_limitation": "any missing data caveats"
-}}
-```
-
-## Example Tool Usage
-- User asks "worst stunting districts in Bihar":
-  → pandas_query: `result = df[df['state']=='Bihar'].nlargest(10, 'stunting_pct')[['district','state','stunting_pct']]`
-  → chart_generator with chart_type='bar', x_col='district', y_col='stunting_pct'
-  → insight_writer with the result
-
-- User asks "correlation between sanitation and stunting":
-  → correlation_finder('improved_sanitation_pct', 'stunting_pct')
-  → chart_generator with chart_type='scatter' using scatter_data
+1. Ground every claim — cite district name, value, and "NFHS-5 (2019-21)".
+2. Use exact column names from the schema above, never guess.
+3. Never hallucinate — if data isn't in the dataset, say so.
+4. Ranking questions: pandas_query with nlargest/nsmallest.
+5. Correlation questions: use correlation_finder.
+6. Trend/"since NFHS-4" questions: use trend_analyser, check `trend_data_available` first. NFHS-4 here is STATE-level only, so disclose that any change figure compares a district's NFHS-5 value to its own state's 2015-16 baseline, not a true district-level figure.
+7. End every answer with a JSON block: {{"answer": "...", "key_facts": ["fact1 [NFHS-5]"], "confidence": "high/medium/low", "data_limitation": "..."}}
 """
 
 
@@ -137,19 +118,19 @@ def build_langchain_tools():
 
     @tool
     def semantic_search(query: str, n_results: int = 5, state_filter: str = "") -> str:
-        """Search for districts using natural language. Use for vague queries about health problems, struggling districts, etc. Args: query (str), n_results (int, default 5), state_filter (str, optional state name)."""
+        """Find districts by vague natural-language query, e.g. 'struggling with nutrition'."""
         result = _semantic_search(query, n_results, state_filter or None)
         return json.dumps(result, default=str)
 
     @tool
     def pandas_query(code: str) -> str:
-        """Execute pandas code on the NFHS-5 dataframe (variable name: `df`, 706 rows x 107 cols). MUST assign output to `result`. Use exact column names from schema. Example: result = df[df['state']=='Bihar'].nlargest(5,'stunting_pct')[['district','state','stunting_pct']]"""
+        """Run pandas code on `df` (706x107). Assign output to `result`. Use exact column names."""
         result = _pandas_query(code)
         return json.dumps(result, default=str)
 
     @tool
     def chart_generator(chart_type: str, title: str, data_json: str, x_col: str, y_col: str, color_col: str = "", filename: str = "") -> str:
-        """Generate an interactive Plotly chart. chart_type: 'bar','scatter','heatmap','box'. data_json: JSON string of list of dicts. x_col, y_col: column names in data. Returns path to HTML file."""
+        """Make a Plotly chart ('bar'/'scatter'/'heatmap'/'box') from a JSON list of dicts."""
         try:
             data = json.loads(data_json)
         except Exception:
@@ -159,7 +140,7 @@ def build_langchain_tools():
 
     @tool
     def insight_writer(data_result_json: str, question: str) -> str:
-        """Write a grounded plain-English insight from a data result. data_result_json: JSON string of the result from pandas_query or trend_analyser. Only facts in the data are used — no hallucination."""
+        """Write a grounded plain-English insight from a data result — no facts outside the data."""
         try:
             data_result = json.loads(data_result_json)
         except Exception:
@@ -169,19 +150,19 @@ def build_langchain_tools():
 
     @tool
     def trend_analyser(indicator: str, state_filter: str = "", top_n: int = 10) -> str:
-        """Analyse indicator distribution across districts. Finds best/worst performers nationally or within a state. indicator: column name or description. state_filter: optional state name."""
+        """Rank districts by an indicator; includes real NFHS-4 vs NFHS-5 change when available."""
         result = _trend_analyser(indicator, state_filter or None, top_n)
         return json.dumps(result, default=str)
 
     @tool
     def correlation_finder(indicator_a: str, indicator_b: str, state_filter: str = "") -> str:
-        """Compute Pearson and Spearman correlation between two health indicators across 706 districts. Returns correlation coefficients, p-values, and scatter data. indicator_a, indicator_b: column names or descriptions."""
+        """Pearson/Spearman correlation between two indicators across districts."""
         result = _correlation_finder(indicator_a, indicator_b, state_filter or None)
         return json.dumps(result, default=str)
 
     @tool
     def sql_query(query: str) -> str:
-        """Execute SQL SELECT queries on NFHS-5 dataset. Use standard SQL syntax with table name 'nfhs5'. Only SELECT queries allowed. query: SQL SELECT statement."""
+        """Run a read-only SQL SELECT against table 'nfhs5'."""
         result = _sql_query(query)
         return json.dumps(result, default=str)
 
@@ -227,7 +208,7 @@ def create_agent(model_name: str = "claude", api_key: Optional[str] = None):
         if not groq_key:
             raise ValueError("GROQ_API_KEY not set")
         llm = ChatGroq(
-            model="llama-3.1-8b-instant",
+            model="llama-3.3-70b-versatile",
             api_key=groq_key,
             temperature=0,
             max_tokens=4096,
@@ -261,6 +242,27 @@ def create_agent(model_name: str = "claude", api_key: Optional[str] = None):
     return agent
 
 
+RATE_LIMIT_MARKERS = ("rate_limit", "429", "413", "tokens per minute", "requires more credits")
+
+
+def _invoke_with_retry(agent, question: str, max_retries: int = 3, base_wait: float = 20.0):
+    """Retry on transient rate-limit errors (free-tier TPM caps, momentary credit dips)
+    instead of recording a real question as a hard failure because of API pacing."""
+    last_error = None
+    for attempt in range(max_retries + 1):
+        try:
+            return agent.invoke(
+                {"messages": [{"role": "user", "content": question}]},
+                config={"callbacks": []},
+            )
+        except Exception as e:
+            last_error = e
+            if attempt < max_retries and any(m in str(e).lower() for m in RATE_LIMIT_MARKERS):
+                time.sleep(base_wait * (attempt + 1))
+                continue
+            raise last_error
+
+
 # ── Query Runner ──────────────────────────────────────────────────────────────
 def run_query(
     question: str,
@@ -283,10 +285,7 @@ def run_query(
 
         # Collect tool call trace
         events = []
-        result = agent.invoke(
-            {"messages": [{"role": "user", "content": question}]},
-            config={"callbacks": []},
-        )
+        result = _invoke_with_retry(agent, question)
 
         latency_ms = int((time.time() - start_time) * 1000)
 

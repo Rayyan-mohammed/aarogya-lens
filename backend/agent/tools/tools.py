@@ -456,9 +456,16 @@ def correlation_finder(indicator_a: str, indicator_b: str, state_filter: Optiona
 
         schema = get_schema()
 
-        scatter_data = df_work[["district", "state", match_a, match_b]].rename(
+        # Cap at 40 points — this result flows straight back into the LLM's context as a
+        # tool observation, and returning all 706 rows was blowing the token budget
+        # (a correlation question alone pushed one request to ~31,000 tokens).
+        SCATTER_SAMPLE_SIZE = 40
+        scatter_df = df_work[["district", "state", match_a, match_b]].rename(
             columns={match_a: "x_value", match_b: "y_value"}
-        ).to_dict(orient="records")
+        )
+        if len(scatter_df) > SCATTER_SAMPLE_SIZE:
+            scatter_df = scatter_df.sample(n=SCATTER_SAMPLE_SIZE, random_state=42)
+        scatter_data = scatter_df.to_dict(orient="records")
 
         return {
             "status": "success",
@@ -473,7 +480,8 @@ def correlation_finder(indicator_a: str, indicator_b: str, state_filter: Optiona
             "spearman_r": round(spearman_r, 4),
             "spearman_p_value": round(spearman_p, 6),
             "interpretation": _interpret_correlation(pearson_r, pearson_p),
-            "scatter_data": scatter_data[:706],
+            "scatter_data": scatter_data,
+            "scatter_data_note": f"sampled {len(scatter_data)} of {len(df_work)} districts for display — pearson_r/spearman_r above are computed on all {len(df_work)}",
             "x_col": "x_value",
             "y_col": "y_value",
         }
