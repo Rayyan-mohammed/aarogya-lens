@@ -1,0 +1,12 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.git/
+.env
+dataset/
+charts_output/
+backend/api/logs/
+backend/evaluation/eval_results.json
+*.md
+node_modules/

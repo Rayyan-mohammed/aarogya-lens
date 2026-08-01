@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./backend/data:/app/backend/data
+      - ./backend/vector_store/chroma_db:/app/backend/vector_store/chroma_db
+      - ./charts_output:/app/charts_output
+
+  frontend:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    command: python -m http.server 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
