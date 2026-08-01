@@ -32,8 +32,10 @@ def test_api_health():
             print(f"✅ API Status: {data['status']}")
             print(f"📊 Dataset: {data['dataset']} ({data['districts']} districts, {data['columns']} indicators)")
             return True
-    except:
-        pass
+    except Exception as e:
+        print(f"Debug health check error: {e}")
+        import traceback
+        traceback.print_exc()
     
     print("❌ API not running. Please start: python -m uvicorn backend.api.main:app --port 8000")
     return False
@@ -73,11 +75,14 @@ def demo_queries():
         print(f"❓ Question: \"{query['question']}\"")
         print(f"💡 Purpose: {query['description']}")
         
-        # Use Groq for demo (fast and has API key)
+        # Use OpenRouter (Gemini 2.5 Flash) or Groq for demo
+        model = "openrouter" if os.getenv("OPENROUTER_API_KEY") else "groq"
+        api_key = os.getenv("OPENROUTER_API_KEY") if model == "openrouter" else os.getenv("GROQ_API_KEY")
+        
         payload = {
             "question": query["question"],
-            "model": "groq",
-            "api_key": os.getenv("GROQ_API_KEY")
+            "model": model,
+            "api_key": api_key
         }
         
         try:
@@ -134,19 +139,20 @@ def show_system_stats():
         # Get state count
         response = requests.get(f"{API_BASE}/states", timeout=5)
         if response.status_code == 200:
-            states = response.json()
-            print(f"\n🗺️  Coverage: {len(states)} states/UTs")
+            states_data = response.json()
+            states_list = states_data.get("states", [])
+            print(f"\n🗺️  Coverage: {states_data.get('total', len(states_list))} states/UTs")
             print("   Top 5 by district count:")
-            sorted_states = sorted(states, key=lambda x: x['district_count'], reverse=True)
+            sorted_states = sorted(states_list, key=lambda x: x.get('districts', 0), reverse=True)
             for state in sorted_states[:5]:
-                print(f"   • {state['state']}: {state['district_count']} districts")
+                print(f"   • {state['state']}: {state['districts']} districts")
                 
         # Get indicators
         response = requests.get(f"{API_BASE}/indicators", timeout=5)
         if response.status_code == 200:
-            indicators = response.json()
+            indicators_data = response.json()
             print(f"\n🏥 Health Domains:")
-            for domain, domain_indicators in indicators.items():
+            for domain, domain_indicators in indicators_data.get("clusters", {}).items():
                 print(f"   • {domain.replace('_', ' ').title()}: {len(domain_indicators)} indicators")
                 
     except Exception as e:
