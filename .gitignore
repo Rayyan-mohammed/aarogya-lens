@@ -65,4 +65,6 @@ tmp/
 
 # Generated files
 backend/evaluation/eval_results.json
+backend/evaluation/eval_results.dryrun.json
+backend/evaluation/eval_checkpoint.json
 *.cache

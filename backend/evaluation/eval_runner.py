@@ -27,6 +27,8 @@ DATA_DIR = ROOT / "backend" / "data"
 EVAL_DIR = ROOT / "backend" / "evaluation"
 
 RESULTS_PATH = EVAL_DIR / "eval_results.json"
+DRYRUN_RESULTS_PATH = EVAL_DIR / "eval_results.dryrun.json"
+CHECKPOINT_PATH = EVAL_DIR / "eval_checkpoint.json"
 
 
 def load_benchmark() -> list:
@@ -295,10 +297,10 @@ def run_evaluation(
     if n_questions:
         questions = questions[:n_questions]
 
-    print(f"\n{'='*60}")
-    print(f"BharatHealth-Bench Evaluation")
-    print(f"Model: {model_name} | Questions: {len(questions)} | Dry run: {dry_run}")
-    print(f"{'='*60}\n")
+    print(f"\n{'='*60}", flush=True)
+    print(f"BharatHealth-Bench Evaluation", flush=True)
+    print(f"Model: {model_name} | Questions: {len(questions)} | Dry run: {dry_run}", flush=True)
+    print(f"{'='*60}\n", flush=True)
 
     results = []
     total_ea = []
@@ -308,7 +310,7 @@ def run_evaluation(
     total_latency = []
 
     for i, q in enumerate(questions):
-        print(f"[{i+1:3d}/{len(questions)}] Q: {q['question'][:70]}...")
+        print(f"[{i+1:3d}/{len(questions)}] Q: {q['question'][:70]}...", flush=True)
 
         if dry_run:
             # Mock answer for pipeline testing
@@ -366,6 +368,10 @@ def run_evaluation(
         results.append(result)
 
         if not dry_run:
+            with open(CHECKPOINT_PATH, "w", encoding="utf-8") as f:
+                json.dump({"model": model_name, "n_done": len(results),
+                           "n_total": len(questions), "results": results},
+                          f, indent=2, ensure_ascii=False, default=str)
             time.sleep(45)  # groq free tier: 12000 TPM, ~6-7k tokens/question — need real spacing
 
     # ── Aggregate metrics ─────────────────────────────────────────────────────
@@ -403,9 +409,12 @@ def run_evaluation(
         "results": results,
     }
 
-    # Save
-    with open(RESULTS_PATH, "w", encoding="utf-8") as f:
+    # Save (dry runs go to their own file so they never clobber a real run's results)
+    out_path = DRYRUN_RESULTS_PATH if dry_run else RESULTS_PATH
+    with open(out_path, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2, ensure_ascii=False, default=str)
+    if not dry_run and CHECKPOINT_PATH.exists():
+        CHECKPOINT_PATH.unlink()
 
     # Print summary table
     print(f"\n{'-'*60}")
@@ -419,7 +428,7 @@ def run_evaluation(
     print(f"\n  By Query Type:")
     for qt, metrics in summary["by_query_type"].items():
         print(f"    {qt:<22} EA={metrics['EA']:.1%}  AF={metrics['AF']:.1%}  HR={metrics['HR']:.1%}  n={metrics['n']}")
-    print(f"\n[OK] Results saved: {RESULTS_PATH}")
+    print(f"\n[OK] Results saved: {out_path}")
 
     # Generate failure analysis report
     if any(r["metrics"]["ea"] < 0.8 for r in results):
