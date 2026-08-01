@@ -50,7 +50,8 @@ def demo_system():
         print("🛠️  Available Analysis Tools:")
         tools = [
             "semantic_search - Find districts by description",
-            "pandas_query - Complex data analysis", 
+            "pandas_query - Complex data analysis",
+            "sql_query - Read-only SQL over the dataset",
             "trend_analyser - Ranking and distribution",
             "correlation_finder - Statistical relationships",
             "chart_generator - Interactive visualizations",

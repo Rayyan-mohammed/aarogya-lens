@@ -22,7 +22,6 @@ def test_query():
         "question": "What is the stunting rate in Kerala?",
         "model": "groq",  # Use Groq since we have the API key
         "api_key": os.getenv("GROQ_API_KEY"),  # Pass the API key
-        "filters": {}
     }
     
     print("🧪 Testing BharatHealth Agent...")
@@ -40,8 +39,8 @@ def test_query():
             data = response.json()
             print("✅ Query successful!")
             print(f"📝 Answer: {data.get('answer', 'No answer')}")
-            print(f"📈 Charts: {data.get('chart_path', 'None')}")
-            print(f"🔢 Confidence: {data.get('confidence', 'N/A')}")
+            print(f"📈 Chart: {data.get('chart_url', 'None')}")
+            print(f"🔢 Confidence: {data.get('structured', {}).get('confidence', 'N/A')}")
             return True
         else:
             print(f"❌ Query failed: {response.text}")
