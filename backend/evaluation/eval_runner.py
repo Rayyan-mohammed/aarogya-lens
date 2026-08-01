@@ -366,7 +366,7 @@ def run_evaluation(
         results.append(result)
 
         if not dry_run:
-            time.sleep(3)  # pace requests to stay under free-tier TPM limits
+            time.sleep(45)  # groq free tier: 12000 TPM, ~6-7k tokens/question — need real spacing
 
     # ── Aggregate metrics ─────────────────────────────────────────────────────
     by_type = {}
