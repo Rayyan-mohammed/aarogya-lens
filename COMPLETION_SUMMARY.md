@@ -11,7 +11,7 @@ answer). This version only states things that have been verified.
 
 | Component | Status |
 |---|---|
-| Data Pipeline | 706 districts x 324 columns, real NFHS-4 (2015-16) trend data merged in for 62 indicators (state-level baseline, documented as such — the raw NFHS-4 file here is state-level, not district-level) |
+| Data Pipeline | 706 districts x 448 columns, real NFHS-4 (2015-16) trend data merged in for 62 indicators (state-level baseline, documented as such — the raw NFHS-4 file here is state-level, not district-level), plus NFHS-4 fallback fill for 2,286 missing NFHS-5 cells (each flagged `_is_imputed`) |
 | Vector Database | ChromaDB, 706 district summaries embedded, verified live |
 | AI Agent | 7 tools (semantic_search, pandas_query, sql_query, chart_generator, insight_writer, trend_analyser, correlation_finder), verified working end-to-end against a real LLM |
 | API Backend | 10 FastAPI endpoints, rate limiting + request logging middleware, verified working in a built Docker container |
@@ -22,24 +22,40 @@ answer). This version only states things that have been verified.
 ## Benchmark results
 
 The 200-question benchmark has been run against `llama-3.3-70b-versatile` (Groq free
-tier — no Anthropic/OpenAI key is configured in this project). Three real bugs in the
-scoring code were found and fixed first (they were making the agent look far worse than
-it is): `extract_numeric` was grabbing the first number anywhere in an answer's text
-(e.g. "15" from "aged 15-49" instead of the real answer), `extract_district_list`
-returned nothing for any prose answer so every ranking question scored 0% regardless of
-correctness, and `correlation_finder` was returning all 706 districts as scatter data,
-which alone pushed one request to ~31,000 tokens.
+tier — no Anthropic/OpenAI key is configured in this project). Several real bugs in the
+scoring code were found and fixed along the way (they were making the agent look far
+worse, or in one case better, than it actually is): `extract_numeric` was grabbing the
+first number anywhere in an answer's text (e.g. "15" from "aged 15-49" instead of the
+real answer), `extract_district_list` returned nothing for any prose answer so every
+ranking question scored 0% regardless of correctness, `correlation_finder` was returning
+all 706 districts as scatter data (one request alone hit ~31,000 tokens), and
+`compute_ea` was silently handing out a free 0.5 score to comparison/distribution
+questions no matter what the agent answered — including a blank answer.
 
-*[Real EA / AF / HR / RCQ / latency numbers go here once the full run finishes —
-see `backend/evaluation/eval_results.json` for the current numbers.]*
+**A real ceiling, not a bug**: the first corrected full run came back 100% `error` status
+on all 200 questions. Direct testing traced this to Groq's free tier having a **100,000
+tokens/day** cap on top of the 12,000 tokens/minute limit already accounted for. At
+~6,266 tokens/question, 200 questions need roughly 1.25M tokens — about 12x the daily
+budget. The other four configured keys (OpenRouter, Gemini, Grok, DeepSeek) were checked
+too and are each at zero or near-zero account balance right now, so Groq is the only
+provider currently reachable at all.
+
+The eval runner now waits out a daily-quota reset and retries the same question instead
+of recording it as a failure (`backend/evaluation/eval_runner.py`), and checkpoints
+progress after every question so a multi-day run can't lose completed work. Given the
+100k/day cap, a full 200-question run realistically takes **several days**, not one
+session — it is running now, patiently, in the background.
+
+*[Real EA / AF / HR / RCQ / latency numbers go here once the run has covered enough
+questions to be meaningful — see `backend/evaluation/eval_results.json` for the final
+numbers, or `backend/evaluation/eval_checkpoint.json` for in-progress partial results.]*
 
 ## Known gaps against the original blueprint
 
-- No Anthropic or OpenAI API key configured — the agent runs on Groq/OpenRouter free
-  tiers, not the Claude Sonnet / GPT-4o the blueprint specified as primary.
+- No Anthropic or OpenAI API key configured — the agent runs on Groq's free tier, the
+  only one of five configured provider keys with any usable quota right now.
+- A full 200-question benchmark run cannot complete in a single session on free-tier
+  Groq alone — see above.
 - Frontend is not Next.js.
 - Nothing is deployed to a public URL.
 - No DVC data versioning.
-- `TECHNICAL_REPORT.md` and `SUBMISSION_PACKAGE.md` have not yet been checked for the
-  same kind of unverified claims this file had — treat their numbers as unverified
-  until reviewed the same way this file was.
