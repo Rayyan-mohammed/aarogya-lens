@@ -18,3 +18,5 @@ rapidfuzz>=3.0.0
 plotly>=5.18.0
 matplotlib>=3.7.0
 sentence-transformers>=3.0.0
+pytest>=8.0.0
+pytest-cov>=5.0.0
