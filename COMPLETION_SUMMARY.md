@@ -14,9 +14,10 @@ answer). This version only states things that have been verified.
 | Data Pipeline | 706 districts x 448 columns, real NFHS-4 (2015-16) trend data merged in for 62 indicators (state-level baseline, documented as such — the raw NFHS-4 file here is state-level, not district-level), plus NFHS-4 fallback fill for 2,286 missing NFHS-5 cells (each flagged `_is_imputed`) |
 | Vector Database | ChromaDB, 706 district summaries embedded, verified live |
 | AI Agent | 7 tools (semantic_search, pandas_query, sql_query, chart_generator, insight_writer, trend_analyser, correlation_finder), verified working end-to-end against a real LLM |
-| API Backend | 10 FastAPI endpoints, rate limiting + request logging middleware, verified working in a built Docker container |
+| API Backend | 11 FastAPI endpoints, rate limiting + request logging middleware, verified working in a built Docker container |
 | Frontend | Single-page vanilla JS/HTML UI (not the Next.js the original blueprint specified) |
 | Evaluation Framework | 200-question benchmark with programmatic ground truth; EA/AF/HR/RCQ/latency metrics computed by real code (not mocked) |
+| Automated Tests | 63 pytest tests covering the data pipeline, all 7 tools, and every API endpoint — several are regression tests for real bugs found this session. Measured coverage: `tools.py` 72%, `main.py` 93%, `eval_runner.py` 49% (the untested part is the LLM-calling loop itself) |
 | Deployment | Dockerfile + docker-compose built and run locally, `/health` verified inside the container. GCP Cloud Run / Vercel deployment has **not** been done. |
 
 ## Benchmark results
@@ -49,6 +50,17 @@ session — it is running now, patiently, in the background.
 *[Real EA / AF / HR / RCQ / latency numbers go here once the run has covered enough
 questions to be meaningful — see `backend/evaluation/eval_results.json` for the final
 numbers, or `backend/evaluation/eval_checkpoint.json` for in-progress partial results.]*
+
+## Other real bugs found and fixed this session
+
+- `schema.json` documented 124 trend columns that were never actually created —
+  the schema writer looped over all 93 candidate NFHS-4 indicators, but the merge
+  itself only adds change/filled columns for the 62 that successfully matched an
+  NFHS-5 column. Fixed so schema.json and the actual data are always in exact sync
+  (verified: 448/448 columns, zero drift either direction, still idempotent on rerun).
+- `pandas_query` had the same NaN-serialization bug already fixed in the API
+  endpoints — a missing value (e.g. Thrissur's vaccination rate) came back as
+  `NaN` instead of `null`, which isn't valid JSON.
 
 ## Known gaps against the original blueprint
 
