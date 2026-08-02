@@ -126,6 +126,16 @@ PANDAS_SAFE_GLOBALS = {
 }
 
 
+def _clean_nan(value):
+    """NaN/inf floats break strict JSON encoders (e.g. FastAPI's) further down the
+    pipeline. df.where(pd.notnull(df), None) doesn't fix this on numeric-dtype
+    columns — pandas converts None back to NaN to keep the float dtype — so this
+    has to run on already-converted plain Python objects instead."""
+    if isinstance(value, float) and (np.isnan(value) or np.isinf(value)):
+        return None
+    return value
+
+
 def pandas_query(code: str) -> dict:
     """
     Execute pandas code on the NFHS-5 dataframe (variable name: `df`).
@@ -152,29 +162,33 @@ def pandas_query(code: str) -> dict:
             return {"status": "error", "error": "Code must assign output to variable `result`"}
 
         if isinstance(result, pd.DataFrame):
-            # Sanitise for JSON
-            result_clean = result.where(pd.notnull(result), None)
+            records = result.head(50).to_dict(orient="records")
+            for row in records:
+                for k, v in row.items():
+                    row[k] = _clean_nan(v)
             return {
                 "status": "success",
                 "type": "dataframe",
                 "columns": result.columns.tolist(),
-                "data": result_clean.head(50).to_dict(orient="records"),
+                "data": records,
                 "shape": list(result.shape),
                 "code_executed": code,
             }
         elif isinstance(result, pd.Series):
-            result_clean = result.where(pd.notnull(result), None)
+            series_dict = result.head(50).to_dict()
+            series_dict = {k: _clean_nan(v) for k, v in series_dict.items()}
             return {
                 "status": "success",
                 "type": "series",
-                "data": result_clean.head(50).to_dict(),
+                "data": series_dict,
                 "code_executed": code,
             }
         else:
+            value = result if not isinstance(result, (np.integer, np.floating)) else float(result)
             return {
                 "status": "success",
                 "type": "scalar",
-                "value": result if not isinstance(result, (np.integer, np.floating)) else float(result),
+                "value": _clean_nan(value),
                 "code_executed": code,
             }
 
