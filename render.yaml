@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: bharathealth-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+
+  - type: web
+    name: bharathealth-frontend
+    runtime: static
+    staticPublishPath: ./frontend
+    plan: free
+    envVars: []
