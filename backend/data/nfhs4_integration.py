@@ -281,11 +281,13 @@ def integrate_nfhs4_with_nfhs5() -> pd.DataFrame:
     merged = df5.merge(baseline_renamed, on="state", how="left")
 
     new_cols = {}
+    matched_cols = []
     n_trend_indicators = 0
     for col in indicator_cols:
         nfhs4_col = f"{col}_nfhs4_state"
         if col not in merged.columns or nfhs4_col not in merged.columns:
             continue
+        matched_cols.append(col)
         change_col = f"{col}_change_from_nfhs4"
         change_pct_col = f"{col}_change_pct_from_nfhs4"
 
@@ -324,8 +326,8 @@ def integrate_nfhs4_with_nfhs5() -> pd.DataFrame:
     merged.to_csv(OUTPUT_TRENDS_CSV, index=False, encoding="utf-8")
     print(f"[OK] Saved enriched dataset: {OUTPUT_PARQUET} ({len(merged)} rows x {len(merged.columns)} cols)")
 
-    update_schema_with_trends(indicator_cols)
-    generate_trend_summary(merged, indicator_cols)
+    update_schema_with_trends(indicator_cols, matched_cols)
+    generate_trend_summary(merged, matched_cols)
     enrich_district_summaries(merged)
 
     return merged
@@ -372,8 +374,15 @@ def enrich_district_summaries(merged: pd.DataFrame) -> None:
     print(f"[OK] Enriched district_summaries.json with real trend sentences ({len(summaries)} districts)")
 
 
-def update_schema_with_trends(indicator_cols: list):
-    """Add schema entries for the new baseline/change/change_pct columns."""
+def update_schema_with_trends(all_cols: list, matched_cols: list):
+    """Add schema entries for the new baseline/change/change_pct columns.
+
+    `_nfhs4_state` gets merged in for every indicator with an NFHS-4 state baseline
+    (all_cols), since that's real state-level data regardless of whether NFHS-5 has a
+    matching district column. The derived change/filled/is_imputed columns only exist
+    for indicators where both sides matched (matched_cols) — documenting them for the
+    rest would describe columns that were never actually created.
+    """
     if not OUTPUT_SCHEMA.exists():
         print("  [WARN] schema.json not found — skipping schema update")
         return
@@ -385,16 +394,21 @@ def update_schema_with_trends(indicator_cols: list):
     schema = {k: v for k, v in schema.items()
               if not re.search(r"(_nfhs4_state$|_change_from_nfhs4$|_change_pct_from_nfhs4$|_filled$|_is_imputed$)", k)}
 
-    for col in indicator_cols:
+    for col in all_cols:
         base_desc = schema.get(col, {}).get("description", col.replace("_", " "))
         unit = schema.get(col, {}).get("unit", "percent")
-        lower_is_better = col not in HIGHER_IS_BETTER
 
         schema[f"{col}_nfhs4_state"] = {
             "description": f"{base_desc} — NFHS-4 (2015-16) STATE-level baseline (district's parent state average, not district-level)",
             "unit": unit,
             "cluster": "trend",
         }
+
+    for col in matched_cols:
+        base_desc = schema.get(col, {}).get("description", col.replace("_", " "))
+        unit = schema.get(col, {}).get("unit", "percent")
+        lower_is_better = col not in HIGHER_IS_BETTER
+
         schema[f"{col}_change_from_nfhs4"] = {
             "description": f"{base_desc} — change from NFHS-4 state baseline to NFHS-5 district value "
                             f"(negative = decrease, positive = increase; "
