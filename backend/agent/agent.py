@@ -7,6 +7,7 @@ Falls back to a rule-based router when no API key is set (demo mode).
 
 import json
 import os
+import re
 import time
 import traceback
 from pathlib import Path
@@ -244,10 +245,27 @@ def create_agent(model_name: str = "claude", api_key: Optional[str] = None):
 
 RATE_LIMIT_MARKERS = ("rate_limit", "429", "413", "tokens per minute", "requires more credits")
 
+# Above this, a provider's "try again in Xs" is pointing at an hourly/daily quota reset,
+# not a momentary dip — waiting it out would stall the whole run for one question.
+MAX_RATE_LIMIT_WAIT = 300.0
+
+
+def _parse_retry_after(message: str) -> Optional[float]:
+    """Pull a provider-suggested wait time out of messages like
+    'Please try again in 8m46.176s' or 'retry in 5.66s'."""
+    m = re.search(r"(?:try again in|retry in)\s+(?:(\d+)m)?(\d+\.?\d*)s", message, re.IGNORECASE)
+    if not m:
+        return None
+    minutes = float(m.group(1)) if m.group(1) else 0.0
+    return minutes * 60 + float(m.group(2))
+
 
 def _invoke_with_retry(agent, question: str, max_retries: int = 3, base_wait: float = 20.0):
     """Retry on transient rate-limit errors (free-tier TPM caps, momentary credit dips)
-    instead of recording a real question as a hard failure because of API pacing."""
+    instead of recording a real question as a hard failure because of API pacing.
+    Honors a provider's own suggested wait time when it gives one, and gives up right
+    away (instead of burning a full 20/40/60s backoff for nothing) when that wait is
+    clearly an hourly/daily quota reset rather than something a retry can fix."""
     last_error = None
     for attempt in range(max_retries + 1):
         try:
@@ -258,7 +276,10 @@ def _invoke_with_retry(agent, question: str, max_retries: int = 3, base_wait: fl
         except Exception as e:
             last_error = e
             if attempt < max_retries and any(m in str(e).lower() for m in RATE_LIMIT_MARKERS):
-                time.sleep(base_wait * (attempt + 1))
+                suggested = _parse_retry_after(str(e))
+                if suggested is not None and suggested > MAX_RATE_LIMIT_WAIT:
+                    raise last_error
+                time.sleep(suggested + 1 if suggested is not None else base_wait * (attempt + 1))
                 continue
             raise last_error
 
@@ -307,7 +328,6 @@ def run_query(
         # Try to extract structured JSON from answer
         structured = {}
         json_match = None
-        import re
         json_blocks = re.findall(r"```json\s*(.*?)\s*```", final_answer, re.DOTALL)
         if json_blocks:
             try:

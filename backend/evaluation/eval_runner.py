@@ -44,6 +44,38 @@ def load_data() -> pd.DataFrame:
     return pd.read_parquet(DATA_DIR / "nfhs5_clean.parquet")
 
 
+def _flatten_gt(gt: dict, prefix: str = "") -> list:
+    """Turn a possibly-nested ground-truth dict into a flat list of leaf values to check for."""
+    leaves = []
+    for k, v in gt.items():
+        if isinstance(v, dict):
+            leaves.extend(_flatten_gt(v, prefix=f"{prefix}{k}."))
+        else:
+            leaves.append((k, v))
+    return leaves
+
+
+def _score_dict_answer(predicted: str, gt: dict) -> float:
+    """Partial credit for comparison/distribution answers with no single best_performing_state key:
+    fraction of the ground-truth's leaf values (state/district names, numbers) found in the answer."""
+    if not predicted.strip():
+        return 0.0
+    leaves = _flatten_gt(gt)
+    if not leaves:
+        return 0.0
+    pred_lower = predicted.lower()
+    pred_numbers = [float(n) for n in re.findall(r"-?\d+\.?\d*", predicted)]
+    hits = 0
+    for _, val in leaves:
+        if isinstance(val, (int, float)):
+            tol = max(1.0, abs(float(val)) * 0.05)
+            if any(abs(n - float(val)) <= tol for n in pred_numbers):
+                hits += 1
+        elif str(val).lower() in pred_lower:
+            hits += 1
+    return round(hits / len(leaves), 4)
+
+
 # ── METRIC 1: Execution Accuracy ─────────────────────────────────────────────
 def compute_ea(predicted: Any, ground_truth: str, answer_type: str) -> float:
     """
@@ -93,7 +125,9 @@ def compute_ea(predicted: Any, ground_truth: str, answer_type: str) -> float:
             if isinstance(gt, dict) and "best_performing_state" in gt:
                 best_state = gt["best_performing_state"]
                 return 1.0 if best_state.lower() in str(predicted).lower() else 0.0
-            return 0.5  # Partial credit for comparison questions
+            if isinstance(gt, dict):
+                return _score_dict_answer(str(predicted), gt)
+            return 0.0
 
         return 0.0
     except Exception:
@@ -112,49 +146,6 @@ def compute_af(agent_response: str, ground_truth: str, question: str) -> float:
         
     except Exception as e:
         print(f"AF computation failed: {e}")
-        return 0.0
-
-        if answer_type == "numeric":
-            pred_val = extract_numeric(str(predicted))
-            gt_val = extract_numeric(str(gt))
-            if pred_val is None or gt_val is None:
-                return 0.0
-            return 1.0 if abs(pred_val - gt_val) <= 0.5 else 0.0
-
-        elif answer_type == "ranking":
-            pred_districts = extract_district_list(str(predicted))
-            gt_districts = extract_district_list(str(gt)) if isinstance(gt, list) else []
-            if not pred_districts or not gt_districts:
-                return 0.0
-            # Compute Kendall's Tau between ordinal positions
-            pred_rank = {d: i for i, d in enumerate(pred_districts)}
-            gt_rank = {d: i for i, d in enumerate(gt_districts)}
-            common = [d for d in gt_districts if d in pred_rank]
-            if len(common) < 3:
-                return float(len(common)) / max(len(gt_districts), 1)
-            x = [gt_rank[d] for d in common]
-            y = [pred_rank[d] for d in common]
-            tau, _ = kendalltau(x, y)
-            return max(0.0, float(tau))
-
-        elif answer_type == "correlation":
-            pred_r = extract_numeric(str(predicted))
-            gt_r = float(gt.get("pearson_r", 0)) if isinstance(gt, dict) else extract_numeric(str(gt))
-            if pred_r is None or gt_r is None:
-                return 0.0
-            # Same direction + within 0.1
-            same_dir = (pred_r * gt_r) >= 0
-            close = abs(pred_r - gt_r) <= 0.1
-            return 1.0 if (same_dir and close) else (0.5 if same_dir else 0.0)
-
-        elif answer_type in ("comparison", "distribution"):
-            if isinstance(gt, dict) and "best_performing_state" in gt:
-                best_state = gt["best_performing_state"]
-                return 1.0 if best_state.lower() in str(predicted).lower() else 0.0
-            return 0.5  # Partial credit for comparison questions
-
-        return 0.0
-    except Exception:
         return 0.0
 
 
