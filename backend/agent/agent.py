@@ -252,12 +252,13 @@ MAX_RATE_LIMIT_WAIT = 300.0
 
 def _parse_retry_after(message: str) -> Optional[float]:
     """Pull a provider-suggested wait time out of messages like
-    'Please try again in 8m46.176s' or 'retry in 5.66s'."""
-    m = re.search(r"(?:try again in|retry in)\s+(?:(\d+)m)?(\d+\.?\d*)s", message, re.IGNORECASE)
+    'Please try again in 8m46.176s', '2h3m1s', or 'retry in 5.66s'."""
+    m = re.search(r"(?:try again in|retry in)\s+(?:(\d+)h)?(?:(\d+)m)?(\d+\.?\d*)s", message, re.IGNORECASE)
     if not m:
         return None
-    minutes = float(m.group(1)) if m.group(1) else 0.0
-    return minutes * 60 + float(m.group(2))
+    hours = float(m.group(1)) if m.group(1) else 0.0
+    minutes = float(m.group(2)) if m.group(2) else 0.0
+    return hours * 3600 + minutes * 60 + float(m.group(3))
 
 
 def _invoke_with_retry(agent, question: str, max_retries: int = 3, base_wait: float = 20.0):

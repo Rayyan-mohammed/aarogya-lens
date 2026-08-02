@@ -280,7 +280,7 @@ def run_evaluation(
     Run the full benchmark evaluation.
     dry_run=True: skip actual API calls, use mock answers (for testing pipeline).
     """
-    from backend.agent.agent import run_query
+    from backend.agent.agent import run_query, _parse_retry_after
 
     questions = load_benchmark()
     df = load_data()
@@ -313,6 +313,17 @@ def run_evaluation(
             }
         else:
             agent_result = run_query(question=q["question"], model_name=model_name, api_key=api_key)
+            # A daily/hourly token quota (not a momentary rate limit) needs waiting out,
+            # not skipping — retry this same question instead of recording a real
+            # question as a failure just because the free tier reset hasn't happened yet.
+            patient_attempts = 0
+            while (agent_result.get("status") == "error" and patient_attempts < 8
+                   and "tokens per day" in str(agent_result.get("error", "")).lower()):
+                wait = _parse_retry_after(str(agent_result.get("error", ""))) or 900.0
+                print(f"    daily quota hit — waiting {wait/60:.1f} min before retrying this question", flush=True)
+                time.sleep(wait + 5)
+                agent_result = run_query(question=q["question"], model_name=model_name, api_key=api_key)
+                patient_attempts += 1
 
         # Compute metrics
         ea = compute_ea(agent_result.get("answer", ""), q["ground_truth"], q["answer_type"])
