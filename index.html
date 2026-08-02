@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BharatHealth Analyst — AI-Powered India District Health Analytics</title>
+  <meta name="description" content="Ask natural language questions over India's NFHS-5 district health data. 706 districts, 100+ health indicators, powered by AI." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <style>
+    :root {
+      --bg-deep:    #060b18;
+      --bg-dark:    #0d1526;
+      --bg-card:    #111d35;
+      --bg-glass:   rgba(17, 29, 53, 0.7);
+      --border:     rgba(99, 102, 241, 0.18);
+      --border-glow:rgba(99, 102, 241, 0.5);
+      --indigo:     #6366f1;
+      --indigo-light:#818cf8;
+      --cyan:       #22d3ee;
+      --amber:      #f59e0b;
+      --emerald:    #10b981;
+      --rose:       #f43f5e;
+      --violet:     #a78bfa;
+      --text-1:     #f1f5f9;
+      --text-2:     #94a3b8;
+      --text-3:     #64748b;
+      --radius:     14px;
+      --radius-sm:  8px;
+      --shadow:     0 8px 32px rgba(0,0,0,0.4);
+      --glow-indigo:0 0 40px rgba(99,102,241,0.15);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-1);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated background ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 10%, rgba(99,102,241,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(34,211,238,0.05) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 50% 50%, rgba(167,139,250,0.04) 0%, transparent 60%);
+    }
+
+    /* ── Layout ── */
+    .app { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* ── Header ── */
+    header {
+      padding: 0 2rem;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(6, 11, 24, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 12px;
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--indigo), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 800; color: white;
+      box-shadow: 0 0 20px rgba(99,102,241,0.4);
+    }
+    .logo-text { font-size: 1.1rem; font-weight: 700; color: var(--text-1); }
+    .logo-sub { font-size: 0.7rem; color: var(--text-3); margin-top: 1px; }
+    .header-badges { display: flex; gap: 8px; }
+    .badge {
+      padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600;
+      border: 1px solid;
+    }
+    .badge-indigo { color: var(--indigo-light); border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.08); }
+    .badge-cyan   { color: var(--cyan);         border-color: rgba(34,211,238,0.3); background: rgba(34,211,238,0.08); }
+    .badge-emerald{ color: var(--emerald);       border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); }
+
+    /* ── Main layout ── */
+    main {
+      flex: 1; display: grid;
+      grid-template-columns: 280px 1fr;
+      grid-template-rows: 1fr;
+      height: calc(100vh - 64px);
+    }
+
+    /* ── Sidebar ── */
+    aside {
+      background: var(--bg-dark);
+      border-right: 1px solid var(--border);
+      overflow-y: auto; padding: 1.5rem 1rem;
+      display: flex; flex-direction: column; gap: 1.5rem;
+    }
+    .sidebar-section h3 {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+      color: var(--text-3); text-transform: uppercase; margin-bottom: 0.75rem;
+    }
+
+    /* Model selector */
+    .model-select {
+      width: 100%; padding: 8px 12px; border-radius: var(--radius-sm);
+      background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text-1); font-size: 0.85rem; font-family: 'Inter', sans-serif;
+      cursor: pointer; outline: none;
+    }
+    .model-select:focus { border-color: var(--indigo); }
+
+    /* State filter */
+    .state-select {
+      width: 100%; padding: 8px 12px; border-radius: var(--radius-sm);
+      background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text-1); font-size: 0.83rem; font-family: 'Inter', sans-serif;
+      cursor: pointer; outline: none;
+    }
+    .state-select:focus { border-color: var(--indigo); }
+
+    /* API Key input */
+    .api-key-input {
+      width: 100%; padding: 8px 12px; border-radius: var(--radius-sm);
+      background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text-1); font-size: 0.8rem; font-family: 'JetBrains Mono', monospace;
+      outline: none;
+    }
+    .api-key-input:focus { border-color: var(--indigo); }
+    .api-key-input::placeholder { color: var(--text-3); }
+
+    /* Example queries */
+    .example-query {
+      padding: 8px 10px; border-radius: var(--radius-sm);
+      background: var(--bg-card); border: 1px solid var(--border);
+      font-size: 0.78rem; color: var(--text-2); cursor: pointer;
+      transition: all 0.2s; line-height: 1.4; text-align: left;
+      width: 100%;
+    }
+    .example-query:hover {
+      background: rgba(99,102,241,0.12); border-color: var(--indigo);
+      color: var(--text-1);
+    }
+    .example-queries { display: flex; flex-direction: column; gap: 6px; }
+
+    /* Stats panel */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stat-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px;
+      text-align: center;
+    }
+    .stat-value { font-size: 1.3rem; font-weight: 800; color: var(--indigo-light); }
+    .stat-label { font-size: 0.65rem; color: var(--text-3); margin-top: 2px; }
+
+    /* Tab nav */
+    .tab-nav { display: flex; gap: 6px; }
+    .tab-btn {
+      flex: 1; padding: 6px; border-radius: var(--radius-sm);
+      background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text-2); font-size: 0.72rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; text-align: center;
+    }
+    .tab-btn.active {
+      background: rgba(99,102,241,0.15); border-color: var(--indigo);
+      color: var(--indigo-light);
+    }
+    .tab-btn:hover:not(.active) { border-color: var(--border-glow); color: var(--text-1); }
+
+    /* ── Content area ── */
+    .content { display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Query bar */
+    .query-bar {
+      padding: 1.25rem 2rem;
+      background: var(--bg-dark);
+      border-bottom: 1px solid var(--border);
+    }
+    .query-form { display: flex; gap: 10px; align-items: flex-start; }
+    .query-input {
+      flex: 1; padding: 14px 18px; border-radius: var(--radius);
+      background: var(--bg-card); border: 1.5px solid var(--border);
+      color: var(--text-1); font-size: 0.95rem; font-family: 'Inter', sans-serif;
+      outline: none; resize: none; min-height: 52px; max-height: 120px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      line-height: 1.5;
+    }
+    .query-input:focus {
+      border-color: var(--indigo);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+    }
+    .query-input::placeholder { color: var(--text-3); }
+    .send-btn {
+      padding: 14px 24px; border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--indigo), #7c3aed);
+      border: none; color: white; font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; white-space: nowrap; transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px;
+      box-shadow: 0 4px 20px rgba(99,102,241,0.3);
+      min-width: 130px; justify-content: center;
+    }
+    .send-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(99,102,241,0.4); }
+    .send-btn:active { transform: translateY(0); }
+    .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .send-btn .spinner {
+      width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Results panel ── */
+    .results-panel { flex: 1; overflow-y: auto; padding: 1.5rem 2rem; }
+
+    /* Welcome screen */
+    .welcome {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 100%; text-align: center; gap: 2rem;
+    }
+    .welcome-hero {
+      max-width: 560px;
+    }
+    .welcome-icon {
+      width: 80px; height: 80px; border-radius: 24px;
+      background: linear-gradient(135deg, var(--indigo), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px; margin: 0 auto 1.5rem;
+      box-shadow: 0 0 60px rgba(99,102,241,0.3);
+    }
+    .welcome h1 { font-size: 2rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.75rem; }
+    .welcome h1 span { background: linear-gradient(135deg, var(--indigo-light), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .welcome p { font-size: 0.95rem; color: var(--text-2); line-height: 1.7; }
+    .welcome-cards {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+      max-width: 760px; width: 100%;
+    }
+    .welcome-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.25rem;
+      cursor: pointer; transition: all 0.2s; text-align: left;
+    }
+    .welcome-card:hover {
+      border-color: var(--indigo); background: rgba(99,102,241,0.08);
+      transform: translateY(-2px);
+    }
+    .welcome-card-icon { font-size: 1.5rem; margin-bottom: 0.6rem; }
+    .welcome-card h4 { font-size: 0.82rem; font-weight: 700; color: var(--text-1); margin-bottom: 0.3rem; }
+    .welcome-card p { font-size: 0.75rem; color: var(--text-2); line-height: 1.5; }
+
+    /* Result card */
+    .result-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-bottom: 1.5rem;
+      overflow: hidden; animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .result-header {
+      padding: 1rem 1.25rem;
+      background: rgba(99,102,241,0.06);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .result-question { font-size: 0.88rem; font-weight: 600; color: var(--text-1); flex: 1; }
+    .result-meta { display: flex; gap: 6px; flex-shrink: 0; }
+    .result-body { padding: 1.25rem; }
+
+    /* Tool chain display */
+    .tool-chain {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .tool-chip {
+      padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600;
+      background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25);
+      color: var(--indigo-light);
+    }
+    .tool-chain-arrow { color: var(--text-3); font-size: 0.7rem; }
+
+    /* Answer text */
+    .answer-text {
+      font-size: 0.88rem; color: var(--text-1); line-height: 1.8;
+      white-space: pre-wrap; font-family: 'Inter', sans-serif;
+    }
+    .answer-text code {
+      background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 4px; padding: 1px 5px; font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82em; color: var(--indigo-light);
+    }
+
+    /* Chart embed */
+    .chart-embed {
+      margin-top: 1rem; border-radius: var(--radius-sm);
+      border: 1px solid var(--border); overflow: hidden;
+      height: 400px;
+    }
+    .chart-embed iframe { width: 100%; height: 100%; border: none; }
+
+    /* Data table */
+    .data-table-wrap { margin-top: 1rem; overflow-x: auto; border-radius: var(--radius-sm); }
+    table {
+      width: 100%; border-collapse: collapse; font-size: 0.8rem;
+    }
+    th {
+      background: rgba(99,102,241,0.1); color: var(--indigo-light);
+      padding: 8px 12px; text-align: left; font-weight: 600;
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    td {
+      padding: 8px 12px; border-bottom: 1px solid rgba(99,102,241,0.08);
+      color: var(--text-2);
+    }
+    tr:hover td { background: rgba(99,102,241,0.04); }
+    .num { text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--cyan); }
+
+    /* Error card */
+    .error-card {
+      background: rgba(244, 63, 94, 0.07); border: 1px solid rgba(244,63,94,0.25);
+      border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem;
+    }
+    .error-title { font-size: 0.88rem; font-weight: 600; color: var(--rose); margin-bottom: 0.4rem; }
+    .error-msg { font-size: 0.8rem; color: var(--text-2); font-family: 'JetBrains Mono', monospace; }
+
+    /* Loading */
+    .loading-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 2rem; text-align: center;
+      margin-bottom: 1.5rem; animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .loading-spinner {
+      width: 32px; height: 32px; border: 3px solid rgba(99,102,241,0.2);
+      border-top-color: var(--indigo); border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto 1rem;
+    }
+    .loading-text { font-size: 0.88rem; color: var(--text-2); }
+    .loading-steps { display: flex; justify-content: center; gap: 16px; margin-top: 1rem; }
+    .loading-step {
+      font-size: 0.72rem; color: var(--text-3);
+      display: flex; align-items: center; gap: 4px;
+    }
+    .loading-step.active { color: var(--indigo-light); }
+    .loading-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: currentColor; animation: pulse 0.8s ease infinite;
+    }
+
+    /* Indicator Explorer Tab */
+    .explorer-panel { padding: 1.5rem; }
+    .explorer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    .indicator-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 1rem; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .indicator-card:hover { border-color: var(--indigo); transform: translateY(-1px); }
+    .indicator-card h4 { font-size: 0.78rem; font-weight: 600; color: var(--text-1); margin-bottom: 0.3rem; }
+    .indicator-card .ind-val { font-size: 1.4rem; font-weight: 800; color: var(--cyan); }
+    .indicator-card .ind-label { font-size: 0.65rem; color: var(--text-3); }
+    .cluster-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      font-size: 0.62rem; font-weight: 600; margin-bottom: 6px;
+    }
+    .cluster-child_nutrition { background: rgba(245,158,11,0.1); color: var(--amber); }
+    .cluster-anaemia        { background: rgba(244,63,94,0.1);  color: var(--rose); }
+    .cluster-maternal_health{ background: rgba(16,185,129,0.1); color: var(--emerald); }
+    .cluster-vaccination    { background: rgba(34,211,238,0.1); color: var(--cyan); }
+    .cluster-sanitation     { background: rgba(99,102,241,0.1); color: var(--indigo-light); }
+    .cluster-ncd            { background: rgba(167,139,250,0.1);color: var(--violet); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.5); }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+      aside { display: none; }
+      .welcome-cards { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .welcome-cards { grid-template-columns: 1fr; }
+      header { padding: 0 1rem; }
+      .results-panel { padding: 1rem; }
+      .query-bar { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <header>
+    <a class="logo" href="#">
+      <div class="logo-icon">B</div>
+      <div>
+        <div class="logo-text">BharatHealth Analyst</div>
+        <div class="logo-sub">NFHS-5 · 706 Districts · AI-Powered</div>
+      </div>
+    </a>
+    <div class="header-badges">
+      <span class="badge badge-indigo">NFHS-5 (2019–21)</span>
+      <span class="badge badge-cyan">706 Districts</span>
+      <span class="badge badge-emerald" id="api-status">Connecting…</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- Sidebar -->
+    <aside>
+      <!-- Model selector -->
+      <div class="sidebar-section">
+        <h3>LLM Model</h3>
+        <select class="model-select" id="model-select">
+          <option value="claude">Claude Sonnet 4.5</option>
+          <option value="gpt4o">GPT-4o</option>
+        </select>
+      </div>
+
+      <!-- API Key -->
+      <div class="sidebar-section">
+        <h3>API Key</h3>
+        <input class="api-key-input" type="password" id="api-key-input"
+          placeholder="sk-ant-... or sk-..." />
+        <p style="font-size:0.68rem;color:var(--text-3);margin-top:6px;">
+          Stored in memory only. Never sent anywhere except the LLM API.
+        </p>
+      </div>
+
+      <!-- State filter -->
+      <div class="sidebar-section">
+        <h3>State Filter (optional)</h3>
+        <select class="state-select" id="state-select">
+          <option value="">All India</option>
+        </select>
+      </div>
+
+      <!-- Example queries -->
+      <div class="sidebar-section">
+        <h3>Example Queries</h3>
+        <div class="example-queries" id="example-queries">
+          <button class="example-query" onclick="setQuery(this.textContent)">Which 10 districts have the worst stunting rate nationally?</button>
+          <button class="example-query" onclick="setQuery(this.textContent)">Compare institutional delivery rates across Bihar, UP, and Kerala</button>
+          <button class="example-query" onclick="setQuery(this.textContent)">Is there a correlation between open defecation and child stunting?</button>
+          <button class="example-query" onclick="setQuery(this.textContent)">Which districts in Rajasthan have the highest anaemia in women?</button>
+          <button class="example-query" onclick="setQuery(this.textContent)">Show me the districts with best full vaccination coverage</button>
+          <button class="example-query" onclick="setQuery(this.textContent)">What is the child marriage rate in Uttar Pradesh districts?</button>
+          <button class="example-query" onclick="setQuery(this.textContent)">Which states have the highest caesarean section rates?</button>
+        </div>
+      </div>
+
+      <!-- Dataset stats -->
+      <div class="sidebar-section">
+        <h3>Dataset Stats</h3>
+        <div class="stat-grid" id="stat-grid">
+          <div class="stat-card"><div class="stat-value">706</div><div class="stat-label">Districts</div></div>
+          <div class="stat-card"><div class="stat-value">36</div><div class="stat-label">States/UTs</div></div>
+          <div class="stat-card"><div class="stat-value">107</div><div class="stat-label">Columns</div></div>
+          <div class="stat-card"><div class="stat-value">19–21</div><div class="stat-label">Survey Yr</div></div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="sidebar-section">
+        <h3>Views</h3>
+        <div class="tab-nav">
+          <button class="tab-btn active" onclick="switchTab('chat', this)">Chat</button>
+          <button class="tab-btn" onclick="switchTab('explorer', this)">Explorer</button>
+          <button class="tab-btn" onclick="switchTab('correlate', this)">Correlate</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <div class="content">
+      <!-- Query bar -->
+      <div class="query-bar">
+        <div class="query-form">
+          <textarea
+            class="query-input"
+            id="query-input"
+            placeholder="Ask anything about India's district health data… e.g. Which districts in Bihar have the highest stunting rates?"
+            rows="2"
+            onkeydown="handleKey(event)"
+          ></textarea>
+          <button class="send-btn" id="send-btn" onclick="runQuery()">
+            <span id="send-icon">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </span>
+            <span id="send-label">Analyse</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="results-panel" id="results-panel">
+        <!-- Welcome -->
+        <div class="welcome" id="welcome-screen">
+          <div class="welcome-hero">
+            <div class="welcome-icon">🏥</div>
+            <h1>India's Health Data,<br /><span>Now Accessible to All</span></h1>
+            <p>Ask natural language questions over NFHS-5 data covering 706 districts across India. Get instant analysis, charts, and grounded insights — no SQL or data science skills needed.</p>
+          </div>
+          <div class="welcome-cards">
+            <div class="welcome-card" onclick="setQuery('Which 10 districts have the worst stunting rate nationally?')">
+              <div class="welcome-card-icon">🍎</div>
+              <h4>Child Nutrition</h4>
+              <p>Stunting, wasting, underweight rates across 706 districts</p>
+            </div>
+            <div class="welcome-card" onclick="setQuery('Compare anaemia rates in women across all states')">
+              <div class="welcome-card-icon">🩸</div>
+              <h4>Anaemia Burden</h4>
+              <p>Anaemia prevalence in children, pregnant & non-pregnant women</p>
+            </div>
+            <div class="welcome-card" onclick="setQuery('Which districts have the lowest institutional delivery rates?')">
+              <div class="welcome-card-icon">🤱</div>
+              <h4>Maternal Health</h4>
+              <p>Institutional delivery, ANC visits, skilled birth attendance</p>
+            </div>
+            <div class="welcome-card" onclick="setQuery('Show vaccination coverage across all districts')">
+              <div class="welcome-card-icon">💉</div>
+              <h4>Vaccination</h4>
+              <p>Full immunisation rates: BCG, DPT, polio, measles by district</p>
+            </div>
+            <div class="welcome-card" onclick="setQuery('Is open defecation correlated with child stunting at district level?')">
+              <div class="welcome-card-icon">🔗</div>
+              <h4>Correlations</h4>
+              <p>Explore relationships between sanitation, nutrition, and health outcomes</p>
+            </div>
+            <div class="welcome-card" onclick="setQuery('Which districts in Uttar Pradesh have the highest child marriage rates?')">
+              <div class="welcome-card-icon">👩</div>
+              <h4>Women's Health</h4>
+              <p>Literacy, child marriage, empowerment, and reproductive health</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results will be injected here -->
+        <div id="results-list"></div>
+
+        <!-- Explorer tab content -->
+        <div id="explorer-panel" style="display:none;">
+          <div class="explorer-panel">
+            <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem;">National Indicator Overview</h2>
+            <div class="explorer-grid" id="explorer-grid">
+              <div style="grid-column:1/-1;text-align:center;color:var(--text-3);padding:2rem;">
+                Loading indicators…
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Correlate tab content -->
+        <div id="correlate-panel" style="display:none;">
+          <div class="explorer-panel">
+            <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:1.5rem;">Correlation Explorer</h2>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1.5rem;">
+              <div>
+                <label style="font-size:0.75rem;color:var(--text-3);display:block;margin-bottom:4px;">Indicator A</label>
+                <select class="state-select" id="corr-a">
+                  <option value="stunting_pct">Stunting (%)</option>
+                  <option value="wasting_pct">Wasting (%)</option>
+                  <option value="anaemia_children_pct">Anaemia in Children (%)</option>
+                  <option value="anaemia_all_women_pct">Anaemia in Women (%)</option>
+                  <option value="institutional_delivery_pct">Institutional Delivery (%)</option>
+                  <option value="fully_vaccinated_recall_pct">Full Vaccination (%)</option>
+                  <option value="improved_sanitation_pct">Improved Sanitation (%)</option>
+                  <option value="women_literacy_pct">Women Literacy (%)</option>
+                  <option value="child_marriage_pct">Child Marriage (%)</option>
+                  <option value="anc_4plus_visits_pct">ANC 4+ Visits (%)</option>
+                  <option value="clean_cooking_fuel_pct">Clean Cooking Fuel (%)</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:0.75rem;color:var(--text-3);display:block;margin-bottom:4px;">Indicator B</label>
+                <select class="state-select" id="corr-b">
+                  <option value="improved_sanitation_pct">Improved Sanitation (%)</option>
+                  <option value="stunting_pct">Stunting (%)</option>
+                  <option value="women_literacy_pct">Women Literacy (%)</option>
+                  <option value="anaemia_all_women_pct">Anaemia in Women (%)</option>
+                  <option value="institutional_delivery_pct">Institutional Delivery (%)</option>
+                  <option value="child_marriage_pct">Child Marriage (%)</option>
+                  <option value="clean_cooking_fuel_pct">Clean Cooking Fuel (%)</option>
+                  <option value="anc_4plus_visits_pct">ANC 4+ Visits (%)</option>
+                  <option value="fully_vaccinated_recall_pct">Full Vaccination (%)</option>
+                  <option value="anaemia_children_pct">Anaemia in Children (%)</option>
+                </select>
+              </div>
+              <div style="display:flex;align-items:flex-end;">
+                <button class="send-btn" style="width:100%;height:38px;padding:0;" onclick="runCorrelation()">
+                  Run Correlation
+                </button>
+              </div>
+            </div>
+            <div id="corr-result"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const API_BASE = 'http://localhost:8000';
+  let currentTab = 'chat';
+  let nationalData = null;
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  async function init() {
+    await checkApiHealth();
+    await loadStates();
+  }
+
+  async function checkApiHealth() {
+    const badge = document.getElementById('api-status');
+    try {
+      const res = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(3000) });
+      if (res.ok) {
+        const data = await res.json();
+        badge.textContent = `API Online · ${data.districts} Districts`;
+        badge.className = 'badge badge-emerald';
+        updateStats(data);
+      } else {
+        badge.textContent = 'API Offline';
+        badge.className = 'badge badge-indigo';
+      }
+    } catch {
+      badge.textContent = 'API Offline (start backend)';
+      badge.className = 'badge badge-indigo';
+    }
+  }
+
+  function updateStats(data) {
+    const grid = document.getElementById('stat-grid');
+    grid.innerHTML = `
+      <div class="stat-card"><div class="stat-value">${data.districts}</div><div class="stat-label">Districts</div></div>
+      <div class="stat-card"><div class="stat-value">${data.states}</div><div class="stat-label">States/UTs</div></div>
+      <div class="stat-card"><div class="stat-value">${data.columns}</div><div class="stat-label">Columns</div></div>
+      <div class="stat-card"><div class="stat-value">19–21</div><div class="stat-label">Survey Yr</div></div>
+    `;
+  }
+
+  async function loadStates() {
+    try {
+      const res = await fetch(`${API_BASE}/states`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const sel = document.getElementById('state-select');
+      data.states.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.state;
+        opt.textContent = `${s.state} (${s.districts})`;
+        sel.appendChild(opt);
+      });
+    } catch { /* API offline — ignore */ }
+  }
+
+  // ── Query ─────────────────────────────────────────────────────────────────
+  function setQuery(text) {
+    const input = document.getElementById('query-input');
+    input.value = text;
+    input.focus();
+    switchTab('chat', document.querySelector('.tab-btn'));
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      runQuery();
+    }
+  }
+
+  async function runQuery() {
+    const question = document.getElementById('query-input').value.trim();
+    if (!question) return;
+
+    const model = document.getElementById('model-select').value;
+    const stateFilter = document.getElementById('state-select').value;
+    const apiKey = document.getElementById('api-key-input').value.trim();
+
+    // Hide welcome
+    document.getElementById('welcome-screen').style.display = 'none';
+
+    // Disable button
+    const btn = document.getElementById('send-btn');
+    btn.disabled = true;
+    document.getElementById('send-icon').innerHTML = '<div class="spinner"></div>';
+    document.getElementById('send-label').textContent = 'Thinking…';
+
+    // Add loading card
+    const loadingId = `loading-${Date.now()}`;
+    const loadingHtml = `
+      <div class="loading-card" id="${loadingId}">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Analysing your question…</div>
+        <div class="loading-steps">
+          <div class="loading-step active"><div class="loading-dot"></div> Parsing query</div>
+          <div class="loading-step"><div class="loading-dot"></div> Running tools</div>
+          <div class="loading-step"><div class="loading-dot"></div> Generating answer</div>
+        </div>
+      </div>`;
+    prependResult(loadingHtml);
+
+    const startTime = Date.now();
+
+    try {
+      const body = { question, model, api_key: apiKey || null };
+      if (stateFilter) body.state_filter = stateFilter;
+
+      const res = await fetch(`${API_BASE}/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+      const latency = ((Date.now() - startTime) / 1000).toFixed(1);
+
+      removeElement(loadingId);
+
+      if (data.status === 'success') {
+        renderResult(question, data, latency);
+      } else {
+        renderError(question, data.error || 'Unknown error', data.answer);
+      }
+    } catch (err) {
+      removeElement(loadingId);
+      if (err.message.includes('fetch') || err.message.includes('network') || err.name === 'TypeError') {
+        renderError(question, 'Cannot connect to backend. Make sure to run: python -m uvicorn backend.api.main:app --reload', '');
+      } else {
+        renderError(question, err.message, '');
+      }
+    } finally {
+      btn.disabled = false;
+      document.getElementById('send-icon').innerHTML = `
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>`;
+      document.getElementById('send-label').textContent = 'Analyse';
+      document.getElementById('query-input').value = '';
+    }
+  }
+
+  function renderResult(question, data, latency) {
+    const toolChainHtml = data.tool_call_sequence && data.tool_call_sequence.length > 0
+      ? `<div class="tool-chain">
+          <span style="font-size:0.7rem;color:var(--text-3);">Tools used:</span>
+          ${data.tool_call_sequence.map((t, i) => `
+            ${i > 0 ? '<span class="tool-chain-arrow">→</span>' : ''}
+            <span class="tool-chip">${t}</span>
+          `).join('')}
+        </div>`
+      : '';
+
+    const answerHtml = formatAnswer(data.answer || '');
+
+    const chartHtml = data.chart_url
+      ? `<div class="chart-embed">
+          <iframe src="${API_BASE}${data.chart_url}" loading="lazy"></iframe>
+        </div>`
+      : '';
+
+    const html = `
+      <div class="result-card">
+        <div class="result-header">
+          <div class="result-question">💬 ${escHtml(question)}</div>
+          <div class="result-meta">
+            <span class="badge badge-indigo">${data.model_used}</span>
+            <span class="badge badge-cyan">${latency}s</span>
+          </div>
+        </div>
+        <div class="result-body">
+          ${toolChainHtml}
+          <div class="answer-text">${answerHtml}</div>
+          ${chartHtml}
+        </div>
+      </div>`;
+
+    prependResult(html);
+  }
+
+  function renderError(question, error, answer) {
+    const html = `
+      <div class="result-card">
+        <div class="result-header">
+          <div class="result-question">💬 ${escHtml(question)}</div>
+          <div class="result-meta"><span class="badge badge-indigo" style="color:var(--rose);border-color:rgba(244,63,94,0.3);">Error</span></div>
+        </div>
+        <div class="result-body">
+          ${answer ? `<div class="answer-text" style="margin-bottom:1rem;">${formatAnswer(answer)}</div>` : ''}
+          <div class="error-card">
+            <div class="error-title">⚠ Error</div>
+            <div class="error-msg">${escHtml(error)}</div>
+          </div>
+        </div>
+      </div>`;
+    prependResult(html);
+  }
+
+  function formatAnswer(text) {
+    if (!text) return '';
+    return escHtml(text)
+      .replace(/```json\n?([\s\S]*?)```/g, '<div style="background:rgba(99,102,241,0.05);border:1px solid rgba(99,102,241,0.15);border-radius:6px;padding:12px;margin:8px 0;font-family:\'JetBrains Mono\',monospace;font-size:0.78rem;color:var(--indigo-light);overflow-x:auto;white-space:pre;">$1</div>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--text-1);">$1</strong>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>');
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function prependResult(html) {
+    const list = document.getElementById('results-list');
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    list.prepend(div.firstElementChild);
+  }
+
+  function removeElement(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  }
+
+  // ── Tab switching ─────────────────────────────────────────────────────────
+  function switchTab(tab, btn) {
+    currentTab = tab;
+
+    // Update active tab button
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    // If called from welcome cards, also update sidebar tab btn
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(b => {
+      if ((tab === 'chat' && b.textContent === 'Chat') ||
+          (tab === 'explorer' && b.textContent === 'Explorer') ||
+          (tab === 'correlate' && b.textContent === 'Correlate')) {
+        b.classList.add('active');
+      }
+    });
+
+    // Show/hide panels
+    const welcome = document.getElementById('welcome-screen');
+    const resultsList = document.getElementById('results-list');
+    const explorerPanel = document.getElementById('explorer-panel');
+    const correlatePanel = document.getElementById('correlate-panel');
+    const queryBar = document.querySelector('.query-bar');
+
+    if (tab === 'chat') {
+      welcome.style.display = resultsList.children.length === 0 ? 'flex' : 'none';
+      resultsList.style.display = '';
+      explorerPanel.style.display = 'none';
+      correlatePanel.style.display = 'none';
+      queryBar.style.display = '';
+    } else if (tab === 'explorer') {
+      welcome.style.display = 'none';
+      resultsList.style.display = 'none';
+      explorerPanel.style.display = '';
+      correlatePanel.style.display = 'none';
+      queryBar.style.display = 'none';
+      loadExplorer();
+    } else if (tab === 'correlate') {
+      welcome.style.display = 'none';
+      resultsList.style.display = 'none';
+      explorerPanel.style.display = 'none';
+      correlatePanel.style.display = '';
+      queryBar.style.display = 'none';
+    }
+  }
+
+  // ── Explorer ──────────────────────────────────────────────────────────────
+  async function loadExplorer() {
+    const grid = document.getElementById('explorer-grid');
+    if (nationalData) { renderExplorer(nationalData); return; }
+
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-3);padding:2rem;">Loading national data…</div>';
+    try {
+      const res = await fetch(`${API_BASE}/national-summary`);
+      if (!res.ok) throw new Error('API error');
+      nationalData = await res.json();
+      renderExplorer(nationalData);
+    } catch {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--rose);padding:2rem;">Could not load data — make sure backend is running.</div>';
+    }
+  }
+
+  const CLUSTER_ICONS = {
+    child_nutrition: '🍎', anaemia: '🩸', maternal_health: '🤱',
+    vaccination: '💉', sanitation: '🚿', ncd: '❤️',
+    women_empowerment: '👩', family_planning: '🏠', lifestyle: '🚬',
+  };
+
+  function renderExplorer(data) {
+    const grid = document.getElementById('explorer-grid');
+    const indicators = data.indicators;
+    grid.innerHTML = '';
+    for (const [col, info] of Object.entries(indicators)) {
+      const cluster = col.includes('anaemia') ? 'anaemia'
+        : col.includes('stunt') || col.includes('wast') || col.includes('underweight') ? 'child_nutrition'
+        : col.includes('delivery') || col.includes('anc') || col.includes('postnatal') ? 'maternal_health'
+        : col.includes('vaccin') ? 'vaccination'
+        : col.includes('sanit') || col.includes('water') || col.includes('cook') ? 'sanitation'
+        : col.includes('sugar') || col.includes('hypert') || col.includes('overweight') ? 'ncd'
+        : 'other';
+
+      const icon = CLUSTER_ICONS[cluster] || '📊';
+      const val = info.national_mean !== null ? `${info.national_mean}%` : 'N/A';
+      const range = info.min !== null ? `${info.min}% – ${info.max}%` : '';
+
+      grid.innerHTML += `
+        <div class="indicator-card" onclick="setQuery('Analyse ${info.description} across all districts'); switchTab('chat', document.querySelector('.tab-btn'))">
+          <div class="cluster-badge cluster-${cluster}">${icon} ${cluster.replace('_', ' ')}</div>
+          <h4>${info.description}</h4>
+          <div class="ind-val">${val}</div>
+          <div class="ind-label">National avg · Range: ${range}</div>
+        </div>`;
+    }
+  }
+
+  // ── Correlation tool ──────────────────────────────────────────────────────
+  async function runCorrelation() {
+    const a = document.getElementById('corr-a').value;
+    const b = document.getElementById('corr-b').value;
+    const resultDiv = document.getElementById('corr-result');
+
+    resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-3);">Running correlation…</div>';
+
+    try {
+      const res = await fetch(`${API_BASE}/query/direct`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tool: 'correlation_finder', params: { indicator_a: a, indicator_b: b } }),
+      });
+      const data = await res.json();
+
+      if (data.status !== 'success') {
+        resultDiv.innerHTML = `<div style="color:var(--rose);padding:1rem;">${escHtml(data.error)}</div>`;
+        return;
+      }
+
+      // Plot scatter
+      const scatter = data.scatter_data || [];
+      const xs = scatter.map(d => d.x_value);
+      const ys = scatter.map(d => d.y_value);
+      const labels = scatter.map(d => `${d.district}, ${d.state}`);
+
+      const layout = {
+        paper_bgcolor: '#111d35', plot_bgcolor: '#0d1526',
+        font: { family: 'Inter', color: '#e2e8f0' },
+        title: { text: `${data.indicator_a_description} vs ${data.indicator_b_description}`, font: { size: 14 } },
+        xaxis: { title: data.indicator_a_description, gridcolor: 'rgba(99,102,241,0.1)' },
+        yaxis: { title: data.indicator_b_description, gridcolor: 'rgba(99,102,241,0.1)' },
+        margin: { l: 60, r: 20, t: 50, b: 60 },
+        showlegend: false,
+      };
+
+      const trace = {
+        x: xs, y: ys, text: labels, mode: 'markers',
+        marker: { color: '#6366f1', size: 6, opacity: 0.7 },
+        type: 'scatter', hovertemplate: '<b>%{text}</b><br>X: %{x:.1f}%<br>Y: %{y:.1f}%<extra></extra>',
+      };
+
+      resultDiv.innerHTML = `
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1rem;">
+            <div class="stat-card">
+              <div class="stat-value" style="font-size:1.6rem;color:${Math.abs(data.pearson_r)>0.5?'var(--emerald)':'var(--amber)'}">
+                ${data.pearson_r}
+              </div>
+              <div class="stat-label">Pearson r</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" style="font-size:1.6rem;color:var(--cyan)">${data.spearman_r}</div>
+              <div class="stat-label">Spearman ρ</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" style="font-size:1.1rem;color:var(--text-2)">${data.pearson_p_value < 0.001 ? '<0.001' : data.pearson_p_value}</div>
+              <div class="stat-label">p-value</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" style="font-size:1.1rem;color:var(--text-2)">${data.n_districts}</div>
+              <div class="stat-label">Districts</div>
+            </div>
+          </div>
+          <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:1rem;">${data.interpretation}</p>
+          <div id="corr-chart" style="height:380px;"></div>
+        </div>`;
+
+      Plotly.newPlot('corr-chart', [trace], layout, { responsive: true, displayModeBar: false });
+
+    } catch (err) {
+      resultDiv.innerHTML = `<div style="color:var(--rose);padding:1rem;">Error: ${escHtml(err.message)}</div>`;
+    }
+  }
+
+  // Start
+  init();
+</script>
+</body>
+</html>
