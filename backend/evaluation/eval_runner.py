@@ -374,7 +374,12 @@ def run_evaluation(
                 json.dump({"model": model_name, "n_done": len(results),
                            "n_total": len(questions), "results": results},
                           f, indent=2, ensure_ascii=False, default=str)
-            time.sleep(45)  # groq free tier: 12000 TPM, ~6-7k tokens/question — need real spacing
+            # 12000 TPM / ~6-7k tokens for the priciest questions ~= 31s worst-case floor,
+            # but most questions cost far less and real calls run ~2-5s — 45s was too
+            # conservative given actual observed usage. 25s trims real time while staying
+            # under the worst-case floor; the daily-quota patient-retry above still
+            # covers us if a pricier stretch of questions does trip the per-minute cap.
+            time.sleep(25)
 
     # ── Aggregate metrics ─────────────────────────────────────────────────────
     by_type = {}
