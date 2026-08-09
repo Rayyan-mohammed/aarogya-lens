@@ -1,0 +1,84 @@
+schema: '2.0'
+stages:
+  build_dataset:
+    cmd: python backend/data/pipeline.py && python 
+      backend/data/nfhs4_integration.py
+    deps:
+    - path: backend/data/nfhs4_integration.py
+      hash: md5
+      md5: ae9dc99bb8917c973941e2b7da9022b9
+      size: 31242
+    - path: backend/data/pipeline.py
+      hash: md5
+      md5: 36d444fc24db87ebac9099ff3adc741b
+      size: 37079
+    - path: dataset/NFHS-4_NFHS3_Factsheet-All_India_Indicators_R1.csv
+      hash: md5
+      md5: 0c4719eb659f3d0315b4eca291481743
+      size: 131983
+    - path: dataset/NFHS_5_India_Districts_Factsheet_Data_datafile.csv
+      hash: md5
+      md5: fabdb95ae43651f8442792642deeeda2
+      size: 598132
+    outs:
+    - path: backend/data/district_summaries.json
+      hash: md5
+      md5: 2295a878bc4e5e82a66abe7cdd1e05b1
+      size: 776649
+    - path: backend/data/nfhs5_clean.csv
+      hash: md5
+      md5: 6be09eb67b7c0c2679878abf98637d67
+      size: 1609747
+    - path: backend/data/nfhs5_clean.parquet
+      hash: md5
+      md5: 5ffd2be53f28cf629b23145f2ae41198
+      size: 1018979
+    - path: backend/data/nfhs5_with_trends.csv
+      hash: md5
+      md5: 6be09eb67b7c0c2679878abf98637d67
+      size: 1609747
+    - path: backend/data/nfhs5_with_trends.parquet
+      hash: md5
+      md5: 5ffd2be53f28cf629b23145f2ae41198
+      size: 1018979
+    - path: backend/data/schema.json
+      hash: md5
+      md5: 85ebe2343d8b63ae23dc3cf4fff8dd8e
+      size: 116812
+  build_index:
+    cmd: python backend/vector_store/build_index.py
+    deps:
+    - path: backend/data/district_summaries.json
+      hash: md5
+      md5: 2295a878bc4e5e82a66abe7cdd1e05b1
+      size: 776649
+    - path: backend/vector_store/build_index.py
+      hash: md5
+      md5: 444ae05a41704e642301455d3d95070f
+      size: 2772
+    outs:
+    - path: backend/vector_store/chroma_db
+      hash: md5
+      md5: eb513489a11c6da6b0243b87b92be08f.dir
+      size: 7225508
+      nfiles: 5
+  generate_benchmark:
+    cmd: python backend/evaluation/generate_benchmark.py
+    deps:
+    - path: backend/data/nfhs5_clean.parquet
+      hash: md5
+      md5: 5ffd2be53f28cf629b23145f2ae41198
+      size: 1018979
+    - path: backend/data/schema.json
+      hash: md5
+      md5: 85ebe2343d8b63ae23dc3cf4fff8dd8e
+      size: 116812
+    - path: backend/evaluation/generate_benchmark.py
+      hash: md5
+      md5: 598851bbb906b8ee90d2bed1c1da5464
+      size: 20115
+    outs:
+    - path: backend/evaluation/benchmark_questions.json
+      hash: md5
+      md5: fbb745c693ecb8493890b80be0344997
+      size: 70942

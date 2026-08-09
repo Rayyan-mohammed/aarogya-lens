@@ -1,0 +1,5 @@
+outs:
+- md5: fabdb95ae43651f8442792642deeeda2
+  size: 598132
+  hash: md5
+  path: NFHS_5_India_Districts_Factsheet_Data_datafile.csv
