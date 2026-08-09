@@ -1,11 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { runCorrelation, CorrelationResponse } from '@/lib/api';
-import Plot from 'react-plotly.js';
+
+// plotly.js references browser-only globals (`self`) at import time, which breaks
+// Next.js's server-side prerendering — load it client-only.
+const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
 const INDICATOR_OPTIONS = [
-  { value: 'stępu', label: 'Stunting (%)' },
+  { value: 'stunting_pct', label: 'Stunting (%)' },
   { value: 'wasting_pct', label: 'Wasting (%)' },
   { value: 'anaemia_children_pct', label: 'Anaemia in Children (%)' },
   { value: 'anaemia_all_women_pct', label: 'Anaemia in Women (%)' },
@@ -167,11 +171,11 @@ export default function CorrelatePanel() {
                     font: { size: 14 },
                   },
                   xaxis: {
-                    title: result.indicator_a_description,
+                    title: { text: result.indicator_a_description },
                     gridcolor: 'rgba(99,102,241,0.1)',
                   },
                   yaxis: {
-                    title: result.indicator_b_description,
+                    title: { text: result.indicator_b_description },
                     gridcolor: 'rgba(99,102,241,0.1)',
                   },
                   margin: { l: 60, r: 20, t: 50, b: 60 },

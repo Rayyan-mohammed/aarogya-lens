@@ -10,43 +10,27 @@ interface ResultCardProps {
   latency: string;
 }
 
-const formatAnswer = (text: string) => {
-  if (!text) return '';
-  return text
-    .replace(/```json\n?([\s\S]*?)```/g, (_, code) => (
-      <div
-        key={Math.random()}
-        style={{
-          background: 'rgba(99,102,241,0.05)',
-          border: '1px solid rgba(99,102,241,0.15)',
-          borderRadius: '6px',
-          padding: '12px',
-          margin: '8px 0',
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: '0.78rem',
-          color: 'var(--indigo-light)',
-          overflowX: 'auto',
-          whiteSpace: 'pre',
-        }}
-      >
-        {code}
-      </div>
-    ))
-    .replace(/\*\*(.*?)\*\*/g, (_, bold) => (
-      <strong key={Math.random()} style={{ color: 'var(--text-1)' }}>{bold}</strong>
-    ))
-    .replace(/`([^`]+)`/g, (_, code) => (
-      <code key={Math.random()}>{code}</code>
-    ));
-};
-
 const escHtml = (s: string) =>
   String(s)
-    .replace(/&/g, '&')
-    .replace(/</g, '<')
-    .replace(/>/g, '>')
-    .replace(/"/g, '"')
-    .replace(/'/g, ''');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+// Escape the raw answer first — it's LLM output rendered via dangerouslySetInnerHTML,
+// so anything not explicitly turned into one of our own tags below must stay inert text.
+// (.replace() with a function that returns JSX doesn't work — String.replace always
+// stringifies the return value, which silently corrupted the formatting before.)
+const formatAnswer = (text: string) => {
+  if (!text) return '';
+  return escHtml(text)
+    .replace(/```json\n?([\s\S]*?)```/g, (_, code) =>
+      `<div style="background:rgba(99,102,241,0.05);border:1px solid rgba(99,102,241,0.15);border-radius:6px;padding:12px;margin:8px 0;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--indigo-light);overflow-x:auto;white-space:pre;">${code}</div>`
+    )
+    .replace(/\*\*(.*?)\*\*/g, (_, bold) => `<strong style="color:var(--text-1)">${bold}</strong>`)
+    .replace(/`([^`]+)`/g, (_, code) => `<code>${code}</code>`);
+};
 
 export default function ResultCard({ question, data, latency }: ResultCardProps) {
   const chartRef = useRef<HTMLDivElement>(null);

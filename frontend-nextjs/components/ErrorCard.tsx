@@ -7,11 +7,11 @@ interface ErrorCardProps {
 
 const escHtml = (s: string) =>
   String(s)
-    .replace(/&/g, '&')
-    .replace(/</g, '<')
-    .replace(/>/g, '>')
-    .replace(/"/g, '"')
-    .replace(/'/g, ''');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 
 export default function ErrorCard({ question, error }: ErrorCardProps) {
   return (

@@ -106,7 +106,7 @@
   }
 
   .logo {
-    @apply flex items-center gap-3 text-decoration-none;
+    @apply flex items-center gap-3 no-underline;
   }
 
   .logo-icon {
@@ -249,7 +249,7 @@
   }
 
   .query-input {
-    @apply flex-1 px-4.5 py-3.5 rounded-[var(--radius)] text-base font-sans resize-none;
+    @apply flex-1 px-[1.125rem] py-3.5 rounded-[var(--radius)] text-base font-sans resize-none;
     background: var(--bg-card);
     border: 1.5px solid var(--border);
     color: var(--text-1);
@@ -459,7 +459,7 @@
   }
 
   .loading-spinner {
-    @apply w-8 h-8 border-3 border-[rgba(99,102,241,0.2)] border-t-[var(--indigo)] rounded-full animate-spin mx-auto mb-4;
+    @apply w-8 h-8 border-[3px] border-[rgba(99,102,241,0.2)] border-t-[var(--indigo)] rounded-full animate-spin mx-auto mb-4;
   }
 
   .loading-text {
