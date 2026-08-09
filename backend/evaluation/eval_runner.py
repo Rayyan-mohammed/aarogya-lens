@@ -275,10 +275,15 @@ def run_evaluation(
     api_key: str = None,
     n_questions: int = None,
     dry_run: bool = False,
+    resume: bool = True,
 ) -> dict:
     """
     Run the full benchmark evaluation.
     dry_run=True: skip actual API calls, use mock answers (for testing pipeline).
+    resume=True (default): if a checkpoint from an interrupted run of the same model
+    and question count exists, pick up where it left off instead of starting over —
+    this run has died mid-way (machine sleep/restart) enough times that redoing 20+
+    already-good questions every time was wasting real Groq quota for nothing.
     """
     from backend.agent.agent import run_query, _parse_retry_after
 
@@ -288,19 +293,32 @@ def run_evaluation(
     if n_questions:
         questions = questions[:n_questions]
 
+    results = []
+    done_ids = set()
+    if resume and not dry_run and CHECKPOINT_PATH.exists():
+        try:
+            checkpoint = json.loads(CHECKPOINT_PATH.read_text(encoding="utf-8"))
+            if checkpoint.get("model") == model_name and checkpoint.get("n_total") == len(questions):
+                results = checkpoint["results"]
+                done_ids = {r["id"] for r in results}
+                print(f"Resuming from checkpoint: {len(results)}/{len(questions)} questions already done.", flush=True)
+        except Exception as e:
+            print(f"Could not read checkpoint, starting fresh: {e}", flush=True)
+
     print(f"\n{'='*60}", flush=True)
     print(f"BharatHealth-Bench Evaluation", flush=True)
     print(f"Model: {model_name} | Questions: {len(questions)} | Dry run: {dry_run}", flush=True)
     print(f"{'='*60}\n", flush=True)
 
-    results = []
-    total_ea = []
-    total_af = []
-    total_hr = []
-    total_rcq = []
-    total_latency = []
+    total_ea = [r["metrics"]["ea"] for r in results]
+    total_af = [r["metrics"]["af"] for r in results]
+    total_hr = [1 if r["metrics"]["hallucination"] else 0 for r in results]
+    total_rcq = [r["metrics"]["rcq"] for r in results]
+    total_latency = [r["metrics"]["latency_ms"] for r in results]
 
     for i, q in enumerate(questions):
+        if q["id"] in done_ids:
+            continue
         print(f"[{i+1:3d}/{len(questions)}] Q: {q['question'][:70]}...", flush=True)
 
         if dry_run:
@@ -479,6 +497,8 @@ if __name__ == "__main__":
     parser.add_argument("--n", type=int, default=None, help="Number of questions to evaluate")
     parser.add_argument("--dry-run", action="store_true", help="Skip API calls, use mock answers")
     parser.add_argument("--api-key", type=str, default=None)
+    parser.add_argument("--no-resume", action="store_true",
+                         help="Ignore any existing checkpoint and start over from question 1")
     args = parser.parse_args()
 
     run_evaluation(
@@ -486,4 +506,5 @@ if __name__ == "__main__":
         api_key=args.api_key,
         n_questions=args.n,
         dry_run=args.dry_run,
+        resume=not args.no_resume,
     )
