@@ -1,0 +1,77 @@
+# DVC Pipeline for BharatHealth Analyst Data Processing
+
+stages:
+  # Stage 1: Download raw NFHS-5 data
+  download_raw:
+    cmd: python backend/data/pipeline.py --download-only
+    deps:
+      - backend/data/pipeline.py
+    outs:
+      - backend/data/raw/nfhs5_raw.csv:
+          persist: true
+
+  # Stage 2: Clean and process NFHS-5 data
+  clean_data:
+    cmd: python backend/data/pipeline.py --clean
+    deps:
+      - backend/data/pipeline.py
+      - backend/data/raw/nfhs5_raw.csv
+    outs:
+      - backend/data/nfhs5_clean.csv:
+          persist: true
+      - backend/data/nfhs5_clean.parquet:
+          persist: true
+
+  # Stage 3: Merge NFHS-4 trend data (state-level)
+  merge_trends:
+    cmd: python backend/data/nfhs4_integration.py
+    deps:
+      - backend/data/nfhs4_integration.py
+      - backend/data/nfhs5_clean.parquet
+      - backend/data/raw/nfhs4_state.csv
+    outs:
+      - backend/data/nfhs5_with_trends.csv:
+          persist: true
+      - backend/data/nfhs5_with_trends.parquet:
+          persist: true
+
+  # Stage 4: Generate district summaries for vector store
+  district_summaries:
+    cmd: python backend/vector_store/build_index.py --summaries-only
+    deps:
+      - backend/vector_store/build_index.py
+      - backend/data/nfhs5_with_trends.parquet
+    outs:
+      - backend/data/district_summaries.json:
+          persist: true
+
+  # Stage 5: Build ChromaDB vector index
+  build_index:
+    cmd: python backend/vector_store/build_index.py
+    deps:
+      - backend/vector_store/build_index.py
+      - backend/data/district_summaries.json
+    outs:
+      - backend/vector_store/chroma_db:
+          persist: true
+
+  # Stage 6: Generate schema.json
+  generate_schema:
+    cmd: python backend/data/pipeline.py --schema
+    deps:
+      - backend/data/pipeline.py
+      - backend/data/nfhs5_with_trends.parquet
+    outs:
+      - backend/data/schema.json:
+          persist: true
+
+  # Stage 7: Generate benchmark questions
+  generate_benchmark:
+    cmd: python backend/evaluation/generate_benchmark.py
+    deps:
+      - backend/evaluation/generate_benchmark.py
+      - backend/data/nfhs5_with_trends.parquet
+      - backend/data/schema.json
+    outs:
+      - backend/evaluation/benchmark_questions.json:
+          persist: true

@@ -1,0 +1,43 @@
+# DVC ignore patterns
+# Files and directories that should not be tracked by DVC
+
+# Python cache
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test outputs
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node modules (for Next.js frontend)
+frontend-nextjs/node_modules/
+frontend-nextjs/.next/
+frontend-nextjs/out/
+
+# Docker
+.docker/
+
+# Temporary files
+*.tmp
+*.temp

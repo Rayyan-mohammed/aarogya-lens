@@ -1,0 +1,6 @@
+/nfhs5_clean.parquet
+/nfhs5_clean.csv
+/nfhs5_with_trends.parquet
+/nfhs5_with_trends.csv
+/district_summaries.json
+/schema.json

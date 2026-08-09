@@ -1,0 +1,5 @@
+outs:
+- md5: 2295a878bc4e5e82a66abe7cdd1e05b1
+  size: 776649
+  hash: md5
+  path: district_summaries.json
