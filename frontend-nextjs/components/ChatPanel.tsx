@@ -93,7 +93,7 @@ export default function ChatPanel({ model, apiKey, stateFilter }: ChatPanelProps
   };
 
   return (
-    <div className="content">
+    <>
       {/* Query bar */}
       <div className="query-bar">
         <form className="query-form" onSubmit={handleSubmit}>
@@ -154,6 +154,6 @@ export default function ChatPanel({ model, apiKey, stateFilter }: ChatPanelProps
           ))}
         </div>
       </div>
-    </div>
+    </>
   );
 }

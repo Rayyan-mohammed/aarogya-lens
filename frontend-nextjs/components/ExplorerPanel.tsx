@@ -22,6 +22,8 @@ const getCluster = (col: string): string => {
   if (col.includes('vaccin')) return 'vaccination';
   if (col.includes('sanit') || col.includes('water') || col.includes('cook')) return 'sanitation';
   if (col.includes('sugar') || col.includes('hypert') || col.includes('overweight')) return 'ncd';
+  if (col.includes('literacy') || col.includes('marriage')) return 'women_empowerment';
+  if (col.includes('fp_') || col.includes('family_plan')) return 'family_planning';
   return 'other';
 };
 

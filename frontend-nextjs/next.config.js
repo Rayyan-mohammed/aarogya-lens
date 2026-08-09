@@ -9,10 +9,6 @@ const nextConfig = {
   basePath,
   images: { unoptimized: true },
   experimental: { cpus: 1, workerThreads: false },
-  // Already verified separately via `tsc --noEmit` and passed — skipping here
-  // trims memory pressure on this machine, which has been running low on it.
-  typescript: { ignoreBuildErrors: true },
-  eslint: { ignoreDuringBuilds: true },
 };
 
 module.exports = nextConfig;

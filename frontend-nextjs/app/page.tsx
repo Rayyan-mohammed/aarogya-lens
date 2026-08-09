@@ -34,6 +34,11 @@ export default function HomePage() {
       }
     };
     init();
+
+    // ExplorerPanel dispatches this when you click an indicator card, to jump to Chat
+    const handleSwitchTab = (e: CustomEvent<'chat' | 'explorer' | 'correlate'>) => setActiveTab(e.detail);
+    window.addEventListener('switch-tab', handleSwitchTab as EventListener);
+    return () => window.removeEventListener('switch-tab', handleSwitchTab as EventListener);
   }, []);
 
   return (
