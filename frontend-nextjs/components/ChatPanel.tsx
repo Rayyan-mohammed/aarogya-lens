@@ -7,7 +7,13 @@ import LoadingCard from './LoadingCard';
 import ErrorCard from './ErrorCard';
 import WelcomeScreen from './WelcomeScreen';
 
-export default function ChatPanel() {
+interface ChatPanelProps {
+  model: string;
+  apiKey: string;
+  stateFilter: string;
+}
+
+export default function ChatPanel({ model, apiKey, stateFilter }: ChatPanelProps) {
   const [question, setQuestion] = useState('');
   const [results, setResults] = useState<Array<{
     id: string;
@@ -18,9 +24,6 @@ export default function ChatPanel() {
     latency?: string;
   }>>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [model, setModel] = useState('groq');
-  const [apiKey, setApiKey] = useState('');
-  const [stateFilter, setStateFilter] = useState('');
   const resultsListRef = useRef<HTMLDivElement>(null);
   const queryInputRef = useRef<HTMLTextAreaElement>(null);
 

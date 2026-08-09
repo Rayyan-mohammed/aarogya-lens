@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { StateInfo } from '@/lib/api';
 
 interface SidebarProps {
@@ -9,12 +8,19 @@ interface SidebarProps {
   apiData: { districts: number; states: number; columns: number } | null;
   activeTab: 'chat' | 'explorer' | 'correlate';
   onTabChange: (tab: 'chat' | 'explorer' | 'correlate') => void;
+  model: string;
+  onModelChange: (model: string) => void;
+  apiKey: string;
+  onApiKeyChange: (key: string) => void;
+  stateFilter: string;
+  onStateFilterChange: (state: string) => void;
 }
 
 const MODEL_OPTIONS = [
-  { value: 'groq', label: 'Groq (Llama 3.3 70B)' },
-  { value: 'claude', label: 'Claude Sonnet 4.5' },
-  { value: 'gpt4o', label: 'GPT-4o' },
+  { value: 'groq', label: 'Groq (Llama 3.3 70B) — working' },
+  { value: 'openrouter', label: 'OpenRouter (Gemini 2.5 Flash) — working' },
+  { value: 'claude', label: 'Claude Sonnet 4.5 — no key configured' },
+  { value: 'gpt4o', label: 'GPT-4o — no key configured' },
 ];
 
 const EXAMPLE_QUERIES = [
@@ -33,11 +39,13 @@ export default function Sidebar({
   apiData,
   activeTab,
   onTabChange,
+  model,
+  onModelChange,
+  apiKey,
+  onApiKeyChange,
+  stateFilter,
+  onStateFilterChange,
 }: SidebarProps) {
-  const [model, setModel] = useState('groq');
-  const [apiKey, setApiKey] = useState('');
-  const [stateFilter, setStateFilter] = useState('');
-
   const handleTabClick = (tab: 'chat' | 'explorer' | 'correlate') => {
     onTabChange(tab);
   };
@@ -57,7 +65,7 @@ export default function Sidebar({
         <select
           className="select-input"
           value={model}
-          onChange={(e) => setModel(e.target.value)}
+          onChange={(e) => onModelChange(e.target.value)}
         >
           {MODEL_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -72,7 +80,7 @@ export default function Sidebar({
           className="api-key-input"
           type="password"
           value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
+          onChange={(e) => onApiKeyChange(e.target.value)}
           placeholder="sk-ant-... or sk-... or gsk_..."
         />
         <p style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginTop: '6px' }}>
@@ -86,7 +94,7 @@ export default function Sidebar({
         <select
           className="select-input state-select"
           value={stateFilter}
-          onChange={(e) => setStateFilter(e.target.value)}
+          onChange={(e) => onStateFilterChange(e.target.value)}
         >
           <option value="">All India</option>
           {states.map((s) => (

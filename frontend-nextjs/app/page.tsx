@@ -15,6 +15,9 @@ export default function HomePage() {
   const [apiData, setApiData] = useState<HealthResponse | null>(null);
   const [states, setStates] = useState<StateInfo[]>([]);
   const [activeTab, setActiveTab] = useState<'chat' | 'explorer' | 'correlate'>('chat');
+  const [model, setModel] = useState('groq');
+  const [apiKey, setApiKey] = useState('');
+  const [stateFilter, setStateFilter] = useState('');
 
   useEffect(() => {
     const init = async () => {
@@ -59,9 +62,15 @@ export default function HomePage() {
           apiData={apiData}
           activeTab={activeTab}
           onTabChange={setActiveTab}
+          model={model}
+          onModelChange={setModel}
+          apiKey={apiKey}
+          onApiKeyChange={setApiKey}
+          stateFilter={stateFilter}
+          onStateFilterChange={setStateFilter}
         />
         <div className="content">
-          {activeTab === 'chat' && <ChatPanel />}
+          {activeTab === 'chat' && <ChatPanel model={model} apiKey={apiKey} stateFilter={stateFilter} />}
           {activeTab === 'explorer' && <ExplorerPanel />}
           {activeTab === 'correlate' && <CorrelatePanel />}
         </div>

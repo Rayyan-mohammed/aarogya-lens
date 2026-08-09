@@ -75,3 +75,4 @@ backend/evaluation/eval_checkpoint.json
 frontend-nextjs/node_modules/
 frontend-nextjs/.next/
 frontend-nextjs/.env.local
+frontend-nextjs/tsconfig.tsbuildinfo
