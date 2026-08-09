@@ -273,6 +273,7 @@ def chart_generator(
 
         # Save
         fname = filename or re.sub(r"[^\w]+", "_", title.lower())[:40]
+        fname = re.sub(r"\.html$", "", fname, flags=re.IGNORECASE)  # the LLM sometimes already includes it
         out_path = CHARTS_DIR / f"{fname}.html"
         fig.write_html(str(out_path))
 
