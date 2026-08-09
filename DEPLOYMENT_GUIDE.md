@@ -64,8 +64,10 @@ docker compose up
 - `frontend` — the static `frontend/index.html` served on port 3000 via `python -m http.server`
 
 Both `Dockerfile` and `docker-compose.yml` have been built and run locally end-to-end
-(`/health` returns the full 706x324 dataset from inside the container). `.dockerignore`
-excludes the raw `dataset/` CSVs, local logs, and eval results from the image.
+(`/health` returns the full 706x448 dataset from inside the container). `.dockerignore`
+excludes the raw `dataset/` CSVs, local logs, and eval results from the image. The
+Dockerfile binds to `$PORT` (falling back to 8000) so it also works unmodified on PaaS
+hosts that inject their own port.
 
 Note: the image is large (~1.5GB+) because `sentence-transformers` pulls in `torch`.
 If image size matters for a real deploy, swap the embedding step to an API-based
@@ -73,14 +75,29 @@ embedding model instead of a local `sentence-transformers` model.
 
 ---
 
-## Cloud Deployment — not yet done
+## Cloud Deployment
 
-The blueprint's target architecture is GCP Cloud Run (backend) + Vercel (frontend).
-**Neither has been deployed as of this writing.** The Docker image above is what you'd
-push to Cloud Run's container registry; the frontend is a static file that Vercel (or
-any static host) can serve directly once `API_BASE` in `frontend/index.html` is pointed
-at the deployed backend URL. Treat any specific `gcloud`/`firebase` command as a sketch
-to adapt, not a verified recipe — none of it has been run against a real GCP project.
+**Frontend: done.** The original `frontend/index.html` is live on GitHub Pages at
+https://rayyan-mohammed.github.io/aarogya-lens/ (served from the `gh-pages` branch,
+root path — GitHub auto-enabled Pages once that branch was pushed). Its `API_BASE`
+still points at `localhost:8000`, so it can't reach a live backend yet.
+
+**Backend: not yet done**, and not for lack of trying — three free-tier hosts were
+attempted and each hit a real wall, not a config mistake:
+- **Render**: API accepted everything (a public GitHub repo doesn't even need
+  pre-authorization) but creating *any* service, free tier included, now requires a
+  card on file for verification. `render.yaml` is in the repo, ready to go once that's
+  sorted.
+- **Hugging Face Spaces**: Docker/Gradio SDKs now require a PRO subscription even on
+  cpu-basic; only static Spaces are free, which can't run a backend.
+- **Vercel serverless**: hits the platform's 250MB function bundle limit before even
+  counting ML dependencies — `pandas` + `numpy` + `scipy` + `plotly` alone are already
+  ~267MB. Not fixable by trimming tools; the core stack itself is too big for a
+  serverless function.
+
+Next candidate: a self-hosted VM (e.g. Oracle Cloud's Always Free Ampere tier, up to
+24GB RAM, no time limit) running the existing Docker image directly — no function-size
+or Docker-SDK-billing constraints apply to a plain VM.
 
 ---
 

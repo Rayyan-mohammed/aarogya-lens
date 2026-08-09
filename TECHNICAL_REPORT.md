@@ -25,7 +25,7 @@ datasets; none target Indian health survey data specifically.
 
 ```
 Data Layer          Agent Layer           API Layer
-NFHS-5 (706x448) -> LangChain ReAct    -> FastAPI (10 endpoints,
+NFHS-5 (706x448) -> LangChain ReAct    -> FastAPI (11 endpoints,
 ChromaDB              7 tools             rate limiting,
 Schema JSON            Multi-LLM           request logging)
 ```
@@ -62,19 +62,26 @@ no Anthropic or OpenAI key is configured in this project; `agent.py` supports Cl
 and GPT-4o but neither has been tested against a real key).
 
 ### 2.3 API
-FastAPI, 10 endpoints, CORS, an in-memory rate limiter (10 req/min, 100 with an
+FastAPI, 11 endpoints, CORS, an in-memory rate limiter (10 req/min, 100 with an
 `X-API-Key` header — single-instance, would need Redis behind multiple workers), and
 JSON-line request logging as a local stand-in for the blueprint's BigQuery analytics.
+93% line coverage from the pytest suite (`tests/test_api.py`).
 
 ### 2.4 Frontend
-Single-page vanilla HTML/CSS/JS — not the Next.js the original project blueprint
-specified. Functional: query bar, indicator explorer, correlation tool, chart embedding.
+Two frontends exist: the original single-page vanilla HTML/CSS/JS UI (query bar,
+indicator explorer, correlation tool, chart embedding), and a Next.js 14 App Router
+rewrite in `frontend-nextjs/` matching the blueprint's original spec — it builds and
+runs (several real bugs, including an XSS-relevant one, were found and fixed getting it
+to build at all; see `COMPLETION_SUMMARY.md`), but isn't deployed yet.
 
 ### 2.5 Deployment
 `Dockerfile` + `docker-compose.yml` exist and have been built and run locally —
-`/health` responds correctly with the full dataset from inside the container. **Nothing
-is deployed to a public URL.** GCP Cloud Run / Vercel, as specified in the original
-blueprint, have not been attempted.
+`/health` responds correctly with the full dataset from inside the container. The
+original frontend is deployed to a public URL (GitHub Pages). **The API is not** —
+Render, Hugging Face Spaces, and Vercel were each attempted and each hit a genuine
+platform wall (billing requirement, billing requirement, and a hard 250MB serverless
+function size limit, respectively) rather than a configuration mistake. GCP Cloud Run,
+as specified in the original blueprint, has not been attempted.
 
 ---
 

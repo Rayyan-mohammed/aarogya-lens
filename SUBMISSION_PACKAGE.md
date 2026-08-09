@@ -17,12 +17,23 @@ current, real numbers.
 - **Agent**: 7 tools (`semantic_search`, `pandas_query`, `sql_query`, `chart_generator`,
   `trend_analyser`, `correlation_finder`, `insight_writer`) via a LangChain/LangGraph
   ReAct agent — confirmed working end-to-end against a real LLM.
-- **API**: FastAPI, 10 endpoints, rate limiting + request logging middleware.
-- **Frontend**: single-page HTML/JS UI (not Next.js).
+- **API**: FastAPI, 11 endpoints, rate limiting + request logging middleware, 93% test
+  coverage.
+- **Frontend**: original single-page HTML/JS UI (deployed, see below) plus a Next.js 14
+  rewrite in `frontend-nextjs/` that builds and runs but isn't deployed yet.
+- **Tests**: 63 pytest tests across the data pipeline, all 7 tools, and every API
+  endpoint — several are regression tests for real bugs found while building this.
 - **Evaluation**: 200-question benchmark, ground truth computed programmatically, 5
-  metrics implemented in real code. A corrected full run (after fixing 3 scoring bugs
-  found along the way) is what any reported numbers come from.
-- **Deployment**: Docker build + run verified locally. Not deployed to a public URL.
+  metrics implemented in real code. Several scoring bugs were found and fixed along the
+  way; the full run is still executing (Groq's free tier caps this model at 100,000
+  tokens/day, so 200 questions takes multiple days, not one sitting) — see
+  `COMPLETION_SUMMARY.md` for current progress.
+- **Deployment**: Docker build + run verified locally. The original frontend is live
+  on GitHub Pages. The API isn't deployed yet — Render, Hugging Face Spaces, and Vercel
+  were each tried and each hit a real platform wall (billing requirement, billing
+  requirement, and a 250MB serverless size limit) rather than a config mistake.
+- **Data versioning**: DVC is configured (`dvc.yaml`, local remote) for the processed
+  data and vector store, though the pipeline doesn't yet `repro` cleanly from scratch.
 
 ## Query types the agent handles
 - Factual: "What is the stunting rate in Kerala?"
@@ -50,11 +61,11 @@ is currently configured for this project, so those code paths in `agent.py` are
 implemented but untested against a real key.
 
 ## What's honestly still missing against the original project blueprint
-- No cloud deployment (Cloud Run / Vercel never attempted).
-- Frontend isn't Next.js.
+- No public API deployment (see Deployment above — genuinely blocked, not skipped).
+- Next.js frontend exists but isn't deployed; only the original HTML/JS UI is live.
 - No Claude/GPT-4o key configured — running on free-tier Groq/OpenRouter instead.
-- No DVC data versioning.
-- No automated test suite with coverage metrics.
+- DVC pipeline doesn't replay cleanly from scratch (see Data versioning above).
+- Final benchmark numbers don't exist yet — the run is still in progress.
 - `TECHNICAL_REPORT.md`'s load-testing and user-acceptance-testing sections in an
   earlier version were never actually run — removed rather than restated unverified.
 
