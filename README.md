@@ -25,7 +25,7 @@ fuller, continuously-updated status.
 | **Evaluation Harness** | 200-question benchmark, ground truth computed programmatically, 5 metrics implemented in real code. Currently mid-run — see below. |
 | **Automated Tests** | 63 pytest tests, all passing, across the data pipeline, all 7 tools, and every API endpoint. Coverage: `tools.py` 72%, `main.py` 93%, `eval_runner.py` 49% (the untested part is the LLM-calling orchestration loop, which needs a live run to exercise). |
 | **Deployment** | Docker builds and runs locally. Frontend live on GitHub Pages. API not yet publicly deployed — free-tier hosts (Render, Hugging Face Spaces, Vercel) each hit a real blocker (billing requirement or a hard function-size limit); next step is a self-hosted VM. |
-| **Data Versioning** | DVC configured (`dvc.yaml`, local remote) for the processed data files and vector store. Honest caveat: the pipeline stages reference a `backend/data/raw/` directory and CLI flags on `pipeline.py` that don't currently exist, so `dvc repro` won't run clean from scratch yet — versioning of already-generated outputs works, the from-scratch pipeline replay doesn't. |
+| **Data Versioning** | DVC pipeline (`dvc.yaml`), 3 stages, verified end to end with `dvc repro` — every regenerated output hashed identical to what was already on disk. Raw CSVs, processed data, vector store, and the benchmark question set are all DVC-tracked; `dvc status` is clean. |
 
 ## Benchmark status
 
@@ -113,7 +113,7 @@ aarogya-lens/
 ├── frontend/index.html                 # original single-page UI (deployed)
 ├── frontend-nextjs/                    # Next.js 14 rewrite (builds, not deployed)
 ├── tests/                              # 63 pytest tests
-├── dvc.yaml, .dvc/                     # data versioning (partially wired, see above)
+├── dvc.yaml, .dvc/                     # data versioning (verified working, see above)
 ├── Dockerfile, docker-compose.yml      # verified locally
 └── COMPLETION_SUMMARY.md               # up-to-date honest status
 ```
@@ -125,8 +125,8 @@ aarogya-lens/
 - NFHS-4 trend data is a state-level approximation, not a true district-level comparison,
   because that's what the source file contains.
 - No public API deployment yet (see the Deployment row above).
-- The DVC pipeline doesn't `repro` cleanly from scratch (see the Data Versioning row above).
-- Benchmark numbers aren't final — the run is still in progress.
+- Benchmark numbers aren't final — the run is still in progress, and doesn't yet
+  resume from a checkpoint if the host machine restarts mid-run.
 
 ---
 

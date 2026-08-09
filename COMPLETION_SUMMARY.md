@@ -15,10 +15,11 @@ answer). This version only states things that have been verified.
 | Vector Database | ChromaDB, 706 district summaries embedded, verified live |
 | AI Agent | 7 tools (semantic_search, pandas_query, sql_query, chart_generator, insight_writer, trend_analyser, correlation_finder), verified working end-to-end against a real LLM |
 | API Backend | 11 FastAPI endpoints, rate limiting + request logging middleware, verified working in a built Docker container |
-| Frontend | Single-page vanilla JS/HTML UI (not the Next.js the original blueprint specified) |
+| Frontend | Two, both real: the original single-page HTML/JS UI (**deployed** at [rayyan-mohammed.github.io/aarogya-lens](https://rayyan-mohammed.github.io/aarogya-lens/)), and a Next.js 14 App Router rewrite in `frontend-nextjs/` — found it had never been built even once, fixed 8 real bugs (including an XSS-relevant one) to get it building and running; not deployed yet. |
 | Evaluation Framework | 200-question benchmark with programmatic ground truth; EA/AF/HR/RCQ/latency metrics computed by real code (not mocked) |
 | Automated Tests | 63 pytest tests covering the data pipeline, all 7 tools, and every API endpoint — several are regression tests for real bugs found this session. Measured coverage: `tools.py` 72%, `main.py` 93%, `eval_runner.py` 49% (the untested part is the LLM-calling loop itself) |
-| Deployment | Dockerfile + docker-compose built and run locally, `/health` verified inside the container. GCP Cloud Run / Vercel deployment has **not** been done. |
+| Data Versioning | DVC pipeline (`dvc.yaml`) — 3 real stages, verified end to end with `dvc repro` (diffed every regenerated output against what was already on disk: byte-for-byte identical). Raw source CSVs, processed data, vector store, and benchmark questions are all DVC-tracked. `dvc status` reports clean. |
+| Deployment | Dockerfile + docker-compose built and run locally, `/health` verified inside the container. Original frontend live on GitHub Pages. API not deployed yet — Render, Hugging Face Spaces, and Vercel were each tried and each hit a genuine platform wall (billing requirement, billing requirement, 250MB serverless size limit), not a config mistake. |
 
 ## Benchmark results
 
@@ -61,13 +62,37 @@ numbers, or `backend/evaluation/eval_checkpoint.json` for in-progress partial re
 - `pandas_query` had the same NaN-serialization bug already fixed in the API
   endpoints — a missing value (e.g. Thrissur's vaccination rate) came back as
   `NaN` instead of `null`, which isn't valid JSON.
+- `README.md` had never been touched this whole project and still had the exact
+  fabricated "90% accuracy, 0% hallucination, 100% reasoning quality" numbers plus a
+  fake "50 concurrent users, 23.8 req/s" load test front and center — the highest-
+  visibility file in the repo, and the last one still making those claims. Rewritten.
+- The `frontend-nextjs/` app (from the "Add Next.js frontend and DVC data versioning"
+  commit) had never actually been built. `npm run build` failed immediately: a broken
+  HTML-escaping function with a syntax error that also did nothing useful even if it
+  had compiled, `formatAnswer` trying to return JSX from inside `.replace()` (silently
+  broken — JS just stringifies it), unescaped LLM output going into
+  `dangerouslySetInnerHTML` (a real XSS opening), three invalid Tailwind classes,
+  Plotly crashing on server-side prerender, a Plotly type error, and a corrupted
+  indicator value (`'stępu'` instead of `'stunting_pct'`). All fixed; it builds and
+  runs now.
+- The DVC pipeline (`dvc.yaml`) referenced CLI flags on `pipeline.py`/`build_index.py`
+  that don't exist and a `backend/data/raw/` directory that was never created — `dvc
+  repro` would fail from scratch. Rebuilt as 3 real stages matching what the scripts
+  actually do, and discovered along the way that `generate_benchmark.py` alone only
+  produces 119 of the real 200 benchmark questions — the rest come from a second
+  script using unseeded `random.choice()` for district/domain selection, so the full
+  200-question file isn't actually regenerable byte-for-byte and is now tracked as
+  data rather than a fake pipeline output. (A third script, `add_final_questions.py`,
+  turned out to be unused — 119 + 81 already equals 200.)
 
 ## Known gaps against the original blueprint
 
 - No Anthropic or OpenAI API key configured — the agent runs on Groq's free tier, the
   only one of five configured provider keys with any usable quota right now.
 - A full 200-question benchmark run cannot complete in a single session on free-tier
-  Groq alone — see above.
-- Frontend is not Next.js.
-- Nothing is deployed to a public URL.
-- No DVC data versioning.
+  Groq alone — see above. It also doesn't survive the host machine sleeping/restarting
+  yet (no resume from checkpoint on restart), so it has had to be restarted from
+  question 1 more than once.
+- Next.js frontend exists and works but isn't deployed; only the original HTML/JS UI
+  is live.
+- The API itself isn't deployed to a public URL yet (see Deployment above).

@@ -32,8 +32,9 @@ current, real numbers.
   on GitHub Pages. The API isn't deployed yet — Render, Hugging Face Spaces, and Vercel
   were each tried and each hit a real platform wall (billing requirement, billing
   requirement, and a 250MB serverless size limit) rather than a config mistake.
-- **Data versioning**: DVC is configured (`dvc.yaml`, local remote) for the processed
-  data and vector store, though the pipeline doesn't yet `repro` cleanly from scratch.
+- **Data versioning**: DVC pipeline (`dvc.yaml`), verified end to end with `dvc repro`
+  — every output matched what was already on disk, byte-for-byte. Raw CSVs, processed
+  data, vector store, and benchmark questions are all tracked.
 
 ## Query types the agent handles
 - Factual: "What is the stunting rate in Kerala?"
@@ -64,8 +65,8 @@ implemented but untested against a real key.
 - No public API deployment (see Deployment above — genuinely blocked, not skipped).
 - Next.js frontend exists but isn't deployed; only the original HTML/JS UI is live.
 - No Claude/GPT-4o key configured — running on free-tier Groq/OpenRouter instead.
-- DVC pipeline doesn't replay cleanly from scratch (see Data versioning above).
-- Final benchmark numbers don't exist yet — the run is still in progress.
+- Final benchmark numbers don't exist yet — the run is still in progress, and doesn't
+  yet resume from a checkpoint if the host machine restarts mid-run.
 - `TECHNICAL_REPORT.md`'s load-testing and user-acceptance-testing sections in an
   earlier version were never actually run — removed rather than restated unverified.
 
