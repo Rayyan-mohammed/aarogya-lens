@@ -17,10 +17,8 @@ interface SidebarProps {
 }
 
 const MODEL_OPTIONS = [
-  { value: 'groq', label: 'Groq (Llama 3.3 70B) — working' },
-  { value: 'openrouter', label: 'OpenRouter (Gemini 2.5 Flash) — working' },
-  { value: 'claude', label: 'Claude Sonnet 4.5 — no key configured' },
-  { value: 'gpt4o', label: 'GPT-4o — no key configured' },
+  { value: 'groq', label: 'Groq (Llama 3.3 70B)' },
+  { value: 'openrouter', label: 'OpenRouter (Gemini 2.5 Flash)' },
 ];
 
 const EXAMPLE_QUERIES = [
