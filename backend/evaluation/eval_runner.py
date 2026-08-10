@@ -384,6 +384,7 @@ def run_evaluation(
             },
             "tool_call_sequence": agent_result.get("tool_call_sequence", []),
             "status": agent_result.get("status"),
+            "error_detail": agent_result.get("error") if agent_result.get("status") == "error" else None,
         }
         results.append(result)
 

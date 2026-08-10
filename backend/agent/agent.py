@@ -245,6 +245,15 @@ def create_agent(model_name: str = "claude", api_key: Optional[str] = None):
 
 RATE_LIMIT_MARKERS = ("rate_limit", "429", "413", "tokens per minute", "requires more credits")
 
+# A ~25hr benchmark run once failed 184/200 questions in under a second each — too
+# fast to be a quota wait, and it didn't match any of the markers above, so nothing
+# retried it even once. Never found the exact error text (it wasn't being saved at
+# the time), but it has every sign of a transient provider-side blip: covering these
+# markers too means a real outage/5xx/timeout gets retried instead of failing cold.
+TRANSIENT_ERROR_MARKERS = ("timeout", "timed out", "connection", "503", "502", "500",
+                           "overloaded", "temporarily unavailable", "server error",
+                           "internal error", "bad gateway", "service unavailable")
+
 # Above this, a provider's "try again in Xs" is pointing at an hourly/daily quota reset,
 # not a momentary dip — waiting it out would stall the whole run for one question.
 MAX_RATE_LIMIT_WAIT = 300.0
@@ -276,7 +285,9 @@ def _invoke_with_retry(agent, question: str, max_retries: int = 3, base_wait: fl
             )
         except Exception as e:
             last_error = e
-            if attempt < max_retries and any(m in str(e).lower() for m in RATE_LIMIT_MARKERS):
+            msg = str(e).lower()
+            retryable = any(m in msg for m in RATE_LIMIT_MARKERS) or any(m in msg for m in TRANSIENT_ERROR_MARKERS)
+            if attempt < max_retries and retryable:
                 suggested = _parse_retry_after(str(e))
                 if suggested is not None and suggested > MAX_RATE_LIMIT_WAIT:
                     raise last_error
