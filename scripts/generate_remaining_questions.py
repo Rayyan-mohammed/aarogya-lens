@@ -11,7 +11,7 @@ from pathlib import Path
 random.seed(42)  # was unseeded — re-running this picked different districts/domains every time
 
 # Load existing data
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).parent.parent
 DATA_DIR = ROOT / "backend" / "data"
 EVAL_DIR = ROOT / "backend" / "evaluation"
 

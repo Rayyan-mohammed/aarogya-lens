@@ -7,8 +7,8 @@ import json
 import pandas as pd
 from pathlib import Path
 
-ROOT = Path(__file__).parent
-DATA_DIR = ROOT / "backend" / "data" 
+ROOT = Path(__file__).parent.parent
+DATA_DIR = ROOT / "backend" / "data"
 EVAL_DIR = ROOT / "backend" / "evaluation"
 
 def add_final_questions():

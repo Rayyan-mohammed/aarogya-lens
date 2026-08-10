@@ -7,6 +7,13 @@ import subprocess
 import sys
 import time
 import json
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Windows consoles default to cp1252 and can't encode the emoji this script prints
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 
 def check_api_server():
     """Check if API server can start"""
@@ -94,14 +101,13 @@ def check_frontend():
     """Check frontend files"""
     print("🔍 Checking Frontend...")
     
-    import os
-    frontend_file = "frontend/index.html"
-    
-    if os.path.exists(frontend_file):
+    frontend_file = Path(__file__).parent.parent / "frontend" / "index.html"
+
+    if frontend_file.exists():
         try:
             with open(frontend_file, 'r', encoding='utf-8') as f:
                 content = f.read()
-                if "BharatHealth" in content and "localhost:8000" in content:
+                if "BharatHealth" in content and "API_BASE" in content:
                     print("  ✅ Frontend HTML ready with API integration")
                     return True
         except Exception as e:
@@ -115,19 +121,19 @@ def check_documentation():
     """Check documentation completeness"""
     print("🔍 Checking Documentation...")
     
+    root = Path(__file__).parent.parent
     docs_to_check = [
-        "README.md",
-        "TECHNICAL_REPORT.md", 
-        "DEPLOYMENT_GUIDE.md",
-        "SUBMISSION_PACKAGE.md"
+        root / "README.md",
+        root / "docs" / "TECHNICAL_REPORT.md",
+        root / "docs" / "DEPLOYMENT_GUIDE.md",
+        root / "docs" / "SUBMISSION_PACKAGE.md",
     ]
-    
-    import os
+
     for doc in docs_to_check:
-        if os.path.exists(doc):
-            print(f"  ✅ {doc} - available")
+        if doc.exists():
+            print(f"  ✅ {doc.name} - available")
         else:
-            print(f"  ❌ {doc} - missing")
+            print(f"  ❌ {doc.name} - missing")
             return False
     
     return True
@@ -138,9 +144,9 @@ def run_mini_evaluation():
     
     try:
         result = subprocess.run([
-            sys.executable, "-m", "backend.evaluation.eval_runner", 
+            sys.executable, "-m", "backend.evaluation.eval_runner",
             "--dry-run", "--n", "1"
-        ], capture_output=True, text=True, timeout=30)
+        ], capture_output=True, text=True, timeout=30, cwd=Path(__file__).parent.parent)
         
         if result.returncode == 0:
             if "OVERALL RESULTS" in result.stdout:

@@ -8,7 +8,7 @@ This README replaces an earlier version that claimed "90% accuracy, 0% hallucina
 rate, 100% reasoning quality" and a "50 concurrent users, 23.8 req/s" load test as
 achieved results. None of that was real — the benchmark numbers traced back to a single
 hardcoded mock answer, and the load test was never run. Below is only what has actually
-been built and verified. See [COMPLETION_SUMMARY.md](COMPLETION_SUMMARY.md) for the
+been built and verified. See [docs/COMPLETION_SUMMARY.md](docs/COMPLETION_SUMMARY.md) for the
 fuller, continuously-updated status.
 
 ---
@@ -24,7 +24,7 @@ fuller, continuously-updated status.
 | **Frontend** | Two, both real: a single-page HTML/JS UI (deployed at [rayyan-mohammed.github.io/aarogya-lens](https://rayyan-mohammed.github.io/aarogya-lens/)), and a Next.js 14 App Router rewrite in `frontend-nextjs/` (builds and runs; not yet deployed). |
 | **Evaluation Harness** | 200-question benchmark, ground truth computed programmatically, 5 metrics implemented in real code. Currently mid-run — see below. |
 | **Automated Tests** | 63 pytest tests, all passing, across the data pipeline, all 7 tools, and every API endpoint. Coverage: `tools.py` 72%, `main.py` 93%, `eval_runner.py` 49% (the untested part is the LLM-calling orchestration loop, which needs a live run to exercise). |
-| **Deployment** | Docker builds and runs locally. Frontend live on GitHub Pages. API not yet publicly deployed — free-tier hosts (Render, Hugging Face Spaces, Vercel) each hit a real blocker (billing requirement or a hard function-size limit); next step is a self-hosted VM. |
+| **Deployment** | Docker builds and runs locally. Both frontends live on GitHub Pages ([original](https://rayyan-mohammed.github.io/aarogya-lens/), [Next.js](https://rayyan-mohammed.github.io/aarogya-lens/next/)), pointed at a live API reachable via a Cloudflare Tunnel to this machine's local backend. Render, Hugging Face Spaces, and Vercel were each tried for a persistent host and each hit a real blocker (billing requirement or a hard function-size limit) — the tunnel works and costs nothing, but only stays up while this machine does. |
 | **Data Versioning** | DVC pipeline (`dvc.yaml`), 3 stages, verified end to end with `dvc repro` — every regenerated output hashed identical to what was already on disk. Raw CSVs, processed data, vector store, and the benchmark question set are all DVC-tracked; `dvc status` is clean. |
 
 ## Benchmark status
@@ -33,7 +33,7 @@ BharatHealth-Bench: 200 questions across 5 query types (factual lookup 59, aggre
 ranking 52, state comparison 30, trend analysis 38, correlation 21) and 6 health domains,
 with ground truth computed directly from the dataset. All 5 metrics (EA, AF, HR, RCQ, LC)
 are implemented in real code — several scoring bugs were found and fixed by running it
-against live model output (see [COMPLETION_SUMMARY.md](COMPLETION_SUMMARY.md) for the list).
+against live model output (see [docs/COMPLETION_SUMMARY.md](docs/COMPLETION_SUMMARY.md) for the list).
 
 The run itself is genuinely rate-limited by Groq's free tier: **100,000 tokens/day**, and
 at ~6,000+ tokens per question, 200 questions need roughly 12x that daily budget. The
@@ -111,11 +111,14 @@ aarogya-lens/
 │   ├── evaluation/benchmark_questions.json
 │   └── vector_store/                   # ChromaDB build + index
 ├── frontend/index.html                 # original single-page UI (deployed)
-├── frontend-nextjs/                    # Next.js 14 rewrite (builds, not deployed)
+├── frontend-nextjs/                    # Next.js 14 rewrite (deployed as a static export)
 ├── tests/                              # 63 pytest tests
+├── scripts/                            # manual demo/smoke-test scripts (not the pytest suite)
+├── docs/                               # blueprint, technical report, deployment guide, etc.
+├── dataset/                            # raw source CSVs (DVC-tracked)
 ├── dvc.yaml, .dvc/                     # data versioning (verified working, see above)
 ├── Dockerfile, docker-compose.yml      # verified locally
-└── COMPLETION_SUMMARY.md               # up-to-date honest status
+└── README.md, docs/COMPLETION_SUMMARY.md   # this file + up-to-date honest status
 ```
 
 ## Known limitations
@@ -125,8 +128,7 @@ aarogya-lens/
 - NFHS-4 trend data is a state-level approximation, not a true district-level comparison,
   because that's what the source file contains.
 - No public API deployment yet (see the Deployment row above).
-- Benchmark numbers aren't final — the run is still in progress, and doesn't yet
-  resume from a checkpoint if the host machine restarts mid-run.
+- Benchmark numbers aren't final — see the Benchmark status section above.
 
 ---
 

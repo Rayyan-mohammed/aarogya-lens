@@ -3,6 +3,11 @@
 Test script for the newly added features
 """
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+
 def test_sql_tool():
     """Test SQL query tool"""
     print("🧪 Testing SQL Query Tool...")

@@ -3,6 +3,11 @@
 Test script to verify BharatHealth tools work directly
 """
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+
 def test_tools():
     """Test each tool individually"""
     

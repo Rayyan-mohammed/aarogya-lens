@@ -3,6 +3,10 @@
 Test the new SQL query tool
 """
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from backend.agent.tools.tools import sql_query
 import json
 

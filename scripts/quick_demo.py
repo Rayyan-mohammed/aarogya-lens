@@ -3,6 +3,11 @@
 Quick demo of BharatHealth system - showing core functionality
 """
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+
 def demo_system():
     """Demonstrate key capabilities"""
     
