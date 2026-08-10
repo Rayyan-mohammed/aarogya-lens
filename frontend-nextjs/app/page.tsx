@@ -16,7 +16,6 @@ export default function HomePage() {
   const [states, setStates] = useState<StateInfo[]>([]);
   const [activeTab, setActiveTab] = useState<'chat' | 'explorer' | 'correlate'>('chat');
   const [model, setModel] = useState('groq');
-  const [apiKey, setApiKey] = useState('');
   const [stateFilter, setStateFilter] = useState('');
 
   useEffect(() => {
@@ -69,13 +68,11 @@ export default function HomePage() {
           onTabChange={setActiveTab}
           model={model}
           onModelChange={setModel}
-          apiKey={apiKey}
-          onApiKeyChange={setApiKey}
           stateFilter={stateFilter}
           onStateFilterChange={setStateFilter}
         />
         <div className="content">
-          {activeTab === 'chat' && <ChatPanel model={model} apiKey={apiKey} stateFilter={stateFilter} />}
+          {activeTab === 'chat' && <ChatPanel model={model} stateFilter={stateFilter} />}
           {activeTab === 'explorer' && <ExplorerPanel />}
           {activeTab === 'correlate' && <CorrelatePanel />}
         </div>

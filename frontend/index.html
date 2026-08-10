@@ -124,16 +124,6 @@
     }
     .state-select:focus { border-color: var(--indigo); }
 
-    /* API Key input */
-    .api-key-input {
-      width: 100%; padding: 8px 12px; border-radius: var(--radius-sm);
-      background: var(--bg-card); border: 1px solid var(--border);
-      color: var(--text-1); font-size: 0.8rem; font-family: 'JetBrains Mono', monospace;
-      outline: none;
-    }
-    .api-key-input:focus { border-color: var(--indigo); }
-    .api-key-input::placeholder { color: var(--text-3); }
-
     /* Example queries */
     .example-query {
       padding: 8px 10px; border-radius: var(--radius-sm);
@@ -428,16 +418,6 @@
         </select>
       </div>
 
-      <!-- API Key -->
-      <div class="sidebar-section">
-        <h3>API Key</h3>
-        <input class="api-key-input" type="password" id="api-key-input"
-          placeholder="sk-ant-... or sk-..." />
-        <p style="font-size:0.68rem;color:var(--text-3);margin-top:6px;">
-          Stored in memory only. Never sent anywhere except the LLM API.
-        </p>
-      </div>
-
       <!-- State filter -->
       <div class="sidebar-section">
         <h3>State Filter (optional)</h3>
@@ -689,7 +669,6 @@
 
     const model = document.getElementById('model-select').value;
     const stateFilter = document.getElementById('state-select').value;
-    const apiKey = document.getElementById('api-key-input').value.trim();
 
     // Hide welcome
     document.getElementById('welcome-screen').style.display = 'none';
@@ -717,7 +696,7 @@
     const startTime = Date.now();
 
     try {
-      const body = { question, model, api_key: apiKey || null };
+      const body = { question, model };
       if (stateFilter) body.state_filter = stateFilter;
 
       const res = await fetch(`${API_BASE}/query`, {

@@ -9,11 +9,10 @@ import WelcomeScreen from './WelcomeScreen';
 
 interface ChatPanelProps {
   model: string;
-  apiKey: string;
   stateFilter: string;
 }
 
-export default function ChatPanel({ model, apiKey, stateFilter }: ChatPanelProps) {
+export default function ChatPanel({ model, stateFilter }: ChatPanelProps) {
   const [question, setQuestion] = useState('');
   const [results, setResults] = useState<Array<{
     id: string;
@@ -57,7 +56,6 @@ export default function ChatPanel({ model, apiKey, stateFilter }: ChatPanelProps
       const request: QueryRequest = {
         question: currentQuestion,
         model,
-        api_key: apiKey || undefined,
         state_filter: stateFilter || undefined,
       };
 

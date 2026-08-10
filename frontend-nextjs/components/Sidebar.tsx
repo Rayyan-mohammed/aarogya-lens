@@ -10,8 +10,6 @@ interface SidebarProps {
   onTabChange: (tab: 'chat' | 'explorer' | 'correlate') => void;
   model: string;
   onModelChange: (model: string) => void;
-  apiKey: string;
-  onApiKeyChange: (key: string) => void;
   stateFilter: string;
   onStateFilterChange: (state: string) => void;
 }
@@ -39,8 +37,6 @@ export default function Sidebar({
   onTabChange,
   model,
   onModelChange,
-  apiKey,
-  onApiKeyChange,
   stateFilter,
   onStateFilterChange,
 }: SidebarProps) {
@@ -69,21 +65,6 @@ export default function Sidebar({
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
-      </div>
-
-      {/* API Key */}
-      <div className="sidebar-section">
-        <h3>API Key</h3>
-        <input
-          className="api-key-input"
-          type="password"
-          value={apiKey}
-          onChange={(e) => onApiKeyChange(e.target.value)}
-          placeholder="sk-ant-... or sk-... or gsk_..."
-        />
-        <p style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginTop: '6px' }}>
-          Stored in memory only. Never sent anywhere except the LLM API.
-        </p>
       </div>
 
       {/* State filter */}

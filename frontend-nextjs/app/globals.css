@@ -167,18 +167,6 @@
     @apply outline-none border-[var(--indigo)];
   }
 
-  .api-key-input {
-    @apply w-full px-3 py-2 rounded-[var(--radius-sm)] text-xs font-mono;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    color: var(--text-1);
-  }
-  .api-key-input:focus {
-    @apply outline-none border-[var(--indigo)];
-  }
-  .api-key-input::placeholder {
-    color: var(--text-3);
-  }
 
   .example-query {
     @apply w-full px-3 py-2 rounded-[var(--radius-sm)] text-left text-sm leading-relaxed;
