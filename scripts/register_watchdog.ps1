@@ -10,7 +10,10 @@
 
 $TaskName = "BharatHealthWatchdog"
 $ScriptPath = "E:\aarogya-lens\scripts\watchdog.ps1"
-$Command = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$ScriptPath`""
+# Fully-qualified path — Task Scheduler's execution context doesn't reliably
+# resolve bare "powershell.exe" the way an interactive shell's PATH does.
+$PowerShellExe = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
+$Command = "`"$PowerShellExe`" -NoProfile -ExecutionPolicy Bypass -File `"$ScriptPath`""
 
 schtasks /create /tn $TaskName /tr $Command /sc minute /mo 10 /f
 if ($LASTEXITCODE -eq 0) {

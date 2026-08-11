@@ -11,6 +11,12 @@ function Log($msg) {
     Add-Content -Path $LogFile -Value $line
 }
 
+# First thing, unconditionally — so if anything below throws, there's still proof
+# the task actually fired under Task Scheduler and a way to see where it died.
+Log "watchdog fired"
+
+try {
+
 Set-Location $Root
 
 # ── 1. Backend (FastAPI on :8000) ──────────────────────────────────────────
@@ -124,4 +130,10 @@ if (-not $evalRunning -and (Test-Path $checkpointPath)) {
     Log "benchmark ok"
 } else {
     Log "benchmark finished (no checkpoint left) - nothing to do"
+}
+
+Log "watchdog done"
+
+} catch {
+    Log "FATAL: $_"
 }
