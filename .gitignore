@@ -77,3 +77,9 @@ frontend-nextjs/.next/
 frontend-nextjs/out/
 frontend-nextjs/.env.local
 frontend-nextjs/tsconfig.tsbuildinfo
+
+# watchdog runtime state
+scripts/.tunnel_url
+scripts/.tunnel_stdout
+scripts/.eval_stdout
+scripts/watchdog.log
