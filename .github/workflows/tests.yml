@@ -30,4 +30,4 @@ jobs:
           python backend/data/nfhs4_integration.py
 
       - name: Run tests
-        run: pytest -v
+        run: python -m pytest -v
