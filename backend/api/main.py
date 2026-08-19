@@ -86,7 +86,7 @@ def get_schema() -> dict:
 # ── Request / Response Models ─────────────────────────────────────────────────
 class QueryRequest(BaseModel):
     question: str
-    model: str = "claude"          # "claude" | "gpt4o"
+    model: str = "gemini"          # "claude" | "gpt4o" | "groq" | "openrouter" | "gemini"
     state_filter: Optional[str] = None
     api_key: Optional[str] = None  # optional override; falls back to env var
 

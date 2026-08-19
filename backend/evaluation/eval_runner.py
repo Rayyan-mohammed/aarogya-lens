@@ -494,7 +494,7 @@ def run_evaluation(
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", default="claude", choices=["claude", "gpt4o", "groq", "openrouter"])
+    parser.add_argument("--model", default="claude", choices=["claude", "gpt4o", "groq", "openrouter", "gemini"])
     parser.add_argument("--n", type=int, default=None, help="Number of questions to evaluate")
     parser.add_argument("--dry-run", action="store_true", help="Skip API calls, use mock answers")
     parser.add_argument("--api-key", type=str, default=None)

@@ -123,7 +123,7 @@ $checkpointPath = "$Root\backend\evaluation\eval_checkpoint.json"
 if (-not $evalRunning -and (Test-Path $checkpointPath)) {
     Log "benchmark not running and checkpoint shows unfinished work, restarting (will resume)"
     Start-Process -FilePath "$Root\.venv\Scripts\python.exe" `
-        -ArgumentList "-u", "-m", "backend.evaluation.eval_runner", "--model", "groq" `
+        -ArgumentList "-u", "-m", "backend.evaluation.eval_runner", "--model", "gemini" `
         -WorkingDirectory $Root -WindowStyle Hidden `
         -RedirectStandardOutput "$Root\scripts\.eval_stdout"
 } elseif ($evalRunning) {

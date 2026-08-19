@@ -215,7 +215,7 @@ def create_agent(model_name: str = "claude", api_key: Optional[str] = None):
             max_tokens=4096,
         )
 
-    elif model_name in ["openrouter", "gemini"]:
+    elif model_name == "openrouter":
         from langchain_openai import ChatOpenAI
         openrouter_key = api_key or os.getenv("OPENROUTER_API_KEY", "")
         if not openrouter_key:
@@ -226,6 +226,20 @@ def create_agent(model_name: str = "claude", api_key: Optional[str] = None):
             base_url="https://openrouter.ai/api/v1",
             temperature=0,
             max_tokens=2048,
+        )
+
+    elif model_name == "gemini":
+        # Direct Gemini API, not routed through OpenRouter — that path needs paid
+        # OpenRouter credits (none available); this uses the raw GEMINI_API_KEY.
+        from langchain_google_genai import ChatGoogleGenerativeAI
+        gemini_key = api_key or os.getenv("GEMINI_API_KEY", "")
+        if not gemini_key:
+            raise ValueError("GEMINI_API_KEY not set")
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-3.6-flash",
+            google_api_key=gemini_key,
+            temperature=0,
+            max_tokens=4096,
         )
 
     else:

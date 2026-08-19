@@ -15,8 +15,9 @@ interface SidebarProps {
 }
 
 const MODEL_OPTIONS = [
-  { value: 'groq', label: 'Groq (Llama 3.3 70B)' },
-  { value: 'openrouter', label: 'OpenRouter (Gemini 2.5 Flash)' },
+  { value: 'gemini', label: 'Gemini 3.6 Flash' },
+  { value: 'groq', label: 'Groq (currently broken — provider deprecated the model)' },
+  { value: 'openrouter', label: 'OpenRouter (currently broken — no credits)' },
 ];
 
 const EXAMPLE_QUERIES = [

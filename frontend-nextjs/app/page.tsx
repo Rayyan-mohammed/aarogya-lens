@@ -15,7 +15,7 @@ export default function HomePage() {
   const [apiData, setApiData] = useState<HealthResponse | null>(null);
   const [states, setStates] = useState<StateInfo[]>([]);
   const [activeTab, setActiveTab] = useState<'chat' | 'explorer' | 'correlate'>('chat');
-  const [model, setModel] = useState('groq');
+  const [model, setModel] = useState('gemini');
   const [stateFilter, setStateFilter] = useState('');
 
   useEffect(() => {
