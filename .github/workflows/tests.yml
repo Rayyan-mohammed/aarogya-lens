@@ -26,6 +26,7 @@ jobs:
         run: |
           cp .github/ci-fixtures/NFHS_5_India_Districts_Factsheet_Data_datafile.csv dataset/
           cp .github/ci-fixtures/NFHS-4_NFHS3_Factsheet-All_India_Indicators_R1.csv dataset/
+          cp .github/ci-fixtures/benchmark_questions.json backend/evaluation/benchmark_questions.json
           python backend/data/pipeline.py
           python backend/data/nfhs4_integration.py
 
