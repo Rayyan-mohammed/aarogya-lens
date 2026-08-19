@@ -1,0 +1,33 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # No reachable DVC remote is configured (see .github/ci-fixtures/README.md),
+      # so rebuild the processed dataset from small fixture copies of the two raw
+      # CSVs instead of `dvc pull`.
+      - name: Rebuild processed dataset from CI fixtures
+        run: |
+          cp .github/ci-fixtures/NFHS_5_India_Districts_Factsheet_Data_datafile.csv dataset/
+          cp .github/ci-fixtures/NFHS-4_NFHS3_Factsheet-All_India_Indicators_R1.csv dataset/
+          python backend/data/pipeline.py
+          python backend/data/nfhs4_integration.py
+
+      - name: Run tests
+        run: pytest -v
