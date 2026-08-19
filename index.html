@@ -413,8 +413,9 @@
       <div class="sidebar-section">
         <h3>LLM Model</h3>
         <select class="model-select" id="model-select">
-          <option value="groq" selected>Groq (Llama 3.3 70B)</option>
-          <option value="openrouter">OpenRouter (Gemini 2.5 Flash)</option>
+          <option value="gemini" selected>Gemini 3.6 Flash</option>
+          <option value="groq">Groq (currently broken — provider deprecated the model)</option>
+          <option value="openrouter">OpenRouter (currently broken — no credits)</option>
         </select>
       </div>
 
@@ -594,7 +595,7 @@
 </div>
 
 <script>
-  const API_BASE = 'https://commitments-semi-barriers-filtering.trycloudflare.com';
+  const API_BASE = 'https://cool-retrieved-dispatch-geographic.trycloudflare.com';
   let currentTab = 'chat';
   let nationalData = null;
 
