@@ -331,12 +331,19 @@ def run_evaluation(
             }
         else:
             agent_result = run_query(question=q["question"], model_name=model_name, api_key=api_key)
-            # A daily/hourly token quota (not a momentary rate limit) needs waiting out,
-            # not skipping — retry this same question instead of recording a real
-            # question as a failure just because the free tier reset hasn't happened yet.
+            # A daily/hourly quota (not a momentary rate limit) needs waiting out, not
+            # skipping — retry this same question instead of recording a real question
+            # as a failure just because the free tier reset hasn't happened yet.
+            # Matched loosely ("perday" with spaces/casing stripped) because different
+            # providers phrase this differently — Groq says "tokens per day", Gemini's
+            # quota id is "GenerateRequestsPerDayPerProjectPerModel" — a literal
+            # "tokens per day" check only ever matched Groq's wording.
+            def _is_daily_quota_error(err) -> bool:
+                return "perday" in str(err).lower().replace(" ", "")
+
             patient_attempts = 0
             while (agent_result.get("status") == "error" and patient_attempts < 8
-                   and "tokens per day" in str(agent_result.get("error", "")).lower()):
+                   and _is_daily_quota_error(agent_result.get("error", ""))):
                 wait = _parse_retry_after(str(agent_result.get("error", ""))) or 900.0
                 print(f"    daily quota hit — waiting {wait/60:.1f} min before retrying this question", flush=True)
                 time.sleep(wait + 5)
