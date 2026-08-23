@@ -344,7 +344,13 @@ def run_evaluation(
             patient_attempts = 0
             while (agent_result.get("status") == "error" and patient_attempts < 8
                    and _is_daily_quota_error(agent_result.get("error", ""))):
-                wait = _parse_retry_after(str(agent_result.get("error", ""))) or 900.0
+                # Gemini's own "retry in Xs" hint for this error has been as short as 13s -
+                # that's a rolling-window hint, not proof the *daily* cap has cleared, so
+                # a bare 13s wait just burns through all 8 attempts in under two minutes
+                # and gives up while the real daily quota is still exhausted. Floor it at
+                # 5 min regardless of what the provider suggests for this error shape.
+                suggested = _parse_retry_after(str(agent_result.get("error", "")))
+                wait = max(suggested or 900.0, 300.0)
                 print(f"    daily quota hit — waiting {wait/60:.1f} min before retrying this question", flush=True)
                 time.sleep(wait + 5)
                 agent_result = run_query(question=q["question"], model_name=model_name, api_key=api_key)
