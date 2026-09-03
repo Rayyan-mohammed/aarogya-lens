@@ -19,6 +19,26 @@ ROOT = Path(__file__).parent.parent.parent
 DATA_DIR = ROOT / "backend" / "data"
 
 
+def get_gemini_keys() -> list:
+    """All configured Gemini keys, in order (GEMINI_API_KEY, then _2, _3, _4, ...).
+    Each comes from a separate Google account/project, so each has its own
+    independent free-tier daily quota (20 requests/day/project) — rotating across
+    them multiplies real daily throughput, unlike just having more keys on one
+    account, which would all share the same exhausted quota."""
+    keys = []
+    base = os.getenv("GEMINI_API_KEY", "")
+    if base:
+        keys.append(base)
+    i = 2
+    while True:
+        k = os.getenv(f"GEMINI_API_KEY_{i}", "")
+        if not k:
+            break
+        keys.append(k)
+        i += 1
+    return keys
+
+
 # ── Load schema for system prompt injection ───────────────────────────────────
 def _load_schema_summary() -> str:
     schema_path = DATA_DIR / "schema.json"

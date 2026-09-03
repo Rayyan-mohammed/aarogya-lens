@@ -285,10 +285,18 @@ def run_evaluation(
     this run has died mid-way (machine sleep/restart) enough times that redoing 20+
     already-good questions every time was wasting real Groq quota for nothing.
     """
-    from backend.agent.agent import run_query, _parse_retry_after
+    from backend.agent.agent import run_query, _parse_retry_after, get_gemini_keys
 
     questions = load_benchmark()
     df = load_data()
+
+    # Multiple Gemini keys (each from a separate Google account/project) each carry
+    # their own independent daily quota — rotate to the next one immediately on a
+    # daily-quota error instead of waiting, and remember which ones are exhausted
+    # for the rest of this run so later questions don't waste time re-trying them.
+    gemini_keys = get_gemini_keys() if model_name == "gemini" else []
+    exhausted_key_idx = set()
+    current_key_idx = 0
 
     if n_questions:
         questions = questions[:n_questions]
@@ -330,7 +338,21 @@ def run_evaluation(
                 "latency_ms": 1500,
             }
         else:
-            agent_result = run_query(question=q["question"], model_name=model_name, api_key=api_key)
+            def _next_gemini_key(start_idx):
+                """First non-exhausted key at or after start_idx, or (None, None)."""
+                for j in range(start_idx, len(gemini_keys)):
+                    if j not in exhausted_key_idx:
+                        return gemini_keys[j], j
+                return None, None
+
+            effective_key = api_key
+            if gemini_keys:
+                key, idx = _next_gemini_key(current_key_idx)
+                if key is not None:
+                    effective_key, current_key_idx = key, idx
+
+            agent_result = run_query(question=q["question"], model_name=model_name, api_key=effective_key)
+
             # A daily/hourly quota (not a momentary rate limit) needs waiting out, not
             # skipping — retry this same question instead of recording a real question
             # as a failure just because the free tier reset hasn't happened yet.
@@ -344,6 +366,23 @@ def run_evaluation(
             patient_attempts = 0
             while (agent_result.get("status") == "error" and patient_attempts < 8
                    and _is_daily_quota_error(agent_result.get("error", ""))):
+                # Other Gemini keys (separate Google accounts/projects) each have their
+                # own independent quota — switch to one immediately instead of waiting.
+                if gemini_keys:
+                    exhausted_key_idx.add(current_key_idx)
+                    next_key, next_idx = _next_gemini_key(current_key_idx + 1)
+                    if next_key is not None:
+                        print(f"    key #{current_key_idx+1} hit its daily quota — switching to key #{next_idx+1}", flush=True)
+                        current_key_idx = next_idx
+                        agent_result = run_query(question=q["question"], model_name=model_name, api_key=next_key)
+                        patient_attempts += 1
+                        continue
+                    # Every configured key is exhausted — give them all a fresh look
+                    # after this wait rather than staying permanently marked exhausted
+                    # for the rest of the run, in case some reset in the meantime.
+                    exhausted_key_idx.clear()
+                    current_key_idx = 0
+
                 # Gemini's own "retry in Xs" hint for this error has been as short as 13s -
                 # that's a rolling-window hint, not proof the *daily* cap has cleared, so
                 # a bare 13s wait just burns through all 8 attempts in under two minutes
@@ -353,7 +392,8 @@ def run_evaluation(
                 wait = max(suggested or 900.0, 300.0)
                 print(f"    daily quota hit — waiting {wait/60:.1f} min before retrying this question", flush=True)
                 time.sleep(wait + 5)
-                agent_result = run_query(question=q["question"], model_name=model_name, api_key=api_key)
+                retry_key = gemini_keys[current_key_idx] if gemini_keys else api_key
+                agent_result = run_query(question=q["question"], model_name=model_name, api_key=retry_key)
                 patient_attempts += 1
 
         # Compute metrics
