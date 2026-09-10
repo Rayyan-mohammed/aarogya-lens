@@ -176,7 +176,16 @@ def pandas_query(code: str) -> dict:
             }
         elif isinstance(result, pd.Series):
             series_dict = result.head(50).to_dict()
-            series_dict = {k: _clean_nan(v) for k, v in series_dict.items()}
+            # A multi-column groupby (e.g. df.groupby(['state','district'])[col].mean())
+            # gives a MultiIndex Series, and .to_dict() on that produces tuple keys —
+            # valid Python, but json.dumps() (which LangChain uses to pass this back to
+            # the LLM) rejects non-str/int/float/bool/None keys outright. Stringify
+            # anything that isn't already JSON-safe rather than let it fail downstream.
+            JSON_SAFE_KEY_TYPES = (str, int, float, bool, type(None))
+            series_dict = {
+                (k if isinstance(k, JSON_SAFE_KEY_TYPES) else " | ".join(map(str, k)) if isinstance(k, tuple) else str(k)): _clean_nan(v)
+                for k, v in series_dict.items()
+            }
             return {
                 "status": "success",
                 "type": "series",
