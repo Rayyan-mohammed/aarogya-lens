@@ -446,12 +446,12 @@ def run_evaluation(
                 json.dump({"model": model_name, "n_done": len(results),
                            "n_total": len(questions), "results": results},
                           f, indent=2, ensure_ascii=False, default=str)
-            # 12000 TPM / ~6-7k tokens for the priciest questions ~= 31s worst-case floor,
-            # but most questions cost far less and real calls run ~2-5s — 45s was too
-            # conservative given actual observed usage. 25s trims real time while staying
-            # under the worst-case floor; the daily-quota patient-retry above still
-            # covers us if a pricier stretch of questions does trip the per-minute cap.
-            time.sleep(25)
+            # Gemini 3 Flash free tier is 10 RPM (one request every 6s minimum) — that
+            # was the Groq-era 25s figure's real constraint too, just for a different
+            # provider's TPM cap. 8s clears the 6s floor with margin for the handful of
+            # internal tool-calling round trips each question already makes, and the
+            # daily-quota patient-retry above still covers us if we ever do trip it.
+            time.sleep(8)
 
     # ── Aggregate metrics ─────────────────────────────────────────────────────
     by_type = {}
