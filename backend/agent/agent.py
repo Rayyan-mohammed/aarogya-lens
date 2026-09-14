@@ -362,7 +362,19 @@ def run_query(
         for msg in reversed(messages):
             if hasattr(msg, "content") and msg.content:
                 if hasattr(msg, "type") and msg.type == "ai":
-                    final_answer = msg.content if isinstance(msg.content, str) else str(msg.content)
+                    if isinstance(msg.content, str):
+                        final_answer = msg.content
+                    elif isinstance(msg.content, list):
+                        # Gemini (unlike Claude/Groq) returns content as a list of
+                        # blocks, not a plain string — pull the text blocks out
+                        # instead of str()-ing the whole list (which stored the raw
+                        # Python repr, including base64 signature blobs, as the answer).
+                        final_answer = "".join(
+                            block.get("text", "") for block in msg.content
+                            if isinstance(block, dict) and block.get("type") == "text"
+                        )
+                    else:
+                        final_answer = str(msg.content)
                     break
 
         # Extract tool calls from message history
