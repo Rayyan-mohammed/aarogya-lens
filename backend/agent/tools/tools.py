@@ -127,12 +127,23 @@ PANDAS_SAFE_GLOBALS = {
 
 
 def _clean_nan(value):
-    """NaN/inf floats break strict JSON encoders (e.g. FastAPI's) further down the
-    pipeline. df.where(pd.notnull(df), None) doesn't fix this on numeric-dtype
-    columns — pandas converts None back to NaN to keep the float dtype — so this
-    has to run on already-converted plain Python objects instead."""
+    """NaN/inf floats break strict JSON encoders (e.g. FastAPI's, and Gemini's API
+    server itself — it rejects the literal `NaN` token as invalid JSON and fails
+    the whole request). df.where(pd.notnull(df), None) doesn't fix this on numeric
+    -dtype columns — pandas converts None back to NaN to keep the float dtype — so
+    this has to run on already-converted plain Python objects instead.
+
+    Recurses into dict/list/tuple because the LLM's own generated pandas code can
+    assign `result` directly as a plain list/dict (e.g. calling `.to_dict(orient=
+    "records")` inside the exec'd snippet) — that bypasses the DataFrame/Series-
+    specific branches below entirely, so a shallow check alone missed NaNs nested
+    inside those LLM-built structures."""
     if isinstance(value, float) and (np.isnan(value) or np.isinf(value)):
         return None
+    if isinstance(value, dict):
+        return {k: _clean_nan(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_clean_nan(v) for v in value]
     return value
 
 
@@ -162,10 +173,7 @@ def pandas_query(code: str) -> dict:
             return {"status": "error", "error": "Code must assign output to variable `result`"}
 
         if isinstance(result, pd.DataFrame):
-            records = result.head(50).to_dict(orient="records")
-            for row in records:
-                for k, v in row.items():
-                    row[k] = _clean_nan(v)
+            records = _clean_nan(result.head(50).to_dict(orient="records"))
             return {
                 "status": "success",
                 "type": "dataframe",

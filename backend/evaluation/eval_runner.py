@@ -307,9 +307,17 @@ def run_evaluation(
         try:
             checkpoint = json.loads(CHECKPOINT_PATH.read_text(encoding="utf-8"))
             if checkpoint.get("model") == model_name and checkpoint.get("n_total") == len(questions):
-                results = checkpoint["results"]
+                # Only successes count as "done" — an errored question (a crash, a
+                # transient network blip that outlasted its retries) should get a
+                # fresh attempt on resume, not stay permanently recorded as a
+                # failure just because it was attempted once before.
+                all_prior = checkpoint["results"]
+                results = [r for r in all_prior if r.get("status") == "success"]
                 done_ids = {r["id"] for r in results}
-                print(f"Resuming from checkpoint: {len(results)}/{len(questions)} questions already done.", flush=True)
+                n_errored = len(all_prior) - len(results)
+                print(f"Resuming from checkpoint: {len(results)}/{len(questions)} questions already done"
+                      + (f" ({n_errored} previously-errored questions will be retried)." if n_errored else "."),
+                      flush=True)
         except Exception as e:
             print(f"Could not read checkpoint, starting fresh: {e}", flush=True)
 
