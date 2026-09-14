@@ -286,7 +286,8 @@ RATE_LIMIT_MARKERS = ("rate_limit", "429", "413", "tokens per minute", "requires
 # markers too means a real outage/5xx/timeout gets retried instead of failing cold.
 TRANSIENT_ERROR_MARKERS = ("timeout", "timed out", "connection", "503", "502", "500",
                            "overloaded", "temporarily unavailable", "server error",
-                           "internal error", "bad gateway", "service unavailable")
+                           "internal error", "bad gateway", "service unavailable",
+                           "certificate verify failed", "server disconnected")
 
 # Above this, a provider's "try again in Xs" is pointing at an hourly/daily quota reset,
 # not a momentary dip — waiting it out would stall the whole run for one question.
