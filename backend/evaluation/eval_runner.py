@@ -385,11 +385,19 @@ def run_evaluation(
                         agent_result = run_query(question=q["question"], model_name=model_name, api_key=next_key)
                         patient_attempts += 1
                         continue
-                    # Every configured key is exhausted — give them all a fresh look
-                    # after this wait rather than staying permanently marked exhausted
-                    # for the rest of the run, in case some reset in the meantime.
-                    exhausted_key_idx.clear()
-                    current_key_idx = 0
+                    # Every configured key is confirmed exhausted for today — this is
+                    # a 24h/project cap, not a per-minute one, so none of them will
+                    # reset within a run's realistic lifetime. Waiting 5+ min and
+                    # retrying up to 8 times here — and then repeating that for every
+                    # remaining question — would burn hours for nothing. Stop the
+                    # whole run now instead; this question is left unrecorded, so the
+                    # next run (later today or tomorrow, once quota resets) picks it
+                    # straight back up from the checkpoint.
+                    print(f"\nAll {len(gemini_keys)} Gemini keys have hit their daily quota — "
+                          f"stopping here instead of waiting it out question-by-question. "
+                          f"{len(results)}/{len(questions)} done and checkpointed; re-run "
+                          f"later to pick up the rest.", flush=True)
+                    return {"status": "paused_quota_exhausted", "n_done": len(results), "n_total": len(questions)}
 
                 # Gemini's own "retry in Xs" hint for this error has been as short as 13s -
                 # that's a rolling-window hint, not proof the *daily* cap has cleared, so
