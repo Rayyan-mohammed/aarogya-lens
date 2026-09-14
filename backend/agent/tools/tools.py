@@ -126,6 +126,20 @@ PANDAS_SAFE_GLOBALS = {
 }
 
 
+JSON_SAFE_KEY_TYPES = (str, int, float, bool, type(None))
+
+
+def _json_safe_key(k):
+    """A MultiIndex Series/dict (e.g. from a multi-column groupby, or a plain dict
+    the LLM's own code builds via `.stack().to_dict()`) has tuple keys — valid
+    Python, but json.dumps() rejects any key that isn't str/int/float/bool/None."""
+    if isinstance(k, JSON_SAFE_KEY_TYPES):
+        return k
+    if isinstance(k, tuple):
+        return " | ".join(map(str, k))
+    return str(k)
+
+
 def _clean_nan(value):
     """NaN/inf floats break strict JSON encoders (e.g. FastAPI's, and Gemini's API
     server itself — it rejects the literal `NaN` token as invalid JSON and fails
@@ -133,15 +147,15 @@ def _clean_nan(value):
     -dtype columns — pandas converts None back to NaN to keep the float dtype — so
     this has to run on already-converted plain Python objects instead.
 
-    Recurses into dict/list/tuple because the LLM's own generated pandas code can
-    assign `result` directly as a plain list/dict (e.g. calling `.to_dict(orient=
-    "records")` inside the exec'd snippet) — that bypasses the DataFrame/Series-
-    specific branches below entirely, so a shallow check alone missed NaNs nested
-    inside those LLM-built structures."""
+    Recurses into dict/list/tuple (sanitizing dict keys too) because the LLM's own
+    generated pandas code can assign `result` directly as a plain list/dict — e.g.
+    `.to_dict(orient="records")` or `.stack().to_dict()` inside the exec'd snippet —
+    which bypasses the DataFrame/Series-specific branches below entirely, so a
+    shallow check alone missed NaNs and tuple keys nested inside those structures."""
     if isinstance(value, float) and (np.isnan(value) or np.isinf(value)):
         return None
     if isinstance(value, dict):
-        return {k: _clean_nan(v) for k, v in value.items()}
+        return {_json_safe_key(k): _clean_nan(v) for k, v in value.items()}
     if isinstance(value, (list, tuple)):
         return [_clean_nan(v) for v in value]
     return value
@@ -183,17 +197,7 @@ def pandas_query(code: str) -> dict:
                 "code_executed": code,
             }
         elif isinstance(result, pd.Series):
-            series_dict = result.head(50).to_dict()
-            # A multi-column groupby (e.g. df.groupby(['state','district'])[col].mean())
-            # gives a MultiIndex Series, and .to_dict() on that produces tuple keys —
-            # valid Python, but json.dumps() (which LangChain uses to pass this back to
-            # the LLM) rejects non-str/int/float/bool/None keys outright. Stringify
-            # anything that isn't already JSON-safe rather than let it fail downstream.
-            JSON_SAFE_KEY_TYPES = (str, int, float, bool, type(None))
-            series_dict = {
-                (k if isinstance(k, JSON_SAFE_KEY_TYPES) else " | ".join(map(str, k)) if isinstance(k, tuple) else str(k)): _clean_nan(v)
-                for k, v in series_dict.items()
-            }
+            series_dict = _clean_nan(result.head(50).to_dict())
             return {
                 "status": "success",
                 "type": "series",
