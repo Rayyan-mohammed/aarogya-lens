@@ -218,14 +218,21 @@ def check_hallucination(answer: str, df: pd.DataFrame) -> dict:
     2. Values outside valid range (0-100%)
     3. Wrong state assignments
     """
-    hallucinations = []
-    valid_districts = set(df["district"].str.lower().tolist())
-    district_to_state = dict(zip(df["district"].str.lower(), df["state"]))
+    from rapidfuzz import process, fuzz
 
-    # Check for made-up districts (mentioned in answer but not in dataset)
+    hallucinations = []
+    all_districts = df["district"].unique()
+
+    # Check for made-up districts (mentioned in answer but not in dataset).
+    # Fuzzy match (not exact lowercase equality) because real district names in
+    # this dataset routinely carry formatting the regex's capture group can't
+    # reproduce byte-for-byte — parentheses ("Khargone (West Nimar)"), ampersands
+    # ("Dadra & Nagar Haveli"), hyphens ("Janjgir - Champa") — so an exact-match
+    # check flagged those as fabricated even when the model named them correctly.
     mentioned_districts = re.findall(r'\b([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\s+district\b', answer)
     for d in mentioned_districts:
-        if d.lower() not in valid_districts:
+        _, score, _ = process.extractOne(d, all_districts, scorer=fuzz.token_sort_ratio)
+        if score < 85:
             hallucinations.append({"type": "fabricated_district", "value": d})
 
     # Check for values > 100% (invalid for percentage indicators)

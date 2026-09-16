@@ -78,13 +78,34 @@ def extract_factual_claims(response_text: str) -> List[Dict[str, str]]:
     
     return claims
 
-def verify_claim_against_data(claim: Dict[str, Any], df: pd.DataFrame) -> Dict[str, Any]:
+def _match_indicator_from_question(question: str, df: pd.DataFrame, min_score: float = 60.0):
+    """comparison_value claims (from 'State A: X%, State B: Y%' prose) carry no
+    indicator of their own — pattern3 only captures a location and a number. The
+    question text is almost always a much better signal for which column is being
+    discussed than trying to guess from the claim itself, since real questions
+    name the indicator directly ('Compare bcg pct across...'). Spaces instead of
+    underscores because token_set_ratio matches on word overlap, and 'bcg_pct'
+    as a single glued token barely overlaps with words in the question at all."""
+    from rapidfuzz import process, fuzz
+
+    if not question:
+        return None, 0.0
+    all_cols = [c for c in df.columns if c not in ("district", "state")]
+    spaced = {c: c.replace("_", " ") for c in all_cols}
+    match, score, _ = process.extractOne(question, list(spaced.values()), scorer=fuzz.token_set_ratio)
+    if score < min_score:
+        return None, score
+    col = next(c for c, s in spaced.items() if s == match)
+    return col, score
+
+
+def verify_claim_against_data(claim: Dict[str, Any], df: pd.DataFrame, question: str = None) -> Dict[str, Any]:
     """
     Verify a single factual claim against the ground truth dataset.
     Returns verification result with accuracy score.
     """
     from rapidfuzz import process, fuzz
-    
+
     verification = {
         "claim": claim,
         "verified": False,
@@ -92,7 +113,7 @@ def verify_claim_against_data(claim: Dict[str, Any], df: pd.DataFrame) -> Dict[s
         "ground_truth_value": None,
         "error": None
     }
-    
+
     try:
         if claim["type"] == "district_value":
             # Find matching district
@@ -100,18 +121,22 @@ def verify_claim_against_data(claim: Dict[str, Any], df: pd.DataFrame) -> Dict[s
             district_match, district_score, _ = process.extractOne(
                 claim["location"], all_districts, scorer=fuzz.token_sort_ratio
             )
-            
+
             if district_score < 70:
                 verification["error"] = f"District '{claim['location']}' not found. Best match: {district_match} (score: {district_score})"
                 return verification
-            
-            # Find matching indicator column
+
+            # Find matching indicator column. Natural phrasing ("anaemia rate")
+            # vs. snake_case column names ("anaemia_men_pct") rarely scores above
+            # 60 with token_sort_ratio even for a correct match — 50 is the
+            # threshold the rest of this codebase already uses for this same
+            # phrase-to-column-name matching (see pandas_query/trend_analyser).
             all_cols = [col for col in df.columns if not col in ['district', 'state']]
             indicator_match, indicator_score, _ = process.extractOne(
                 claim["indicator"], all_cols, scorer=fuzz.token_sort_ratio
             )
-            
-            if indicator_score < 60:
+
+            if indicator_score < 50:
                 verification["error"] = f"Indicator '{claim['indicator']}' not found. Best match: {indicator_match} (score: {indicator_score})"
                 return verification
             
@@ -150,11 +175,11 @@ def verify_claim_against_data(claim: Dict[str, Any], df: pd.DataFrame) -> Dict[s
             indicator_match, indicator_score, _ = process.extractOne(
                 claim["indicator"], all_cols, scorer=fuzz.token_sort_ratio
             )
-            
-            if indicator_score < 60:
+
+            if indicator_score < 50:
                 verification["error"] = f"Indicator '{claim['indicator']}' not found"
                 return verification
-            
+
             # Calculate state average
             state_data = df[df['state'] == state_match]
             state_avg = state_data[indicator_match].mean()
@@ -177,27 +202,73 @@ def verify_claim_against_data(claim: Dict[str, Any], df: pd.DataFrame) -> Dict[s
             indicator_match, indicator_score, _ = process.extractOne(
                 claim["indicator"], all_cols, scorer=fuzz.token_sort_ratio
             )
-            
-            if indicator_score < 60:
+
+            if indicator_score < 50:
                 verification["error"] = f"Indicator '{claim['indicator']}' not found"
                 return verification
-            
+
             # Count districts above threshold
             if claim["comparison"] == "above":
                 actual_count = len(df[df[indicator_match] > claim["threshold"]])
             else:
                 actual_count = len(df[df[indicator_match] < claim["threshold"]])
-            
+
             verification["ground_truth_value"] = actual_count
-            
+
             # Compare counts (within 10% tolerance)
             diff = abs(claim["count"] - actual_count)
             tolerance = max(1, actual_count * 0.1)  # 10% or at least 1
-            
+
             if diff <= tolerance:
                 verification["verified"] = True
                 verification["accuracy_score"] = max(0, 1.0 - (diff / max(actual_count, 1)))
-    
+
+        elif claim["type"] == "comparison_value":
+            # Pattern3 ("State A: X%, State B: Y%") captures a location and a
+            # value but no indicator — infer it from the question instead, since
+            # this claim type is what most comparison/ranking-style answers
+            # produce and previously had NO branch here at all, so it always
+            # fell through to the default verified=False regardless of accuracy.
+            indicator_match, indicator_score = _match_indicator_from_question(question, df)
+            if indicator_match is None:
+                verification["error"] = f"Could not infer an indicator from the question (best score: {indicator_score})"
+                return verification
+
+            # Try state first (comparison answers are usually state-level), then
+            # district, since pattern3's bare "<name>: X%" doesn't say which.
+            all_states = df["state"].unique()
+            state_match, state_score, _ = process.extractOne(
+                claim["location"], all_states, scorer=fuzz.token_sort_ratio
+            )
+            all_districts = df["district"].unique()
+            district_match, district_score, _ = process.extractOne(
+                claim["location"], all_districts, scorer=fuzz.token_sort_ratio
+            )
+
+            if state_score >= 70 and state_score >= district_score:
+                actual_value = df[df["state"] == state_match][indicator_match].mean()
+                tolerance = 3.0
+            elif district_score >= 70:
+                district_rows = df[df["district"] == district_match]
+                actual_value = district_rows[indicator_match].iloc[0] if not district_rows.empty else None
+                tolerance = 2.0
+            else:
+                verification["error"] = (
+                    f"Location '{claim['location']}' not found as state (score {state_score}) "
+                    f"or district (score {district_score})"
+                )
+                return verification
+
+            if actual_value is None or pd.isna(actual_value):
+                verification["error"] = f"No valid data for {indicator_match} at {claim['location']}"
+                return verification
+
+            verification["ground_truth_value"] = actual_value
+            diff = abs(claim["value"] - actual_value)
+            if diff <= tolerance:
+                verification["verified"] = True
+                verification["accuracy_score"] = max(0, 1.0 - (diff / (tolerance * 5)))
+
     except Exception as e:
         verification["error"] = f"Verification failed: {str(e)}"
     
@@ -233,7 +304,7 @@ def compute_answer_faithfulness(agent_response: str, question: str = None) -> Di
     total_accuracy = 0.0
     
     for claim in claims:
-        verification = verify_claim_against_data(claim, df)
+        verification = verify_claim_against_data(claim, df, question)
         verification_results.append(verification)
         
         if verification["verified"]:
