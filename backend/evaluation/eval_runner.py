@@ -5,6 +5,7 @@ EA (Execution Accuracy), AF (Answer Faithfulness), HR (Hallucination Rate),
 RCQ (Reasoning Chain Quality), LC (Latency/Cost).
 """
 
+import ast
 import json
 import re
 import sys
@@ -76,8 +77,77 @@ def _score_dict_answer(predicted: str, gt: dict) -> float:
     return round(hits / len(leaves), 4)
 
 
+def _parse_ground_truth(ground_truth):
+    """Ground truth is typed inconsistently across this benchmark's question
+    file — sometimes a JSON-looking string, sometimes already a parsed list/dict
+    (benchmark_questions.json stores comparison/ranking ground truth as real
+    JSON arrays for some questions and as string literals for others). A plain
+    ground_truth.startswith("{") crashed outright on the non-string ones,
+    hitting compute_ea's outer except and silently scoring 0.0 regardless of the
+    actual answer. And even the string ones aren't always valid JSON — some were
+    generated as Python repr (single-quoted, e.g. "['Puducherry: 21.0%', ...]"),
+    which json.loads also rejects; ast.literal_eval parses both that and real
+    JSON-like Python literals.
+    """
+    if not isinstance(ground_truth, str):
+        return ground_truth
+    if not (ground_truth.startswith("{") or ground_truth.startswith("[")):
+        return ground_truth
+    try:
+        return json.loads(ground_truth)
+    except (json.JSONDecodeError, ValueError):
+        try:
+            return ast.literal_eval(ground_truth)
+        except (ValueError, SyntaxError):
+            return ground_truth
+
+
+def _extract_gt_district_list(gt) -> list:
+    """Ranking ground truth comes in two structured shapes in this benchmark —
+    a list of {"district": ..., <indicator>: ...} dicts, or a list of "District,
+    State" strings — never prose. Reading the name straight out of the structure
+    is more reliable than str(gt) + extract_district_list's fuzzy prose-matching,
+    which depended on the district name accidentally surviving as a substring of
+    a Python-repr'd list/dict."""
+    if isinstance(gt, list) and gt:
+        if isinstance(gt[0], dict) and "district" in gt[0]:
+            return [item["district"] for item in gt]
+        if isinstance(gt[0], str):
+            return [item.split(",")[0].strip() for item in gt]
+    return extract_district_list(str(gt))
+
+
+def _parse_location_value_list(items: list) -> dict:
+    """Comparison ground truth is sometimes a list of "Location: XX.X%" strings
+    rather than a dict — turn it into {location: value} so _score_dict_answer's
+    existing generic leaf-matching can be reused instead of a separate scorer."""
+    out = {}
+    for item in items:
+        if not isinstance(item, str) or ":" not in item:
+            continue
+        loc, _, val = item.rpartition(":")
+        num = extract_numeric(val)
+        if num is not None:
+            out[loc.strip()] = num
+    return out
+
+
+def extract_correlation_value(text: str):
+    """The agent always reports its Pearson r labeled ('**Pearson Correlation
+    ($r$):** **-0.5067**', or as a markdown table cell), but generic
+    extract_numeric just grabs the first bare number anywhere in the text —
+    almost always the district count ("across all 706 districts...") stated
+    earlier in the answer, not the actual coefficient. Search near the
+    "Pearson" label first; only fall back to the generic extractor if that
+    label isn't present in the (possibly truncated) text at all."""
+    m = re.search(r"pearson[^0-9\-]{0,60}(-?\d+\.\d+)", text, re.IGNORECASE)
+    if m:
+        return float(m.group(1))
+    return extract_numeric(text)
+
+
 # ── METRIC 1: Execution Accuracy ─────────────────────────────────────────────
-def compute_ea(predicted: Any, ground_truth: str, answer_type: str) -> float:
+def compute_ea(predicted: Any, ground_truth: Any, answer_type: str) -> float:
     """
     Execution Accuracy: did the agent return the correct value?
     - numeric: within ±0.5% of ground truth
@@ -86,8 +156,8 @@ def compute_ea(predicted: Any, ground_truth: str, answer_type: str) -> float:
     - correlation: Pearson r within ±0.1
     """
     try:
-        gt = json.loads(ground_truth) if ground_truth.startswith("{") or ground_truth.startswith("[") else ground_truth
-        
+        gt = _parse_ground_truth(ground_truth)
+
         if answer_type == "numeric":
             pred_val = extract_numeric(str(predicted))
             gt_val = extract_numeric(str(gt))
@@ -97,7 +167,7 @@ def compute_ea(predicted: Any, ground_truth: str, answer_type: str) -> float:
 
         elif answer_type == "ranking":
             pred_districts = extract_district_list(str(predicted))
-            gt_districts = extract_district_list(str(gt)) if isinstance(gt, list) else []
+            gt_districts = _extract_gt_district_list(gt)
             if not pred_districts or not gt_districts:
                 return 0.0
             # Compute Kendall's Tau between ordinal positions
@@ -112,7 +182,7 @@ def compute_ea(predicted: Any, ground_truth: str, answer_type: str) -> float:
             return max(0.0, float(tau))
 
         elif answer_type == "correlation":
-            pred_r = extract_numeric(str(predicted))
+            pred_r = extract_correlation_value(str(predicted))
             gt_r = float(gt.get("pearson_r", 0)) if isinstance(gt, dict) else extract_numeric(str(gt))
             if pred_r is None or gt_r is None:
                 return 0.0
@@ -125,6 +195,8 @@ def compute_ea(predicted: Any, ground_truth: str, answer_type: str) -> float:
             if isinstance(gt, dict) and "best_performing_state" in gt:
                 best_state = gt["best_performing_state"]
                 return 1.0 if best_state.lower() in str(predicted).lower() else 0.0
+            if isinstance(gt, list):
+                gt = _parse_location_value_list(gt)
             if isinstance(gt, dict):
                 return _score_dict_answer(str(predicted), gt)
             return 0.0
@@ -155,13 +227,18 @@ def extract_numeric(text: str):
     Prefers numbers immediately followed by '%' — the agent's prose almost always
     states other numbers first (age ranges like "15-49", "12-23 months", or
     question phrasing like "ANC 4+"), so blindly taking the first number in the
-    text was picking those up instead of the actual answer value.
+    text was picking those up instead of the actual answer value. The percent
+    pattern deliberately has no sign handling — indicators here are always 0-100%,
+    so a "-" right before one (as in "40-55%") is a range separator, not a minus
+    sign. The bare-number fallback DOES need a sign (ground truth for correlation
+    questions reads like "Correlation: -0.083"), but only takes it when the "-"
+    isn't itself preceded by a digit, so "15-49" still reads as 49, not -49.
     """
     cleaned = text.replace(",", "")
     percent_matches = re.findall(r"\d+\.?\d*(?=\s*%)", cleaned)
     if percent_matches:
         return float(percent_matches[0])
-    matches = re.findall(r"\d+\.?\d*", cleaned)
+    matches = re.findall(r"(?<!\d)-?\d+\.?\d*", cleaned)
     return float(matches[0]) if matches else None
 
 
@@ -283,6 +360,7 @@ def run_evaluation(
     n_questions: int = None,
     dry_run: bool = False,
     resume: bool = True,
+    query_type: str = None,
 ) -> dict:
     """
     Run the full benchmark evaluation.
@@ -291,11 +369,25 @@ def run_evaluation(
     and question count exists, pick up where it left off instead of starting over —
     this run has died mid-way (machine sleep/restart) enough times that redoing 20+
     already-good questions every time was wasting real Groq quota for nothing.
+    query_type: restrict the run to a single benchmark query_type (e.g.
+    "trend_analysis") for a fast, targeted re-check of one category instead of
+    a full 200-question run. Writes to its own results/checkpoint files (named
+    with the query_type) so it can never overwrite the full-benchmark output.
     """
     from backend.agent.agent import run_query, _parse_retry_after, get_gemini_keys
 
     questions = load_benchmark()
     df = load_data()
+
+    if query_type:
+        questions = [q for q in questions if q["query_type"] == query_type]
+        if not questions:
+            raise ValueError(f"No questions found with query_type={query_type!r}")
+        results_path = EVAL_DIR / f"eval_results.subset_{query_type}.json"
+        checkpoint_path = EVAL_DIR / f"eval_checkpoint.subset_{query_type}.json"
+    else:
+        results_path = RESULTS_PATH
+        checkpoint_path = CHECKPOINT_PATH
 
     # Multiple Gemini keys (each from a separate Google account/project) each carry
     # their own independent daily quota — rotate to the next one immediately on a
@@ -310,9 +402,9 @@ def run_evaluation(
 
     results = []
     done_ids = set()
-    if resume and not dry_run and CHECKPOINT_PATH.exists():
+    if resume and not dry_run and checkpoint_path.exists():
         try:
-            checkpoint = json.loads(CHECKPOINT_PATH.read_text(encoding="utf-8"))
+            checkpoint = json.loads(checkpoint_path.read_text(encoding="utf-8"))
             if checkpoint.get("model") == model_name and checkpoint.get("n_total") == len(questions):
                 # Only successes count as "done" — an errored question (a crash, a
                 # transient network blip that outlasted its retries) should get a
@@ -465,7 +557,7 @@ def run_evaluation(
         results.append(result)
 
         if not dry_run:
-            with open(CHECKPOINT_PATH, "w", encoding="utf-8") as f:
+            with open(checkpoint_path, "w", encoding="utf-8") as f:
                 json.dump({"model": model_name, "n_done": len(results),
                            "n_total": len(questions), "results": results},
                           f, indent=2, ensure_ascii=False, default=str)
@@ -512,11 +604,11 @@ def run_evaluation(
     }
 
     # Save (dry runs go to their own file so they never clobber a real run's results)
-    out_path = DRYRUN_RESULTS_PATH if dry_run else RESULTS_PATH
+    out_path = DRYRUN_RESULTS_PATH if dry_run else results_path
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2, ensure_ascii=False, default=str)
-    if not dry_run and CHECKPOINT_PATH.exists():
-        CHECKPOINT_PATH.unlink()
+    if not dry_run and checkpoint_path.exists():
+        checkpoint_path.unlink()
 
     # Print summary table
     print(f"\n{'-'*60}")
@@ -576,6 +668,9 @@ if __name__ == "__main__":
     parser.add_argument("--api-key", type=str, default=None)
     parser.add_argument("--no-resume", action="store_true",
                          help="Ignore any existing checkpoint and start over from question 1")
+    parser.add_argument("--query-type", type=str, default=None,
+                         help="Restrict to one benchmark query_type (e.g. trend_analysis) "
+                              "for a fast, targeted re-check instead of the full 200 questions")
     args = parser.parse_args()
 
     run_evaluation(
@@ -584,4 +679,5 @@ if __name__ == "__main__":
         n_questions=args.n,
         dry_run=args.dry_run,
         resume=not args.no_resume,
+        query_type=args.query_type,
     )
