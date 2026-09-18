@@ -306,8 +306,26 @@ def check_hallucination(answer: str, df: pd.DataFrame) -> dict:
     # reproduce byte-for-byte — parentheses ("Khargone (West Nimar)"), ampersands
     # ("Dadra & Nagar Haveli"), hyphens ("Janjgir - Champa") — so an exact-match
     # check flagged those as fabricated even when the model named them correctly.
+    #
+    # The capture group just needs "<Capitalized word(s)> district" — it has no
+    # idea whether those words are actually a place name. Answers constantly use
+    # "district" as a plain noun in phrases like "the National district-level
+    # data" or "at the district level", and every capitalized word right before
+    # it (sentence starts, markdown headers/bold are capitalized regardless of
+    # meaning) reads as a location candidate: "National", "Capital", "Average",
+    # "The", "Lowest", "Highest", "Best", "Worst" all got flagged as fabricated
+    # districts this way even though none of them were ever a place-name claim.
+    # No real district in this dataset is one of these generic words, so
+    # filtering them out before the fuzzy check can't hide an actual fabrication.
+    _NON_PLACE_WORDS = {
+        "national", "capital", "average", "the", "lowest", "highest", "best",
+        "worst", "top", "bottom", "overall", "summary", "this", "that", "key",
+        "total", "mean", "median", "range", "distribution", "state", "district",
+    }
     mentioned_districts = re.findall(r'\b([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\s+district\b', answer)
     for d in mentioned_districts:
+        if d.lower() in _NON_PLACE_WORDS:
+            continue
         _, score, _ = process.extractOne(d, all_districts, scorer=fuzz.token_sort_ratio)
         if score < 85:
             hallucinations.append({"type": "fabricated_district", "value": d})
