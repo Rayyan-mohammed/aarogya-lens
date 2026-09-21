@@ -113,7 +113,9 @@ def _extract_gt_district_list(gt) -> list:
         if isinstance(gt[0], dict) and "district" in gt[0]:
             return [item["district"] for item in gt]
         if isinstance(gt[0], str):
-            return [item.split(",")[0].strip() for item in gt]
+            # "District, State" or "District: 54.8%" — name is everything before
+            # the first comma or colon
+            return [re.split(r"[,:]", item, maxsplit=1)[0].strip() for item in gt]
     return extract_district_list(str(gt))
 
 
@@ -171,8 +173,13 @@ def compute_ea(predicted: Any, ground_truth: Any, answer_type: str) -> float:
             if not pred_districts or not gt_districts:
                 return 0.0
             # Compute Kendall's Tau between ordinal positions
-            pred_rank = {d: i for i, d in enumerate(pred_districts)}
-            gt_rank = {d: i for i, d in enumerate(gt_districts)}
+            # setdefault: a district mentioned again later (context paragraphs,
+            # summaries) must keep its FIRST position, not be overwritten by its last
+            pred_rank, gt_rank = {}, {}
+            for i, d in enumerate(pred_districts):
+                pred_rank.setdefault(d, i)
+            for i, d in enumerate(gt_districts):
+                gt_rank.setdefault(d, i)
             common = [d for d in gt_districts if d in pred_rank]
             if len(common) < 3:
                 return float(len(common)) / max(len(gt_districts), 1)
