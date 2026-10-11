@@ -44,13 +44,34 @@ provider currently reachable at all.
 
 The eval runner now waits out a daily-quota reset and retries the same question instead
 of recording it as a failure (`backend/evaluation/eval_runner.py`), and checkpoints
-progress after every question so a multi-day run can't lose completed work. Given the
-100k/day cap, a full 200-question run realistically takes **several days**, not one
-session — it is running now, patiently, in the background.
+progress after every question so a multi-day run can't lose completed work.
 
-*[Real EA / AF / HR / RCQ / latency numbers go here once the run has covered enough
-questions to be meaningful — see `backend/evaluation/eval_results.json` for the final
-numbers, or `backend/evaluation/eval_checkpoint.json` for in-progress partial results.]*
+**Update, 2026-09 to 2026-10:** Groq was abandoned (the 100k/day token cap made it
+unworkable) in favor of Gemini `gemini-3.6-flash` with multiple rotating API keys, each
+with its own independent free-tier daily quota. The full 200-question run **completed**
+on 2026-09-16. Four more scoring-harness bugs surfaced and were fixed afterward (missing
+comparison-claim verification in the AF checker, a hallucination-checker regex that
+flagged generic words like "National"/"The" as fabricated districts, a missing
+negative-sign in the numeric extractor, and a ranking-scorer bug that let a repeated
+district mention overwrite its correct rank). Rescored final numbers:
+
+| Metric | Overall (200 questions) |
+|---|---|
+| EA | 71.1% |
+| AF | 82.0% |
+| HR | 5.0% |
+| RCQ | 64.7% |
+| Mean latency | 120s/question |
+
+Separately, a routing gap was found in the agent's own system prompt: the purpose-built
+`trend_analyser` tool was only used 2/38 times on `trend_analysis`-category questions
+because the prompt only triggered it for explicit "trend"/"NFHS-4" wording, which those
+questions never actually use. Fixed and re-validated live on a full, clean 38-question
+re-run of that category alone: EA 54.4% → 84.5%, RCQ 37.2% → 89.2%. The other four
+categories (162/200 questions) have not yet been re-run against this fix, so the 64.7%
+overall RCQ above is a confirmed floor, not the final number. See
+[README.md § Results](../README.md#results) for the full per-category breakdown and the
+honest-scope caveats (AF still undercounts markdown-bullet-formatted answers).
 
 ## Other real bugs found and fixed this session
 

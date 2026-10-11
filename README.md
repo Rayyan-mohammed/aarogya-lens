@@ -15,7 +15,7 @@
 
 BharatHealth Analyst is a LangGraph ReAct agent that answers questions like *"which 10 districts have the worst child anaemia?"* or *"is sanitation correlated with stunting in Bihar?"* directly against India's NFHS-5 district health survey — no SQL, no pivot tables. The agent has **7 real tools (semantic search, pandas/SQL query, chart generation, trend and correlation analysis) verified end-to-end against a live LLM**, sitting on top of a data pipeline that merges 706 districts × 448 indicators with real NFHS-4 (2015-16) trend data for 62 of them.
 
-> **Status: working prototype, in progress since 2026-06-02 (11 weeks).** The data pipeline, vector store, agent, API, and both frontends are built, tested, and running. The one thing *not* yet proven is the full 200-question accuracy benchmark — it has been blocked twice by free-tier LLM rate limits (Groq, then Gemini) and does not yet have a clean final score. See [Results](#results) for exactly what is and isn't proven.
+> **Status: working prototype, in progress since 2026-06-02 (~19 weeks).** The data pipeline, vector store, agent, API, both frontends, and the full 200-question accuracy benchmark are all built, tested, and complete — **EA 71.1%, AF 82.0%, HR 5.0%, RCQ 64.7%** overall. One of five question categories has since been re-validated against a prompt fix that raised its RCQ from 37.2% to 89.2%; the other four have not, so 64.7% is a confirmed floor for RCQ, not the final number. See [Results](#results) for exactly what is and isn't proven, and exactly which numbers are current versus pending re-validation.
 
 ---
 
@@ -137,16 +137,47 @@ Verified locally on 2026-08-19:
 
 > **Honest scope:** the untested 53% of `eval_runner.py` is almost entirely the live LLM-calling orchestration loop — it can only be exercised by an actual model run, not a unit test with a mocked response.
 
-### 3. Agent verified end-to-end against a real LLM — full benchmark is not
+### 3. Full 200-question benchmark complete, with one category re-validated after a prompt fix
 
-The 200-question benchmark (`benchmark_questions.json`: 59 factual, 52 ranking/aggregation, 30 state comparison, 38 trend, 21 correlation) has been attempted twice:
+The 200-question benchmark (`benchmark_questions.json`: 59 factual, 52 ranking/aggregation, 30 state comparison, 38 trend, 21 correlation) ran to completion against Gemini `gemini-3.6-flash`, after two earlier disqualified attempts:
 
 | Attempt | Date | Model | Outcome |
 |---|---|---|---|
 | Full run #1 | 2026-08-17 | Groq `llama-3.3-70b-versatile` | Completed all 200, but Groq deprecated the model mid-run — result file kept as `eval_results.groq_contaminated_aug17.json` and **not used**, since an unknown fraction of answers came from a model that no longer existed by the time the run finished. |
-| Full run #2 | 2026-08-19 – ongoing | Gemini `gemini-3.6-flash` | Blocked by Gemini's free tier: **20 requests/day**. At that rate, 200 questions take 10+ days minimum. |
+| Full run #2 | 2026-08-19 | Gemini `gemini-3.6-flash` | Blocked by Gemini's free tier: 20 requests/day on a single key. Fixed by rotating across multiple keys/projects, each with an independent daily quota. |
+| Full run #3 | 2026-09-16 | Gemini `gemini-3.6-flash`, multi-key rotation | **Completed, 200/200.** Numbers below. |
 
-> **Honest scope:** no clean final EA/AF/HR/RCQ numbers exist yet. What *is* verified: the agent correctly calls tools and returns structured answers in ad-hoc manual testing (`scripts/demo.py`, `scripts/quick_demo.py`), and several real scoring bugs in the evaluation code itself were found and fixed by running it against live output (e.g. `extract_numeric` grabbing the wrong number from phrases like "aged 15-49", `correlation_finder` returning all 706 districts as scatter data in a single ~31,000-token response). See [docs/COMPLETION_SUMMARY.md](docs/COMPLETION_SUMMARY.md) for the full bug list.
+**Overall (200 questions, rescored 2026-10-11 with every scoring-harness fix found to date):**
+
+| Metric | Score |
+|---|---|
+| EA (exact answer accuracy) | 71.1% |
+| AF (answer faithfulness) | 82.0% |
+| HR (hallucination rate) | 5.0% |
+| RCQ (reasoning chain quality) | 64.7% |
+| Mean latency | 120s/question |
+
+**By category:**
+
+| Category | n | EA | AF | HR | RCQ |
+|---|---|---|---|---|---|
+| factual_lookup | 59 | 100% | 76.3% | 15.3% | 60.7% |
+| aggregation_ranking | 52 | 66.7% | 86.5% | 0% | 74.0% |
+| correlation | 21 | 81.0% | 100% | 4.8% | 82.6% |
+| state_comparison | 30 | 35.8% | 90.0% | 0% | 78.7% |
+| trend_analysis | 38 | 54.4%† | 68.4% | 0% | 37.2%† |
+
+† **trend_analysis has since been re-validated against a fixed system prompt** — EA 54.4% → **84.5%**, RCQ 37.2% → **89.2%** on a clean, full 38-question re-run (`backend/evaluation/eval_results.subset_trend_analysis.json`). The other four categories above still reflect the prompt as it stood before that fix; whether the same gain generalizes to them is not yet confirmed.
+
+**What the low `trend_analysis` RCQ turned out to be:** not a model failure, but a routing gap in the system prompt. The agent has a purpose-built `trend_analyser` tool that returns mean/median/min/max plus best/worst districts in a single call, but the prompt only routed to it for explicit "trend" or "since NFHS-4" wording. The actual benchmark questions in that category never use that phrasing — e.g. *"what is the distribution of X across all districts, which states perform best and worst"* — so the agent fell back to reconstructing the same numbers with 2-4 rounds of hand-written `pandas_query` code instead, and called `insight_writer` on almost every question regardless of need. Fixed by routing on question shape instead of keyword and making `chart_generator`/`insight_writer` usage explicit rules rather than left to judgment; verified live before (`trend_analyser` used 2/38 times) and after (37/38) the fix.
+
+**Four scoring-harness bugs were also found and fixed**, independent of model behavior, that were making the agent look worse than it actually was:
+- The answer-faithfulness verifier had no handling at all for one entire claim shape ("State A: X%, State B: Y%"), so every comparison-style answer scored AF=0 regardless of accuracy.
+- The hallucination checker flagged generic words ("National", "The", "Best") immediately preceding the word "district" as fabricated place names — confirmed via zero overlap with any of the 698 real district names in the dataset.
+- The numeric extractor had no negative-sign handling, so ground truth like `"Correlation: -0.083"` was read as `+0.083`.
+- The ranking scorer overwrote a district's rank position on every repeated mention, so a district named early and referenced again later (common in summary paragraphs) scored as if it had moved — one question listed the ground-truth districts in the exact right order and still scored 0 before the fix.
+
+> **Honest scope:** EA/AF/HR above are rescored with every fix found to date; RCQ and the underlying answers for 4 of 5 categories still reflect the prompt before the routing fix. `AF` is known to still undercount markdown-bullet-formatted answers (`**Label:** value%`) that don't match any of the claim-extraction regex patterns — most visible in `trend_analysis`'s still-low 68.4% AF despite high EA. See [docs/COMPLETION_SUMMARY.md](docs/COMPLETION_SUMMARY.md) for the full bug list and dates.
 
 ### 4. Both frontends are deployed, not just built
 
@@ -161,7 +192,8 @@ The 200-question benchmark (`benchmark_questions.json`: 59 factual, 52 ranking/a
 
 ## Honest limitations
 
-- **No completed accuracy benchmark.** Two full 200-question runs have been attempted; one is disqualified (model deprecated mid-run), the other is rate-limited to ~20 questions/day. There is currently no trustworthy EA/AF/HR/RCQ number for this system.
+- **Benchmark RCQ is a confirmed floor, not a final number.** The 200-question run completed and EA/AF/HR are rescored with every known scoring-harness fix (EA 71.1%, AF 82.0%, HR 5.0%), but only 1 of 5 categories (`trend_analysis`, 38/200) has been re-run against the prompt fix that raised its RCQ from 37.2% to 89.2%. The other four categories' RCQ (and the raw answers behind it) still reflect the prompt before that fix — the true current RCQ is likely higher than the reported 64.7% but unconfirmed at full scale.
+- **AF still undercounts one answer format.** The claim-extraction regex used for answer faithfulness doesn't match markdown-bullet-style claims (`**Label:** value%`), which is common in longer answers — visible as `trend_analysis` scoring 68.4% AF despite 84.5% EA on the re-validated prompt. A real gap, not yet fixed.
 - **Single point of failure by design.** The API only exists as long as this one Windows machine is on and the Cloudflare Tunnel is up. A watchdog auto-restarts it, but there is no redundancy.
 - **No production LLM key.** Of five configured providers (Groq, Gemini, OpenRouter, Grok, DeepSeek), none is a paid tier — Claude and GPT-4o code paths in `agent.py` exist but have never been run against a real key.
 - **CI runs against fixture data, not the DVC pipeline.** `.github/workflows/tests.yml` rebuilds the processed dataset from two small CSV copies checked into `.github/ci-fixtures/` because the configured DVC remote is a local-only folder on the author's machine — `dvc pull` can't reach it from a GitHub Actions runner. See [.github/ci-fixtures/README.md](.github/ci-fixtures/README.md).
@@ -230,7 +262,10 @@ dvc status                         # should report clean
 
 ```bash
 # evaluation — small sample, not the full 200-question run
-python -m backend.evaluation.eval_runner --model groq --n 5
+python -m backend.evaluation.eval_runner --model gemini --n 5
+
+# or re-check one category only (e.g. after a prompt change) instead of all 200
+python -m backend.evaluation.eval_runner --model gemini --query-type trend_analysis
 ```
 
 ```bash
@@ -265,7 +300,8 @@ The watchdog exists precisely because early runs of the benchmark got silently k
 | Weeks 1-4 (Jun 2026) | ✅ NFHS-5 clean + schema | ✅ 7 tools built | — | — | — | — |
 | Weeks 5-8 (Jul 2026) | ✅ NFHS-4 trend merge | ✅ ReAct agent wired up | ✅ 11 endpoints + middleware | ✅ HTML/JS UI | ✅ 200-Q set + 5 metrics | ✅ Docker local |
 | Weeks 9-11 (Aug 2026) | ✅ DVC pipeline verified | ✅ sandboxed pandas_query | ✅ 93% test coverage, ✅ CI on every push | ✅ Next.js rewrite deployed | ⏳ blocked on free-tier quota (2 attempts) | ✅ GitHub Pages (both), tunnel + watchdog |
-| Next | Real DVC remote (CI still uses fixture CSVs) | Claude/GPT-4o path, untested | — | — | Complete a clean 200-Q run | Persistent (non-tunnel) API host |
+| Weeks 12-19 (Sep-Oct 2026) | — | ✅ trend_analyser/chart_generator routing fix (RCQ 37.2%→89.2% on re-validated category) | — | — | ✅ 200/200 run complete, 4 scoring bugs fixed, 1/5 categories re-validated | — |
+| Next | Real DVC remote (CI still uses fixture CSVs) | Claude/GPT-4o path, untested; re-validate routing fix on remaining 4 categories | — | — | Full fresh 200-Q run once a paid API key removes the free-tier quota ceiling | Persistent (non-tunnel) API host |
 
 ---
 
