@@ -68,8 +68,14 @@ try {
         # --protocol http2 (TCP) instead of the default quic (UDP) — this network has
         # blocked outbound UDP to Cloudflare's edge before, which leaves quic retrying
         # forever with no error, just silence. http2 routes around that.
-        Start-Process -FilePath $CloudflaredExe -ArgumentList "tunnel", "--protocol", "http2", "--url", "http://localhost:8000" `
-            -WorkingDirectory $Root -WindowStyle Hidden -RedirectStandardError $tunnelLog
+        #
+        # Launched through cmd, which writes the log file itself: Start-Process with any
+        # -Redirect* switch makes the child inherit every handle this script has open,
+        # including run_watchdog.bat's redirect into scripts\.raw_stdout. cloudflared then
+        # kept that file locked for its whole life, so every later watchdog run failed on
+        # its very first line and nothing restarted the tunnel when it died.
+        Start-Process -FilePath $env:ComSpec -WorkingDirectory $Root -WindowStyle Hidden `
+            -ArgumentList "/c `"`"$CloudflaredExe`" tunnel --protocol http2 --url http://localhost:8000 2> `"$tunnelLog`"`""
 
         # cloudflared prints the URL to stderr within a few seconds of starting
         $newUrl = $null
@@ -146,10 +152,9 @@ try {
 
     if (-not $evalRunning -and (Test-Path $checkpointPath)) {
         Log "benchmark not running and checkpoint shows unfinished work, restarting (will resume)"
-        Start-Process -FilePath "$Root\.venv\Scripts\python.exe" `
-            -ArgumentList "-u", "-m", "backend.evaluation.eval_runner", "--model", "gemini" `
-            -WorkingDirectory $Root -WindowStyle Hidden `
-            -RedirectStandardOutput "$Root\scripts\.eval_stdout"
+        # through cmd for the same handle-inheritance reason as cloudflared above
+        Start-Process -FilePath $env:ComSpec -WorkingDirectory $Root -WindowStyle Hidden `
+            -ArgumentList "/c `"`"$Root\.venv\Scripts\python.exe`" -u -m backend.evaluation.eval_runner --model gemini > `"$Root\scripts\.eval_stdout`"`""
     } elseif ($evalRunning) {
         Log "benchmark ok"
     } else {
