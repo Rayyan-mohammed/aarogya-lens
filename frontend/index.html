@@ -1,994 +1,1491 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BharatHealth Analyst — AI-Powered India District Health Analytics</title>
-  <meta name="description" content="Ask natural language questions over India's NFHS-5 district health data. 706 districts, 100+ health indicators, powered by AI." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-  <style>
-    :root {
-      --bg-deep:    #060b18;
-      --bg-dark:    #0d1526;
-      --bg-card:    #111d35;
-      --bg-glass:   rgba(17, 29, 53, 0.7);
-      --border:     rgba(99, 102, 241, 0.18);
-      --border-glow:rgba(99, 102, 241, 0.5);
-      --indigo:     #6366f1;
-      --indigo-light:#818cf8;
-      --cyan:       #22d3ee;
-      --amber:      #f59e0b;
-      --emerald:    #10b981;
-      --rose:       #f43f5e;
-      --violet:     #a78bfa;
-      --text-1:     #f1f5f9;
-      --text-2:     #94a3b8;
-      --text-3:     #64748b;
-      --radius:     14px;
-      --radius-sm:  8px;
-      --shadow:     0 8px 32px rgba(0,0,0,0.4);
-      --glow-indigo:0 0 40px rgba(99,102,241,0.15);
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg-deep);
-      color: var(--text-1);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>BharatHealth Analyst — ask India's district health data</title>
+<meta name="description" content="Ask plain-English questions over India's NFHS-5 survey (2019–21): 706 districts, 36 states and union territories, 100+ health indicators. Answers are grounded in the data, with charts, key facts and caveats." />
+<meta name="theme-color" content="#f5f3ee" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230e6b63'/%3E%3Cpath d='M6 17h5l2.5-6 4 11 2.5-5H26' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script>
+  // Set the theme before first paint so dark-mode visitors don't get a white flash.
+  (function () {
+    var t;
+    try { t = localStorage.getItem('bha-theme'); } catch (e) {}
+    if (t !== 'light' && t !== 'dark') t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<style>
+  :root {
+    --bg: #f5f3ee;
+    --bg-2: #ece8df;
+    --surface: #ffffff;
+    --surface-2: #faf8f4;
+    --ink: #1b1a17;
+    --ink-2: #4c4842;
+    --ink-3: #69645c;
+    --line: #e3dfd5;
+    --line-2: #d3cdbf;
+    --accent: #0e6b63;
+    --accent-ink: #ffffff;
+    --accent-soft: #e0eeea;
+    --accent-strong: #0a524c;
+    --worse: #b4530b;
+    --good: #136b41; --good-soft: #e1f1e7;
+    --warn: #8f5500; --warn-soft: #f9eed6;
+    --bad: #b42318; --bad-soft: #fbe5e2;
+    --t-nutrition: #b4530b;
+    --t-anaemia: #c0362c;
+    --t-mothers: #7a3e9d;
+    --t-immunisation: #0e6b63;
+    --t-household: #2b5ea7;
+    --t-women: #a0386b;
+    --shadow-sm: 0 1px 2px rgba(27, 26, 23, 0.06);
+    --shadow: 0 1px 2px rgba(27, 26, 23, 0.05), 0 10px 28px -14px rgba(27, 26, 23, 0.22);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+    --font-ui: 'Public Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    --topbar-h: 64px;
+    color-scheme: light;
+  }
+  [data-theme='dark'] {
+    --bg: #121413;
+    --bg-2: #1c1f1d;
+    --surface: #191c1a;
+    --surface-2: #1f2321;
+    --ink: #ecebe6;
+    --ink-2: #c0bcb3;
+    --ink-3: #9a968d;
+    --line: #2b302d;
+    --line-2: #3b413d;
+    --accent: #5cc5b6;
+    --accent-ink: #0a1a18;
+    --accent-soft: rgba(92, 197, 182, 0.14);
+    --accent-strong: #84d8cc;
+    --worse: #f0a14a;
+    --good: #74d19c; --good-soft: rgba(116, 209, 156, 0.13);
+    --warn: #f0bb62; --warn-soft: rgba(240, 187, 98, 0.13);
+    --bad: #f38a76; --bad-soft: rgba(243, 138, 118, 0.13);
+    --t-nutrition: #f0a14a;
+    --t-anaemia: #f38a76;
+    --t-mothers: #c69ce3;
+    --t-immunisation: #5cc5b6;
+    --t-household: #86aeea;
+    --t-women: #e893bb;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 12px 30px -14px rgba(0, 0, 0, 0.7);
+    color-scheme: dark;
+  }
 
-    /* ── Animated background ── */
-    body::before {
-      content: '';
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
-      background:
-        radial-gradient(ellipse 80% 50% at 20% 10%, rgba(99,102,241,0.07) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(34,211,238,0.05) 0%, transparent 60%),
-        radial-gradient(ellipse 40% 30% at 50% 50%, rgba(167,139,250,0.04) 0%, transparent 60%);
-    }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 400 16px/1.55 var(--font-ui);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  a { color: var(--accent); }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .skip-link { position: absolute; left: 12px; top: -48px; z-index: 100; background: var(--accent); color: var(--accent-ink); padding: 8px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; }
+  .skip-link:focus { top: 12px; }
+  svg { flex-shrink: 0; }
+  .icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-    /* ── Layout ── */
-    .app { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; }
+  /* ── Top bar ─────────────────────────────────────────── */
+  .topbar {
+    position: sticky; top: 0; z-index: 40;
+    background: var(--bg);
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: saturate(1.4) blur(12px);
+    -webkit-backdrop-filter: saturate(1.4) blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-inner {
+    max-width: 1200px; margin: 0 auto; padding: 0 20px;
+    min-height: var(--topbar-h);
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
+  }
+  .brand { display: flex; align-items: center; gap: 11px; color: inherit; text-decoration: none; min-width: 0; }
+  .brand-text { min-width: 0; }
+  .brand-name { display: block; font-family: var(--font-display); font-weight: 600; font-size: 1.12rem; letter-spacing: -0.01em; line-height: 1.15; white-space: nowrap; }
+  .brand-tag { display: block; font-size: 0.74rem; color: var(--ink-3); white-space: nowrap; }
 
-    /* ── Header ── */
-    header {
-      padding: 0 2rem;
-      height: 64px;
-      display: flex; align-items: center; justify-content: space-between;
-      background: rgba(6, 11, 24, 0.85);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--border);
-      position: sticky; top: 0; z-index: 100;
-    }
-    .logo {
-      display: flex; align-items: center; gap: 12px;
-      text-decoration: none;
-    }
-    .logo-icon {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--indigo), var(--cyan));
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px; font-weight: 800; color: white;
-      box-shadow: 0 0 20px rgba(99,102,241,0.4);
-    }
-    .logo-text { font-size: 1.1rem; font-weight: 700; color: var(--text-1); }
-    .logo-sub { font-size: 0.7rem; color: var(--text-3); margin-top: 1px; }
-    .header-badges { display: flex; gap: 8px; }
-    .badge {
-      padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600;
-      border: 1px solid;
-    }
-    .badge-indigo { color: var(--indigo-light); border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.08); }
-    .badge-cyan   { color: var(--cyan);         border-color: rgba(34,211,238,0.3); background: rgba(34,211,238,0.08); }
-    .badge-emerald{ color: var(--emerald);       border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); }
+  .tabs { display: flex; gap: 2px; padding: 4px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 999px; }
+  .tab {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    border: 0; background: transparent; color: var(--ink-2);
+    padding: 7px 16px; border-radius: 999px; font-size: 0.9rem; font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected='true'] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
+  .tab .icon { width: 16px; height: 16px; }
 
-    /* ── Main layout ── */
-    main {
-      flex: 1; display: grid;
-      grid-template-columns: 280px 1fr;
-      grid-template-rows: 1fr;
-      height: calc(100vh - 64px);
-    }
+  .tools { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+  .status {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 0.78rem; font-weight: 600; color: var(--ink-2);
+    padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface);
+    white-space: nowrap;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); }
+  .status[data-state='checking'] .status-dot { animation: blink 1.2s ease-in-out infinite; }
+  .status[data-state='online'] .status-dot { background: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
+  .status[data-state='offline'] .status-dot { background: var(--worse); }
+  .icon-btn {
+    width: 36px; height: 36px; display: inline-grid; place-items: center;
+    border-radius: 10px; border: 1px solid transparent; background: transparent; color: var(--ink-2);
+    text-decoration: none;
+  }
+  .icon-btn:hover { background: var(--bg-2); color: var(--ink); }
+  [data-theme='light'] .show-in-dark, [data-theme='dark'] .show-in-light { display: none; }
+  body:has(dialog[open]) { overflow: hidden; }
 
-    /* ── Sidebar ── */
-    aside {
-      background: var(--bg-dark);
-      border-right: 1px solid var(--border);
-      overflow-y: auto; padding: 1.5rem 1rem;
-      display: flex; flex-direction: column; gap: 1.5rem;
-    }
-    .sidebar-section h3 {
-      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
-      color: var(--text-3); text-transform: uppercase; margin-bottom: 0.75rem;
-    }
+  @keyframes blink { 50% { opacity: 0.3; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
 
-    /* Model selector */
-    .model-select {
-      width: 100%; padding: 8px 12px; border-radius: var(--radius-sm);
-      background: var(--bg-card); border: 1px solid var(--border);
-      color: var(--text-1); font-size: 0.85rem; font-family: 'Inter', sans-serif;
-      cursor: pointer; outline: none;
-    }
-    .model-select:focus { border-color: var(--indigo); }
+  /* ── Views ───────────────────────────────────────────── */
+  .view { max-width: 1200px; margin: 0 auto; padding: 40px 20px 64px; }
+  .eyebrow { font-size: 0.74rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); margin: 0; }
+  .page-head h2 { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.75rem, 3.4vw, 2.5rem); line-height: 1.1; letter-spacing: -0.02em; margin: 10px 0 10px; }
+  .page-head p { color: var(--ink-2); max-width: 66ch; margin: 0; }
 
-    /* State filter */
-    .state-select {
-      width: 100%; padding: 8px 12px; border-radius: var(--radius-sm);
-      background: var(--bg-card); border: 1px solid var(--border);
-      color: var(--text-1); font-size: 0.83rem; font-family: 'Inter', sans-serif;
-      cursor: pointer; outline: none;
-    }
-    .state-select:focus { border-color: var(--indigo); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    border: 1px solid var(--line-2); background: var(--surface); color: var(--ink);
+    border-radius: var(--radius-sm); padding: 8px 13px; font-size: 0.86rem; font-weight: 500;
+    text-decoration: none; white-space: nowrap;
+  }
+  .btn:hover { background: var(--surface-2); border-color: var(--ink-3); }
+  .btn .icon { width: 16px; height: 16px; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .btn-primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+  .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .btn-quiet { border-color: transparent; background: transparent; color: var(--ink-2); }
+  .btn-quiet:hover { background: var(--bg-2); border-color: transparent; color: var(--ink); }
 
-    /* Example queries */
-    .example-query {
-      padding: 8px 10px; border-radius: var(--radius-sm);
-      background: var(--bg-card); border: 1px solid var(--border);
-      font-size: 0.78rem; color: var(--text-2); cursor: pointer;
-      transition: all 0.2s; line-height: 1.4; text-align: left;
-      width: 100%;
-    }
-    .example-query:hover {
-      background: rgba(99,102,241,0.12); border-color: var(--indigo);
-      color: var(--text-1);
-    }
-    .example-queries { display: flex; flex-direction: column; gap: 6px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.76rem; font-weight: 500; line-height: 1.3;
+    padding: 3px 10px; border-radius: 999px;
+    background: var(--bg-2); color: var(--ink-2); border: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .chip-good { background: var(--good-soft); color: var(--good); border-color: transparent; }
+  .chip-warn { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+  .chip-bad { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 
-    /* Stats panel */
-    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .stat-card {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); padding: 10px;
-      text-align: center;
-    }
-    .stat-value { font-size: 1.3rem; font-weight: 800; color: var(--indigo-light); }
-    .stat-label { font-size: 0.65rem; color: var(--text-3); margin-top: 2px; }
+  select.input, input.input {
+    height: 42px; border-radius: var(--radius-sm); border: 1px solid var(--line-2);
+    background-color: var(--surface); color: var(--ink); padding: 0 12px; font-size: 0.92rem; width: 100%;
+  }
+  select.input {
+    appearance: none; -webkit-appearance: none; padding-right: 34px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888277' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center; background-size: 16px;
+  }
+  select.input:focus, input.input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 
-    /* Tab nav */
-    .tab-nav { display: flex; gap: 6px; }
-    .tab-btn {
-      flex: 1; padding: 6px; border-radius: var(--radius-sm);
-      background: var(--bg-card); border: 1px solid var(--border);
-      color: var(--text-2); font-size: 0.72rem; font-weight: 600;
-      cursor: pointer; transition: all 0.2s; text-align: center;
-    }
-    .tab-btn.active {
-      background: rgba(99,102,241,0.15); border-color: var(--indigo);
-      color: var(--indigo-light);
-    }
-    .tab-btn:hover:not(.active) { border-color: var(--border-glow); color: var(--text-1); }
+  /* ── Ask view ────────────────────────────────────────── */
+  .view-ask { max-width: 880px; padding-bottom: 0; display: flex; flex-direction: column; min-height: calc(100vh - var(--topbar-h)); min-height: calc(100dvh - var(--topbar-h)); }
+  .thread { flex: 1; }
 
-    /* ── Content area ── */
-    .content { display: flex; flex-direction: column; overflow: hidden; }
+  .hero { padding: 6vh 0 8px; animation: rise 0.5s ease both; }
+  .hero h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2.1rem, 5vw, 3.3rem); line-height: 1.04; letter-spacing: -0.025em; margin: 14px 0 16px; max-width: 16ch; }
+  .hero h1 em { font-style: italic; color: var(--accent); }
+  .hero-lede { color: var(--ink-2); font-size: 1.08rem; max-width: 58ch; margin: 0; }
+  .facts-strip { display: flex; flex-wrap: wrap; gap: 10px 34px; margin: 28px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); list-style: none; }
+  .facts-strip li { display: flex; flex-direction: column; }
+  .facts-strip b { font-family: var(--font-display); font-weight: 500; font-size: 1.65rem; line-height: 1.1; letter-spacing: -0.02em; }
+  .facts-strip span { font-size: 0.8rem; color: var(--ink-3); }
+  .section-label { font-size: 0.82rem; font-weight: 600; color: var(--ink-3); margin: 36px 0 12px; }
+  .suggest-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .suggest {
+    text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 14px;
+    padding: 14px 16px; display: flex; flex-direction: column; gap: 7px;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  }
+  .suggest:hover { border-color: var(--line-2); box-shadow: var(--shadow); transform: translateY(-1px); }
+  .suggest-topic { display: flex; align-items: center; gap: 7px; font-size: 0.76rem; font-weight: 600; color: var(--ink-3); }
+  .suggest-q { font-weight: 500; color: var(--ink); line-height: 1.4; }
+  .how { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin: 32px 0 8px; padding: 0; list-style: none; counter-reset: step; }
+  .how li { counter-increment: step; font-size: 0.86rem; color: var(--ink-2); line-height: 1.45; }
+  .how li::before { content: counter(step); display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 0.76rem; margin-bottom: 8px; }
+  .how b { display: block; color: var(--ink); font-weight: 600; margin-bottom: 2px; }
 
-    /* Query bar */
-    .query-bar {
-      padding: 1.25rem 2rem;
-      background: var(--bg-dark);
-      border-bottom: 1px solid var(--border);
-    }
-    .query-form { display: flex; gap: 10px; align-items: flex-start; }
-    .query-input {
-      flex: 1; padding: 14px 18px; border-radius: var(--radius);
-      background: var(--bg-card); border: 1.5px solid var(--border);
-      color: var(--text-1); font-size: 0.95rem; font-family: 'Inter', sans-serif;
-      outline: none; resize: none; min-height: 52px; max-height: 120px;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      line-height: 1.5;
-    }
-    .query-input:focus {
-      border-color: var(--indigo);
-      box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
-    }
-    .query-input::placeholder { color: var(--text-3); }
-    .send-btn {
-      padding: 14px 24px; border-radius: var(--radius);
-      background: linear-gradient(135deg, var(--indigo), #7c3aed);
-      border: none; color: white; font-size: 0.9rem; font-weight: 600;
-      cursor: pointer; white-space: nowrap; transition: all 0.2s;
-      display: flex; align-items: center; gap: 8px;
-      box-shadow: 0 4px 20px rgba(99,102,241,0.3);
-      min-width: 130px; justify-content: center;
-    }
-    .send-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(99,102,241,0.4); }
-    .send-btn:active { transform: translateY(0); }
-    .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    .send-btn .spinner {
-      width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+  .msg-user { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin: 30px 0 14px; scroll-margin-top: calc(var(--topbar-h) + 16px); animation: rise 0.25s ease both; }
+  .bubble { background: var(--accent-soft); color: var(--ink); padding: 11px 16px; border-radius: 18px 18px 5px 18px; max-width: min(80%, 620px); font-weight: 500; overflow-wrap: anywhere; }
+  .msg-scope { font-size: 0.76rem; color: var(--ink-3); display: inline-flex; align-items: center; gap: 5px; }
+  .msg-scope .icon { width: 13px; height: 13px; }
 
-    /* ── Results panel ── */
-    .results-panel { flex: 1; overflow-y: auto; padding: 1.5rem 2rem; }
+  .answer { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; scroll-margin-top: calc(var(--topbar-h) + 16px); animation: rise 0.3s ease both; }
+  .answer-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 12px 18px; border-bottom: 1px solid var(--line); }
+  .analyst { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; font-size: 0.9rem; }
+  .analyst svg { width: 24px; height: 24px; }
+  .answer-meta { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; }
+  .answer-body { padding: 20px 22px 6px; }
+  .answer-section { padding: 0 22px 18px; }
+  .answer-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--line); background: var(--surface-2); }
+  .answer-foot .steps { margin-left: auto; }
+  .steps { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; font-size: 0.76rem; color: var(--ink-3); }
+  .steps .step { font-family: var(--font-mono); font-size: 0.72rem; background: var(--bg-2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; color: var(--ink-2); }
 
-    /* Welcome screen */
-    .welcome {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      height: 100%; text-align: center; gap: 2rem;
-    }
-    .welcome-hero {
-      max-width: 560px;
-    }
-    .welcome-icon {
-      width: 80px; height: 80px; border-radius: 24px;
-      background: linear-gradient(135deg, var(--indigo), var(--cyan));
-      display: flex; align-items: center; justify-content: center;
-      font-size: 40px; margin: 0 auto 1.5rem;
-      box-shadow: 0 0 60px rgba(99,102,241,0.3);
-    }
-    .welcome h1 { font-size: 2rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.75rem; }
-    .welcome h1 span { background: linear-gradient(135deg, var(--indigo-light), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .welcome p { font-size: 0.95rem; color: var(--text-2); line-height: 1.7; }
-    .welcome-cards {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
-      max-width: 760px; width: 100%;
-    }
-    .welcome-card {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 1.25rem;
-      cursor: pointer; transition: all 0.2s; text-align: left;
-    }
-    .welcome-card:hover {
-      border-color: var(--indigo); background: rgba(99,102,241,0.08);
-      transform: translateY(-2px);
-    }
-    .welcome-card-icon { font-size: 1.5rem; margin-bottom: 0.6rem; }
-    .welcome-card h4 { font-size: 0.82rem; font-weight: 700; color: var(--text-1); margin-bottom: 0.3rem; }
-    .welcome-card p { font-size: 0.75rem; color: var(--text-2); line-height: 1.5; }
+  .facts { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+  .facts h4, .chart-bar span, .note b { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 8px; }
+  .facts ul { margin: 0; padding-left: 1.1em; }
+  .facts li { font-size: 0.92rem; line-height: 1.55; }
+  .facts li + li { margin-top: 5px; }
+  .facts li::marker { color: var(--accent); }
+  .chart { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin: 0; }
+  .chart-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+  .chart-bar span { margin: 0; }
+  .chart-bar a { font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; font-weight: 500; }
+  .chart-bar a .icon { width: 14px; height: 14px; }
+  .chart iframe { display: block; width: 100%; height: 440px; border: 0; background: #fff; }
+  .note { display: flex; gap: 10px; font-size: 0.85rem; color: var(--ink-2); line-height: 1.5; }
+  .note .icon { width: 17px; height: 17px; color: var(--ink-3); margin-top: 2px; }
+  .note b { display: block; margin-bottom: 2px; }
 
-    /* Result card */
-    .result-card {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--radius); margin-bottom: 1.5rem;
-      overflow: hidden; animation: slideIn 0.3s ease;
-    }
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .result-header {
-      padding: 1rem 1.25rem;
-      background: rgba(99,102,241,0.06);
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-    }
-    .result-question { font-size: 0.88rem; font-weight: 600; color: var(--text-1); flex: 1; }
-    .result-meta { display: flex; gap: 6px; flex-shrink: 0; }
-    .result-body { padding: 1.25rem; }
+  .pending .answer-body { padding-bottom: 20px; }
+  .pending-title { font-weight: 600; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--accent-soft); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .pending-sub { margin: 0 0 18px; color: var(--ink-3); font-size: 0.9rem; }
+  .skeleton span { display: block; height: 11px; border-radius: 6px; margin-top: 10px; background: linear-gradient(90deg, var(--bg-2) 0, var(--line) 60px, var(--bg-2) 120px); background-size: 800px 100%; animation: shimmer 1.6s linear infinite; }
+  .skeleton span:nth-child(1) { width: 92%; }
+  .skeleton span:nth-child(2) { width: 78%; }
+  .skeleton span:nth-child(3) { width: 85%; }
+  .skeleton span:nth-child(4) { width: 46%; }
 
-    /* Tool chain display */
-    .tool-chain {
-      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-      margin-bottom: 1rem;
-    }
-    .tool-chip {
-      padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600;
-      background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25);
-      color: var(--indigo-light);
-    }
-    .tool-chain-arrow { color: var(--text-3); font-size: 0.7rem; }
+  .error-body { padding: 18px 22px; display: flex; gap: 14px; }
+  .error-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0; background: var(--bad-soft); color: var(--bad); }
+  .error-icon.mild { background: var(--bg-2); color: var(--ink-3); }
+  .error-title { font-weight: 600; margin: 4px 0 4px; }
+  .error-text { margin: 0; color: var(--ink-2); font-size: 0.92rem; }
+  .error-body details { margin-top: 10px; font-size: 0.82rem; color: var(--ink-3); }
+  .error-body details pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 0.78rem/1.5 var(--font-mono); background: var(--bg-2); border-radius: 8px; padding: 10px; margin: 8px 0 0; max-height: 180px; overflow: auto; }
+  .error-actions { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
 
-    /* Answer text */
-    .answer-text {
-      font-size: 0.88rem; color: var(--text-1); line-height: 1.8;
-      white-space: pre-wrap; font-family: 'Inter', sans-serif;
-    }
-    .answer-text code {
-      background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.2);
-      border-radius: 4px; padding: 1px 5px; font-family: 'JetBrains Mono', monospace;
-      font-size: 0.82em; color: var(--indigo-light);
-    }
+  /* Composer */
+  .composer-wrap { position: sticky; bottom: 0; z-index: 20; padding: 18px 0 max(16px, env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--bg) 72%, transparent); }
+  .offline-banner { display: flex; gap: 9px; align-items: flex-start; font-size: 0.85rem; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--worse); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; box-shadow: var(--shadow-sm); }
+  .offline-banner .icon { color: var(--worse); width: 17px; height: 17px; margin-top: 2px; }
+  .composer { background: var(--surface); border: 1px solid var(--line-2); border-radius: 20px; box-shadow: var(--shadow); padding: 10px 10px 10px 18px; transition: border-color 0.15s, box-shadow 0.15s; }
+  .composer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow); }
+  .composer textarea { display: block; width: 100%; border: 0; outline: 0; resize: none; background: transparent; font-size: 1rem; line-height: 1.5; padding: 6px 0; min-height: 36px; max-height: 200px; }
+  .composer textarea::placeholder { color: var(--ink-3); }
+  .composer-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .scope { position: relative; display: inline-flex; align-items: center; }
+  .scope .icon { position: absolute; left: 10px; width: 15px; height: 15px; color: var(--ink-3); pointer-events: none; }
+  .scope select { appearance: none; -webkit-appearance: none; height: 34px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); padding: 0 28px 0 30px; font-size: 0.84rem; color: var(--ink-2); max-width: 220px; text-overflow: ellipsis;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888277' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 9px center; background-size: 14px; }
+  .scope select:hover { border-color: var(--line-2); color: var(--ink); }
+  .kbd-hint { font-size: 0.76rem; color: var(--ink-3); margin-left: auto; }
+  .kbd-hint kbd { font: 0.7rem var(--font-mono); border: 1px solid var(--line-2); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: var(--surface-2); }
+  .send { width: 40px; height: 40px; border-radius: 12px; border: 0; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; transition: background 0.15s, opacity 0.15s; }
+  .send:hover { background: var(--accent-strong); }
+  .send:disabled { opacity: 0.4; cursor: not-allowed; }
+  .send.stop { background: var(--ink); color: var(--bg); }
+  .composer-foot { text-align: center; font-size: 0.74rem; color: var(--ink-3); margin: 8px 0 0; }
 
-    /* Chart embed */
-    .chart-embed {
-      margin-top: 1rem; border-radius: var(--radius-sm);
-      border: 1px solid var(--border); overflow: hidden;
-      height: 400px;
-    }
-    .chart-embed iframe { width: 100%; height: 100%; border: none; }
+  /* Rendered answer markdown */
+  .prose { font-size: 0.99rem; line-height: 1.7; overflow-wrap: break-word; }
+  .prose > :first-child { margin-top: 0; }
+  .prose > :last-child { margin-bottom: 0; }
+  .prose p, .prose ul, .prose ol, .prose .table-wrap, .prose pre, .prose blockquote { margin: 0 0 0.9em; }
+  .prose h3, .prose h4, .prose h5, .prose h6 { font-family: var(--font-display); font-weight: 600; line-height: 1.25; letter-spacing: -0.01em; margin: 1.5em 0 0.55em; }
+  .prose h3 { font-size: 1.28rem; }
+  .prose h4 { font-size: 1.12rem; }
+  .prose h5, .prose h6 { font-size: 1rem; }
+  .prose ul, .prose ol { padding-left: 1.35em; }
+  .prose li + li { margin-top: 0.35em; }
+  .prose li > ul, .prose li > ol { margin: 0.35em 0 0; }
+  .prose li::marker { color: var(--ink-3); }
+  .prose strong { font-weight: 650; }
+  .prose code { font-family: var(--font-mono); font-size: 0.84em; background: var(--bg-2); border: 1px solid var(--line); padding: 0.08em 0.35em; border-radius: 5px; overflow-wrap: anywhere; }
+  .prose pre { overflow-x: auto; background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: 0.82rem/1.55 var(--font-mono); }
+  .prose pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+  .prose hr { border: 0; border-top: 1px solid var(--line); margin: 1.5em 0; }
+  .prose blockquote { border-left: 3px solid var(--accent); padding: 2px 0 2px 14px; color: var(--ink-2); }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+  .prose table { width: 100%; border-collapse: collapse; font-size: 0.9rem; line-height: 1.45; }
+  .prose th { text-align: left; font-weight: 600; font-size: 0.8rem; color: var(--ink-2); background: var(--surface-2); padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .prose td { padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .prose tbody tr:last-child td { border-bottom: 0; }
+  .prose tbody tr:hover td { background: var(--surface-2); }
+  .prose .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .prose .center { text-align: center; }
+  .src { font-family: var(--font-ui); font-size: 0.68em; font-weight: 700; letter-spacing: 0.02em; color: var(--accent); background: var(--accent-soft); padding: 0.15em 0.5em; border-radius: 5px; vertical-align: 0.12em; white-space: nowrap; }
+  .math { font-family: var(--font-display); font-style: italic; }
 
-    /* Data table */
-    .data-table-wrap { margin-top: 1rem; overflow-x: auto; border-radius: var(--radius-sm); }
-    table {
-      width: 100%; border-collapse: collapse; font-size: 0.8rem;
-    }
-    th {
-      background: rgba(99,102,241,0.1); color: var(--indigo-light);
-      padding: 8px 12px; text-align: left; font-weight: 600;
-      border-bottom: 1px solid var(--border); white-space: nowrap;
-    }
-    td {
-      padding: 8px 12px; border-bottom: 1px solid rgba(99,102,241,0.08);
-      color: var(--text-2);
-    }
-    tr:hover td { background: rgba(99,102,241,0.04); }
-    .num { text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--cyan); }
+  /* ── Explore ─────────────────────────────────────────── */
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 28px 0 20px; }
+  .search { position: relative; flex: 0 1 300px; min-width: 220px; }
+  .search .icon { position: absolute; left: 12px; top: 12px; width: 18px; height: 18px; color: var(--ink-3); pointer-events: none; }
+  .search input { padding-left: 38px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; }
+  .filter { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); border-radius: 999px; padding: 6px 12px; font-size: 0.84rem; font-weight: 500; }
+  .filter:hover { border-color: var(--line-2); color: var(--ink); }
+  .filter[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  .filter[aria-pressed='true'] .dot { box-shadow: 0 0 0 2px var(--ink); }
 
-    /* Error card */
-    .error-card {
-      background: rgba(244, 63, 94, 0.07); border: 1px solid rgba(244,63,94,0.25);
-      border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem;
-    }
-    .error-title { font-size: 0.88rem; font-weight: 600; color: var(--rose); margin-bottom: 0.4rem; }
-    .error-msg { font-size: 0.8rem; color: var(--text-2); font-family: 'JetBrains Mono', monospace; }
+  .ind-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 14px; }
+  .ind-card {
+    text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius);
+    padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 10px;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  }
+  .ind-card:hover { border-color: var(--line-2); box-shadow: var(--shadow); transform: translateY(-2px); }
+  .ind-theme { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 0.76rem; font-weight: 600; color: var(--ink-3); }
+  .ind-theme > span { display: inline-flex; align-items: center; gap: 7px; }
+  .direction { font-weight: 500; display: inline-flex; align-items: center; gap: 3px; }
+  .direction .icon { width: 13px; height: 13px; }
+  .ind-name { font-weight: 650; font-size: 1.05rem; line-height: 1.3; color: var(--ink); }
+  .ind-def { font-size: 0.85rem; color: var(--ink-3); line-height: 1.45; margin-top: -4px; }
+  .ind-value { display: flex; align-items: baseline; gap: 8px; margin-top: 2px; }
+  .ind-value b { font-family: var(--font-display); font-weight: 500; font-size: 2.2rem; line-height: 1; letter-spacing: -0.03em; }
+  .ind-value span { font-size: 0.78rem; color: var(--ink-3); }
+  .range-track { display: block; position: relative; height: 8px; border-radius: 999px; background: var(--bg-2); }
+  .range-fill { position: absolute; top: 0; bottom: 0; border-radius: 999px; background: color-mix(in srgb, var(--accent) 30%, transparent); }
+  .range-mean { position: absolute; top: -4px; width: 3px; height: 16px; border-radius: 2px; background: var(--ink); transform: translateX(-50%); }
+  .range-labels { display: flex; justify-content: space-between; gap: 8px; font-size: 0.72rem; color: var(--ink-3); margin-top: 7px; font-variant-numeric: tabular-nums; }
+  .empty-filter { grid-column: 1 / -1; text-align: center; padding: 48px 16px; color: var(--ink-3); }
+  .snapshot-note { margin: 28px 0 0; font-size: 0.82rem; color: var(--ink-3); display: flex; gap: 8px; align-items: flex-start; }
+  .snapshot-note .icon { width: 16px; height: 16px; margin-top: 2px; }
 
-    /* Loading */
-    .loading-card {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 2rem; text-align: center;
-      margin-bottom: 1.5rem; animation: pulse 1.5s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
-    }
-    .loading-spinner {
-      width: 32px; height: 32px; border: 3px solid rgba(99,102,241,0.2);
-      border-top-color: var(--indigo); border-radius: 50%;
-      animation: spin 0.8s linear infinite; margin: 0 auto 1rem;
-    }
-    .loading-text { font-size: 0.88rem; color: var(--text-2); }
-    .loading-steps { display: flex; justify-content: center; gap: 16px; margin-top: 1rem; }
-    .loading-step {
-      font-size: 0.72rem; color: var(--text-3);
-      display: flex; align-items: center; gap: 4px;
-    }
-    .loading-step.active { color: var(--indigo-light); }
-    .loading-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: currentColor; animation: pulse 0.8s ease infinite;
-    }
+  /* Indicator drawer */
+  dialog.drawer {
+    position: fixed; inset: 0 0 0 auto; margin: 0; padding: 0; border: 0;
+    width: min(540px, 100%); height: 100%; max-height: 100%; max-width: 100%;
+    background: var(--surface); color: var(--ink); box-shadow: -24px 0 60px rgba(0, 0, 0, 0.18);
+  }
+  dialog.drawer[open] { animation: slide-in 0.25s ease both; }
+  @keyframes slide-in { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+  dialog.drawer::backdrop { background: rgba(18, 16, 13, 0.4); }
+  .drawer-inner { display: flex; flex-direction: column; height: 100%; }
+  .drawer-head { padding: 22px 24px 18px; border-bottom: 1px solid var(--line); position: relative; }
+  .drawer-head h3 { font-family: var(--font-display); font-weight: 500; font-size: 1.7rem; letter-spacing: -0.02em; line-height: 1.15; margin: 8px 40px 6px 0; }
+  .drawer-head p { margin: 0; color: var(--ink-2); font-size: 0.92rem; }
+  .drawer-close { position: absolute; top: 16px; right: 16px; }
+  .drawer-body { flex: 1; overflow-y: auto; padding: 20px 24px 28px; overscroll-behavior: contain; }
+  .stat-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .stat { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; min-width: 0; }
+  .stat b { display: block; font-family: var(--font-display); font-weight: 500; font-size: 1.45rem; letter-spacing: -0.02em; line-height: 1.15; }
+  .stat span { display: block; font-size: 0.76rem; color: var(--ink-3); }
+  .stat small { display: block; font-size: 0.78rem; color: var(--ink-2); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .drawer-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 4px; }
+  .rank-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 26px 0 8px; }
+  .rank-head h4 { margin: 0; font-size: 1rem; font-weight: 650; }
+  .rank-head span { font-size: 0.78rem; color: var(--ink-3); }
+  .rank-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.76rem; color: var(--ink-3); margin-bottom: 10px; }
+  .rank-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend-line { width: 2px; height: 12px; background: var(--ink); opacity: 0.55; }
+  .rank-list { list-style: none; margin: 0; padding: 0; }
+  .rank-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) 56px; align-items: center; gap: 10px; padding: 6px 0; }
+  .rank-n { font-size: 0.76rem; color: var(--ink-3); text-align: right; font-variant-numeric: tabular-nums; }
+  .rank-name { display: block; font-size: 0.86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rank-track { display: block; position: relative; height: 7px; border-radius: 999px; background: var(--bg-2); margin-top: 4px; }
+  .rank-fill { display: block; height: 100%; border-radius: 999px; background: var(--line-2); }
+  .rank-row.best .rank-fill { background: var(--accent); }
+  .rank-row.worst .rank-fill { background: var(--worse); }
+  .rank-mean { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); opacity: 0.55; }
+  .rank-val { font-size: 0.86rem; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .drawer-foot { font-size: 0.8rem; color: var(--ink-3); margin-top: 18px; line-height: 1.5; }
 
-    /* Indicator Explorer Tab */
-    .explorer-panel { padding: 1.5rem; }
-    .explorer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-    .indicator-card {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); padding: 1rem; cursor: pointer;
-      transition: all 0.2s;
-    }
-    .indicator-card:hover { border-color: var(--indigo); transform: translateY(-1px); }
-    .indicator-card h4 { font-size: 0.78rem; font-weight: 600; color: var(--text-1); margin-bottom: 0.3rem; }
-    .indicator-card .ind-val { font-size: 1.4rem; font-weight: 800; color: var(--cyan); }
-    .indicator-card .ind-label { font-size: 0.65rem; color: var(--text-3); }
-    .cluster-badge {
-      display: inline-block; padding: 2px 8px; border-radius: 10px;
-      font-size: 0.62rem; font-weight: 600; margin-bottom: 6px;
-    }
-    .cluster-child_nutrition { background: rgba(245,158,11,0.1); color: var(--amber); }
-    .cluster-anaemia        { background: rgba(244,63,94,0.1);  color: var(--rose); }
-    .cluster-maternal_health{ background: rgba(16,185,129,0.1); color: var(--emerald); }
-    .cluster-vaccination    { background: rgba(34,211,238,0.1); color: var(--cyan); }
-    .cluster-sanitation     { background: rgba(99,102,241,0.1); color: var(--indigo-light); }
-    .cluster-ncd            { background: rgba(167,139,250,0.1);color: var(--violet); }
+  /* ── Correlate ───────────────────────────────────────── */
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; margin: 26px 0 14px; align-items: center; }
+  .presets > span { font-size: 0.82rem; color: var(--ink-3); margin-right: 2px; }
+  .corr-controls {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 0.8fr) auto; align-items: end; gap: 10px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow-sm);
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; font-size: 0.78rem; font-weight: 600; color: var(--ink-2); min-width: 0; }
+  .swap { height: 42px; width: 42px; border-radius: var(--radius-sm); border: 1px solid var(--line-2); background: var(--surface); color: var(--ink-2); display: grid; place-items: center; }
+  .swap:hover { color: var(--ink); background: var(--surface-2); }
+  .corr-controls .btn-primary { height: 42px; padding: 0 20px; }
+  .field-error { grid-column: 1 / -1; font-size: 0.84rem; color: var(--bad); margin: 0; }
+  .corr-out { margin-top: 18px; }
+  .corr-result { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 16px; animation: rise 0.3s ease both; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; min-width: 0; }
+  .r-label { font-size: 0.8rem; color: var(--ink-3); font-weight: 600; }
+  .r-big { font-family: var(--font-display); font-weight: 500; font-size: 3.6rem; line-height: 1; letter-spacing: -0.04em; margin: 6px 0 8px; font-variant-numeric: tabular-nums; }
+  .r-strength { font-weight: 650; font-size: 1.05rem; }
+  .r-sentence { color: var(--ink-2); margin: 6px 0 0; font-size: 0.94rem; }
+  .meter { position: relative; height: 10px; border-radius: 999px; margin: 22px 0 6px; background: linear-gradient(90deg, var(--t-mothers), var(--bg-2) 50%, var(--accent)); }
+  .meter-mark { position: absolute; top: -6px; width: 4px; height: 22px; border-radius: 3px; background: var(--ink); transform: translateX(-50%); box-shadow: 0 0 0 2px var(--surface); }
+  .meter-labels { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--ink-3); }
+  .corr-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 20px 0 0; }
+  .corr-stats div { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; }
+  .corr-stats dt { font-size: 0.72rem; color: var(--ink-3); }
+  .corr-stats dd { margin: 2px 0 0; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .caveat { margin: 18px 0 0; font-size: 0.82rem; color: var(--ink-3); line-height: 1.5; }
+  .plot-panel { padding: 14px 14px 8px; display: flex; flex-direction: column; }
+  .plot-title { font-size: 0.86rem; font-weight: 600; margin: 4px 6px 0; }
+  .plot { flex: 1; min-height: 380px; }
+  .plot-note { font-size: 0.78rem; color: var(--ink-3); margin: 4px 6px 6px; }
+  .corr-placeholder { border: 1.5px dashed var(--line-2); border-radius: var(--radius); padding: 44px 20px; text-align: center; color: var(--ink-3); }
+  .corr-placeholder .icon { width: 30px; height: 30px; margin-bottom: 8px; stroke-width: 1.5; }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.5); }
+  /* ── Footer ──────────────────────────────────────────── */
+  .site-foot { border-top: 1px solid var(--line); }
+  .site-foot-inner { max-width: 1200px; margin: 0 auto; padding: 22px 20px 40px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; font-size: 0.82rem; color: var(--ink-3); }
+  .site-foot a { color: var(--ink-2); }
 
-    /* Responsive */
-    @media (max-width: 900px) {
-      main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-      aside { display: none; }
-      .welcome-cards { grid-template-columns: 1fr 1fr; }
-    }
-    @media (max-width: 600px) {
-      .welcome-cards { grid-template-columns: 1fr; }
-      header { padding: 0 1rem; }
-      .results-panel { padding: 1rem; }
-      .query-bar { padding: 1rem; }
-    }
-  </style>
+  /* ── Responsive ──────────────────────────────────────── */
+  @media (max-width: 900px) {
+    .corr-controls { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+    .corr-controls .field-scope { grid-column: 1 / 3; }
+    .corr-result { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 760px) {
+    :root { --topbar-h: 108px; }
+    .topbar-inner { grid-template-columns: minmax(0, 1fr) auto; padding: 10px 16px; gap: 10px; row-gap: 10px; }
+    .tabs { grid-row: 2; grid-column: 1 / -1; }
+    .tab { flex: 1; padding: 8px 6px; }
+    .brand-tag { display: none; }
+    .view { padding: 28px 16px 56px; }
+    .view-ask { padding-bottom: 0; }
+    .hero { padding-top: 2vh; }
+    .facts-strip { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .suggest-grid { grid-template-columns: minmax(0, 1fr); }
+    .how { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    .how li { display: grid; grid-template-columns: 22px 1fr; column-gap: 12px; }
+    .how li::before { margin: 0; grid-row: span 2; }
+    .bubble { max-width: 90%; }
+    .kbd-hint { display: none; }
+    .composer-row .send { margin-left: auto; }
+    .prose th, .prose td { padding: 8px 10px; }
+    .answer-body { padding: 18px 16px 4px; }
+    .answer-section { padding: 0 16px 16px; }
+    .answer-head { padding: 11px 14px; }
+    .answer-foot .steps { margin-left: 0; width: 100%; }
+    .chart iframe { height: 340px; }
+    .search { flex: 1 1 100%; }
+    .corr-controls { grid-template-columns: minmax(0, 1fr); }
+    .corr-controls .field-scope { grid-column: auto; }
+    .swap { justify-self: center; transform: rotate(90deg); }
+    .corr-controls .btn-primary { width: 100%; }
+    .r-big { font-size: 3rem; }
+    .plot { min-height: 320px; }
+    dialog.drawer { inset: auto 0 0 0; width: 100%; height: 90%; border-radius: 20px 20px 0 0; }
+    dialog.drawer[open] { animation-name: sheet-in; }
+    @keyframes sheet-in { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+    .drawer-head h3 { font-size: 1.45rem; }
+  }
+  @media (max-width: 420px) {
+    .brand-name { font-size: 1rem; }
+    .status-text { display: none; }
+    .status { padding: 8px; }
+  }
+  @media (hover: none) { .kbd-hint { display: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
+</style>
 </head>
 <body>
-<div class="app">
+<a class="skip-link" href="#main">Skip to content</a>
 
-  <!-- Header -->
-  <header>
-    <a class="logo" href="#">
-      <div class="logo-icon">B</div>
-      <div>
-        <div class="logo-text">BharatHealth Analyst</div>
-        <div class="logo-sub">NFHS-5 · 706 Districts · AI-Powered</div>
-      </div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-scatter" viewBox="0 0 24 24"><path d="M3 3v18h18"/><circle cx="8" cy="15" r="1.4"/><circle cx="11" cy="11" r="1.4"/><circle cx="15" cy="12" r="1.4"/><circle cx="17" cy="7" r="1.4"/><circle cx="13" cy="16" r="1.4"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+    <symbol id="i-github" viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-plug" viewBox="0 0 24 24"><path d="M12 22v-5M9 8V2M15 8V2M18 8v4a6 6 0 0 1-12 0V8z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+    <symbol id="i-retry" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 16V4M3 8l4-4 4 4M17 8v12M21 16l-4 4-4-4"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+    <symbol id="i-clear" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
+    <symbol id="i-mark" viewBox="0 0 32 32"><rect width="32" height="32" rx="9" style="fill:var(--accent)"/><path d="M6 17h5l2.5-6 4 11 2.5-5H26" style="fill:none;stroke:var(--accent-ink)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="#ask" aria-label="BharatHealth Analyst — home">
+      <svg class="brand-mark" width="34" height="34" aria-hidden="true"><use href="#i-mark"/></svg>
+      <span class="brand-text">
+        <span class="brand-name">BharatHealth Analyst</span>
+        <span class="brand-tag">NFHS-5 district health data, in plain English</span>
+      </span>
     </a>
-    <div class="header-badges">
-      <span class="badge badge-indigo">NFHS-5 (2019–21)</span>
-      <span class="badge badge-cyan">706 Districts</span>
-      <span class="badge badge-emerald" id="api-status">Connecting…</span>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button class="tab" role="tab" id="tab-ask" aria-controls="view-ask" data-view="ask"><svg class="icon"><use href="#i-chat"/></svg>Ask</button>
+      <button class="tab" role="tab" id="tab-explore" aria-controls="view-explore" data-view="explore"><svg class="icon"><use href="#i-grid"/></svg>Explore</button>
+      <button class="tab" role="tab" id="tab-correlate" aria-controls="view-correlate" data-view="correlate"><svg class="icon"><use href="#i-scatter"/></svg>Correlate</button>
+    </nav>
+    <div class="tools">
+      <span class="status" id="status" data-state="checking" role="status" title="Checking the live analysis server…">
+        <span class="status-dot" aria-hidden="true"></span><span class="status-text">Connecting</span>
+      </span>
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="Switch colour theme" title="Switch colour theme">
+        <svg class="icon show-in-light"><use href="#i-moon"/></svg><svg class="icon show-in-dark"><use href="#i-sun"/></svg>
+      </button>
+      <a class="icon-btn" href="https://github.com/Rayyan-mohammed/aarogya-lens" target="_blank" rel="noopener noreferrer" aria-label="Source code on GitHub" title="Source code on GitHub"><svg class="icon"><use href="#i-github"/></svg></a>
     </div>
-  </header>
+  </div>
+</header>
 
-  <main>
-    <!-- Sidebar -->
-    <aside>
-      <!-- Model selector -->
-      <div class="sidebar-section">
-        <h3>LLM Model</h3>
-        <select class="model-select" id="model-select">
-          <option value="gemini" selected>Gemini 3.6 Flash</option>
-          <option value="groq">Groq (currently broken — provider deprecated the model)</option>
-          <option value="openrouter">OpenRouter (currently broken — no credits)</option>
-        </select>
-      </div>
-
-      <!-- State filter -->
-      <div class="sidebar-section">
-        <h3>State Filter (optional)</h3>
-        <select class="state-select" id="state-select">
-          <option value="">All India</option>
-        </select>
-      </div>
-
-      <!-- Example queries -->
-      <div class="sidebar-section">
-        <h3>Example Queries</h3>
-        <div class="example-queries" id="example-queries">
-          <button class="example-query" onclick="setQuery(this.textContent)">Which 10 districts have the worst stunting rate nationally?</button>
-          <button class="example-query" onclick="setQuery(this.textContent)">Compare institutional delivery rates across Bihar, UP, and Kerala</button>
-          <button class="example-query" onclick="setQuery(this.textContent)">Is there a correlation between open defecation and child stunting?</button>
-          <button class="example-query" onclick="setQuery(this.textContent)">Which districts in Rajasthan have the highest anaemia in women?</button>
-          <button class="example-query" onclick="setQuery(this.textContent)">Show me the districts with best full vaccination coverage</button>
-          <button class="example-query" onclick="setQuery(this.textContent)">What is the child marriage rate in Uttar Pradesh districts?</button>
-          <button class="example-query" onclick="setQuery(this.textContent)">Which states have the highest caesarean section rates?</button>
+<main id="main">
+  <!-- ── Ask ── -->
+  <section class="view view-ask" id="view-ask" role="tabpanel" aria-labelledby="tab-ask">
+    <div class="thread" id="thread">
+      <div class="empty" id="empty">
+        <div class="hero">
+          <p class="eyebrow">NFHS-5 · 2019–21 · 706 districts</p>
+          <h1>Ask India's district health data <em>anything.</em></h1>
+          <p class="hero-lede">Type a question in plain English. An AI analyst queries the National Family Health Survey, runs the numbers and answers with key facts, charts and caveats — no SQL or spreadsheets.</p>
+          <ul class="facts-strip" id="facts-strip" aria-label="Dataset at a glance"></ul>
         </div>
-      </div>
-
-      <!-- Dataset stats -->
-      <div class="sidebar-section">
-        <h3>Dataset Stats</h3>
-        <div class="stat-grid" id="stat-grid">
-          <div class="stat-card"><div class="stat-value">706</div><div class="stat-label">Districts</div></div>
-          <div class="stat-card"><div class="stat-value">36</div><div class="stat-label">States/UTs</div></div>
-          <div class="stat-card"><div class="stat-value">107</div><div class="stat-label">Columns</div></div>
-          <div class="stat-card"><div class="stat-value">19–21</div><div class="stat-label">Survey Yr</div></div>
-        </div>
-      </div>
-
-      <!-- Tabs -->
-      <div class="sidebar-section">
-        <h3>Views</h3>
-        <div class="tab-nav">
-          <button class="tab-btn active" onclick="switchTab('chat', this)">Chat</button>
-          <button class="tab-btn" onclick="switchTab('explorer', this)">Explorer</button>
-          <button class="tab-btn" onclick="switchTab('correlate', this)">Correlate</button>
-        </div>
-      </div>
-    </aside>
-
-    <!-- Main content -->
-    <div class="content">
-      <!-- Query bar -->
-      <div class="query-bar">
-        <div class="query-form">
-          <textarea
-            class="query-input"
-            id="query-input"
-            placeholder="Ask anything about India's district health data… e.g. Which districts in Bihar have the highest stunting rates?"
-            rows="2"
-            onkeydown="handleKey(event)"
-          ></textarea>
-          <button class="send-btn" id="send-btn" onclick="runQuery()">
-            <span id="send-icon">
-              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-              </svg>
-            </span>
-            <span id="send-label">Analyse</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Results -->
-      <div class="results-panel" id="results-panel">
-        <!-- Welcome -->
-        <div class="welcome" id="welcome-screen">
-          <div class="welcome-hero">
-            <div class="welcome-icon">🏥</div>
-            <h1>India's Health Data,<br /><span>Now Accessible to All</span></h1>
-            <p>Ask natural language questions over NFHS-5 data covering 706 districts across India. Get instant analysis, charts, and grounded insights — no SQL or data science skills needed.</p>
-          </div>
-          <div class="welcome-cards">
-            <div class="welcome-card" onclick="setQuery('Which 10 districts have the worst stunting rate nationally?')">
-              <div class="welcome-card-icon">🍎</div>
-              <h4>Child Nutrition</h4>
-              <p>Stunting, wasting, underweight rates across 706 districts</p>
-            </div>
-            <div class="welcome-card" onclick="setQuery('Compare anaemia rates in women across all states')">
-              <div class="welcome-card-icon">🩸</div>
-              <h4>Anaemia Burden</h4>
-              <p>Anaemia prevalence in children, pregnant & non-pregnant women</p>
-            </div>
-            <div class="welcome-card" onclick="setQuery('Which districts have the lowest institutional delivery rates?')">
-              <div class="welcome-card-icon">🤱</div>
-              <h4>Maternal Health</h4>
-              <p>Institutional delivery, ANC visits, skilled birth attendance</p>
-            </div>
-            <div class="welcome-card" onclick="setQuery('Show vaccination coverage across all districts')">
-              <div class="welcome-card-icon">💉</div>
-              <h4>Vaccination</h4>
-              <p>Full immunisation rates: BCG, DPT, polio, measles by district</p>
-            </div>
-            <div class="welcome-card" onclick="setQuery('Is open defecation correlated with child stunting at district level?')">
-              <div class="welcome-card-icon">🔗</div>
-              <h4>Correlations</h4>
-              <p>Explore relationships between sanitation, nutrition, and health outcomes</p>
-            </div>
-            <div class="welcome-card" onclick="setQuery('Which districts in Uttar Pradesh have the highest child marriage rates?')">
-              <div class="welcome-card-icon">👩</div>
-              <h4>Women's Health</h4>
-              <p>Literacy, child marriage, empowerment, and reproductive health</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Results will be injected here -->
-        <div id="results-list"></div>
-
-        <!-- Explorer tab content -->
-        <div id="explorer-panel" style="display:none;">
-          <div class="explorer-panel">
-            <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem;">National Indicator Overview</h2>
-            <div class="explorer-grid" id="explorer-grid">
-              <div style="grid-column:1/-1;text-align:center;color:var(--text-3);padding:2rem;">
-                Loading indicators…
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Correlate tab content -->
-        <div id="correlate-panel" style="display:none;">
-          <div class="explorer-panel">
-            <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:1.5rem;">Correlation Explorer</h2>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1.5rem;">
-              <div>
-                <label style="font-size:0.75rem;color:var(--text-3);display:block;margin-bottom:4px;">Indicator A</label>
-                <select class="state-select" id="corr-a">
-                  <option value="stunting_pct">Stunting (%)</option>
-                  <option value="wasting_pct">Wasting (%)</option>
-                  <option value="anaemia_children_pct">Anaemia in Children (%)</option>
-                  <option value="anaemia_all_women_pct">Anaemia in Women (%)</option>
-                  <option value="institutional_delivery_pct">Institutional Delivery (%)</option>
-                  <option value="fully_vaccinated_recall_pct">Full Vaccination (%)</option>
-                  <option value="improved_sanitation_pct">Improved Sanitation (%)</option>
-                  <option value="women_literacy_pct">Women Literacy (%)</option>
-                  <option value="child_marriage_pct">Child Marriage (%)</option>
-                  <option value="anc_4plus_visits_pct">ANC 4+ Visits (%)</option>
-                  <option value="clean_cooking_fuel_pct">Clean Cooking Fuel (%)</option>
-                </select>
-              </div>
-              <div>
-                <label style="font-size:0.75rem;color:var(--text-3);display:block;margin-bottom:4px;">Indicator B</label>
-                <select class="state-select" id="corr-b">
-                  <option value="improved_sanitation_pct">Improved Sanitation (%)</option>
-                  <option value="stunting_pct">Stunting (%)</option>
-                  <option value="women_literacy_pct">Women Literacy (%)</option>
-                  <option value="anaemia_all_women_pct">Anaemia in Women (%)</option>
-                  <option value="institutional_delivery_pct">Institutional Delivery (%)</option>
-                  <option value="child_marriage_pct">Child Marriage (%)</option>
-                  <option value="clean_cooking_fuel_pct">Clean Cooking Fuel (%)</option>
-                  <option value="anc_4plus_visits_pct">ANC 4+ Visits (%)</option>
-                  <option value="fully_vaccinated_recall_pct">Full Vaccination (%)</option>
-                  <option value="anaemia_children_pct">Anaemia in Children (%)</option>
-                </select>
-              </div>
-              <div style="display:flex;align-items:flex-end;">
-                <button class="send-btn" style="width:100%;height:38px;padding:0;" onclick="runCorrelation()">
-                  Run Correlation
-                </button>
-              </div>
-            </div>
-            <div id="corr-result"></div>
-          </div>
-        </div>
+        <p class="section-label" id="suggest-label">Try a question</p>
+        <div class="suggest-grid" id="suggestions" aria-labelledby="suggest-label"></div>
+        <ol class="how" aria-label="How it works">
+          <li><b>You ask</b>Any question about nutrition, anaemia, maternal care, immunisation, sanitation or women's health.</li>
+          <li><b>The analyst works</b>It picks tools — data queries, rankings, correlations, charts — and runs them on all 706 districts.</li>
+          <li><b>You get a grounded answer</b>With the numbers, key facts and the survey's limitations spelled out.</li>
+        </ol>
       </div>
     </div>
-  </main>
-</div>
+
+    <div class="composer-wrap">
+      <div class="offline-banner" id="offline-banner" hidden>
+        <svg class="icon"><use href="#i-plug"/></svg>
+        <span><b>The live analyst is offline right now.</b> It runs on the author's own machine and isn't always on. Questions won't go through until it's back — the <a href="#explore">Explore</a> tab works offline.</span>
+      </div>
+      <form class="composer" id="composer" autocomplete="off">
+        <label class="sr-only" for="question">Your question</label>
+        <textarea id="question" rows="1" placeholder="Ask about any district, state or indicator…" maxlength="1000"></textarea>
+        <div class="composer-row">
+          <span class="scope" title="Limit the question to one state">
+            <svg class="icon"><use href="#i-pin"/></svg>
+            <label class="sr-only" for="scope">Scope</label>
+            <select id="scope"><option value="">All India</option></select>
+          </span>
+          <button class="btn btn-quiet" type="button" id="clear-btn" hidden><svg class="icon"><use href="#i-clear"/></svg>Clear</button>
+          <span class="kbd-hint"><kbd>Enter</kbd> to send · <kbd>Shift</kbd>+<kbd>Enter</kbd> new line</span>
+          <button class="send" type="submit" id="send-btn" aria-label="Send question" disabled><svg class="icon"><use href="#i-send"/></svg></button>
+        </div>
+      </form>
+      <p class="composer-foot">AI-generated answers can be wrong. Check key figures against the NFHS-5 factsheets before relying on them.</p>
+    </div>
+  </section>
+
+  <!-- ── Explore ── -->
+  <section class="view" id="view-explore" role="tabpanel" aria-labelledby="tab-explore" hidden>
+    <div class="page-head">
+      <p class="eyebrow">Explore</p>
+      <h2>The national picture, indicator by indicator</h2>
+      <p>Averages and spread across all 706 districts for the survey's headline indicators. Select one to see how every state compares.</p>
+    </div>
+    <div class="toolbar">
+      <div class="search">
+        <svg class="icon"><use href="#i-search"/></svg>
+        <label class="sr-only" for="ind-search">Search indicators</label>
+        <input class="input" type="search" id="ind-search" placeholder="Search indicators" />
+      </div>
+      <div class="filters" id="filters" role="group" aria-label="Filter by theme"></div>
+    </div>
+    <div class="ind-grid" id="ind-grid"></div>
+    <p class="snapshot-note"><svg class="icon"><use href="#i-info"/></svg><span>These figures are bundled with the page, so Explore works even when the live server is offline. District averages are unweighted, so each district counts equally regardless of population. Source: NFHS-5 district factsheets, 2019–21.</span></p>
+  </section>
+
+  <!-- ── Correlate ── -->
+  <section class="view" id="view-correlate" role="tabpanel" aria-labelledby="tab-correlate" hidden>
+    <div class="page-head">
+      <p class="eyebrow">Correlate</p>
+      <h2>Do two indicators move together?</h2>
+      <p>Pick any two indicators to measure how closely they track each other across districts — for example, whether districts with better sanitation see less child stunting.</p>
+    </div>
+    <div class="presets" id="presets"><span>Try:</span></div>
+    <form class="corr-controls" id="corr-form">
+      <label class="field">Indicator A<select class="input" id="corr-a"></select></label>
+      <button class="swap" type="button" id="corr-swap" aria-label="Swap indicators" title="Swap indicators"><svg class="icon"><use href="#i-swap"/></svg></button>
+      <label class="field">Indicator B<select class="input" id="corr-b"></select></label>
+      <label class="field field-scope">Within<select class="input" id="corr-scope"><option value="">All India</option></select></label>
+      <button class="btn btn-primary" type="submit" id="corr-run">Calculate</button>
+      <p class="field-error" id="corr-error" role="alert" hidden></p>
+    </form>
+    <div class="corr-out" id="corr-out" aria-live="polite">
+      <div class="corr-placeholder">
+        <svg class="icon"><use href="#i-scatter"/></svg>
+        <p>Choose two indicators and press <b>Calculate</b>.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot" id="site-foot" hidden>
+  <div class="site-foot-inner">
+    <span>Data: National Family Health Survey (NFHS-5), 2019–21 · IIPS and Ministry of Health &amp; Family Welfare, Government of India.</span>
+    <span>Built by Mohammed Rayyan · <a href="https://github.com/Rayyan-mohammed/aarogya-lens" target="_blank" rel="noopener noreferrer">source on GitHub</a></span>
+  </div>
+</footer>
+
+<dialog class="drawer" id="drawer" aria-labelledby="drawer-title">
+  <div class="drawer-inner" id="drawer-inner"></div>
+</dialog>
+
+<div class="sr-only" id="announcer" aria-live="polite"></div>
 
 <script>
   const API_BASE = 'https://electro-hydrocodone-choose-peers.trycloudflare.com';
-  let currentTab = 'chat';
-  let nationalData = null;
+  // Local dev: a page served from localhost talks to a local backend; ?api=<url> overrides either.
+  const IS_LOCAL = ['localhost', '127.0.0.1'].includes(location.hostname);
+  const API = (new URLSearchParams(location.search).get('api') || (IS_LOCAL ? 'http://localhost:8000' : API_BASE)).replace(/\/+$/, '');
+  const MODEL = 'gemini';
+  const QUERY_TIMEOUT_MS = 5 * 60 * 1000;
 
-  // ── Init ──────────────────────────────────────────────────────────────────
-  async function init() {
-    await checkApiHealth();
-    await loadStates();
-  }
+/* SNAPSHOT:BEGIN — generated by scripts/build_frontend_snapshot.py; do not edit by hand */
+const SNAPSHOT = {"districts":706,"states_n":36,"states":[["Andaman & Nicobar Islands",3],["Andhra Pradesh",13],["Arunachal Pradesh",20],["Assam",33],["Bihar",38],["Chandigarh",1],["Chhattisgarh",27],["Dadra and Nagar Haveli & Daman and Diu",3],["Goa",2],["Gujarat",33],["Haryana",22],["Himachal Pradesh",12],["Jammu & Kashmir",20],["Jharkhand",24],["Karnataka",30],["Kerala",14],["Ladakh",2],["Lakshadweep",1],["Madhya Pradesh",51],["Maharastra",36],["Manipur",9],["Meghalaya",11],["Mizoram",8],["NCT of Delhi",11],["Nagaland",11],["Odisha",30],["Puducherry",4],["Punjab",22],["Rajasthan",33],["Sikkim",4],["Tamil Nadu",32],["Telangana",31],["Tripura",8],["Uttar Pradesh",75],["Uttarakhand",13],["West Bengal",19]],"ind":{"stunting_pct":{"d":"% of children under 5 who are stunted (low height-for-age, chronic malnutrition)","mean":33.51,"med":32.85,"min":13.2,"max":60.6,"lo":["Jagatsinghapur","Odisha",13.2],"hi":["Pashchimi Singhbhum","Jharkhand",60.6],"n":706,"s":[["Meghalaya",42.98],["Bihar",42.59],["Jharkhand",40.19],["Uttar Pradesh",39.63],["Gujarat",38.66],["Assam",35.7],["Chhattisgarh",35.67],["Dadra and Nagar Haveli & Daman and Diu",35.43],["Madhya Pradesh",35.37],["Maharastra",35.11],["Karnataka",34.58],["West Bengal",33.21],["Telangana",33.18],["Nagaland",33.16],["Tripura",32.96],["Lakshadweep",32.0],["Rajasthan",31.74],["Odisha",31.65],["Himachal Pradesh",31.55],["NCT of Delhi",30.72],["Ladakh",30.4],["Andhra Pradesh",30.38],["Mizoram",29.29],["Puducherry",28.93],["Uttarakhand",27.29],["Arunachal Pradesh",26.75],["Haryana",26.55],["Goa",26.25],["Jammu & Kashmir",26.15],["Punjab",25.39],["Tamil Nadu",25.32],["Chandigarh",25.3],["Sikkim",24.9],["Manipur",24.62],["Kerala",23.28],["Andaman & Nicobar Islands",23.23]]},"wasting_pct":{"d":"% of children under 5 who are wasted (low weight-for-height, acute malnutrition)","mean":18.56,"med":18.1,"min":4.5,"max":48.0,"lo":["North  District","Sikkim",4.5],"hi":["Karimganj","Assam",48.0],"n":706,"s":[["Gujarat",26.14],["Maharastra",25.8],["Bihar",24.25],["Jharkhand",23.11],["Telangana",22.14],["West Bengal",21.35],["Dadra and Nagar Haveli & Daman and Diu",21.17],["Assam",20.69],["Goa",19.55],["Madhya Pradesh",19.26],["Jammu & Kashmir",19.23],["Karnataka",19.23],["Chhattisgarh",19.09],["Tripura",18.91],["Odisha",18.47],["Andaman & Nicobar Islands",18.43],["Nagaland",18.11],["Rajasthan",18.05],["Uttar Pradesh",17.69],["Ladakh",17.45],["Lakshadweep",17.4],["Himachal Pradesh",16.11],["Andhra Pradesh",16.08],["Kerala",15.06],["Tamil Nadu",14.85],["Meghalaya",13.69],["Arunachal Pradesh",13.37],["Uttarakhand",12.46],["Sikkim",11.98],["NCT of Delhi",11.72],["Puducherry",11.65],["Haryana",11.54],["Punjab",10.81],["Mizoram",10.06],["Manipur",9.94],["Chandigarh",8.4]]},"underweight_pct":{"d":"% of children under 5 who are underweight (low weight-for-age)","mean":29.52,"med":29.35,"min":7.2,"max":62.4,"lo":["South District","Sikkim",7.2],"hi":["Pashchimi Singhbhum","Jharkhand",62.4],"n":706,"s":[["Bihar",41.73],["Jharkhand",40.4],["Gujarat",40.33],["Maharastra",36.44],["Dadra and Nagar Haveli & Daman and Diu",33.3],["Chhattisgarh",33.22],["Madhya Pradesh",33.18],["Telangana",32.77],["West Bengal",32.76],["Uttar Pradesh",32.32],["Assam",31.61],["Karnataka",31.3],["Odisha",30.25],["Andhra Pradesh",28.77],["Rajasthan",28.4],["Andaman & Nicobar Islands",28.27],["Nagaland",26.53],["Tripura",26.16],["Lakshadweep",25.8],["Meghalaya",25.44],["Himachal Pradesh",24.68],["Goa",23.4],["Tamil Nadu",22.26],["NCT of Delhi",22.13],["Jammu & Kashmir",21.07],["Puducherry",21.02],["Haryana",20.91],["Chandigarh",20.6],["Ladakh",20.4],["Kerala",19.37],["Uttarakhand",19.16],["Punjab",17.66],["Arunachal Pradesh",14.12],["Manipur",13.77],["Sikkim",13.7],["Mizoram",13.29]]},"anaemia_children_pct":{"d":"% of children 6-59 months who are anaemic (<11.0 g/dl)","mean":65.81,"med":67.7,"min":24.9,"max":95.5,"lo":["Siang","Arunachal Pradesh",24.9],"hi":["Leh(Ladakh)","Ladakh",95.5],"n":706,"s":[["Ladakh",91.7],["Gujarat",79.84],["Dadra and Nagar Haveli & Daman and Diu",73.37],["Jammu & Kashmir",73.2],["Rajasthan",72.2],["Madhya Pradesh",71.67],["Maharastra",70.34],["Telangana",70.2],["Bihar",70.08],["Assam",69.82],["Punjab",69.7],["West Bengal",69.69],["Haryana",69.62],["NCT of Delhi",69.16],["Chhattisgarh",69.0],["Jharkhand",68.22],["Uttar Pradesh",66.41],["Tripura",65.85],["Odisha",64.66],["Karnataka",64.55],["Andhra Pradesh",63.48],["Himachal Pradesh",59.95],["Tamil Nadu",57.44],["Sikkim",56.72],["Arunachal Pradesh",56.62],["Uttarakhand",56.48],["Chandigarh",54.6],["Goa",52.6],["Puducherry",52.1],["Mizoram",46.02],["Lakshadweep",43.1],["Nagaland",42.98],["Manipur",41.98],["Meghalaya",41.95],["Kerala",38.29],["Andaman & Nicobar Islands",37.17]]},"anaemia_all_women_pct":{"d":"% of all women 15-49 who are anaemic","mean":55.92,"med":57.2,"min":14.9,"max":93.5,"lo":["Kohima","Nagaland",14.9],"hi":["Leh(Ladakh)","Ladakh",93.5],"n":706,"s":[["Ladakh",92.75],["West Bengal",71.53],["Tripura",67.05],["Jammu & Kashmir",66.93],["Jharkhand",66.27],["Assam",65.75],["Bihar",64.68],["Gujarat",64.57],["Odisha",64.3],["Chhattisgarh",63.01],["Haryana",60.68],["Chandigarh",60.3],["Andhra Pradesh",59.02],["Punjab",58.77],["Dadra and Nagar Haveli & Daman and Diu",58.5],["Telangana",58.45],["Rajasthan",55.43],["Madhya Pradesh",55.18],["Meghalaya",54.95],["Maharastra",54.7],["Himachal Pradesh",54.17],["Tamil Nadu",53.92],["Andaman & Nicobar Islands",52.7],["Uttar Pradesh",50.45],["NCT of Delhi",49.5],["Karnataka",48.21],["Puducherry",48.17],["Sikkim",40.62],["Uttarakhand",40.17],["Arunachal Pradesh",38.85],["Goa",38.8],["Kerala",35.73],["Mizoram",34.1],["Nagaland",29.21],["Manipur",28.73],["Lakshadweep",25.8]]},"institutional_delivery_pct":{"d":"% of births occurring in a health facility (institutional delivery)","mean":88.67,"med":92.2,"min":21.4,"max":100.0,"lo":["Mon","Nagaland",21.4],"hi":["South Goa","Goa",100.0],"n":706,"s":[["Goa",99.8],["Puducherry",99.78],["Kerala",99.7],["Tamil Nadu",99.65],["Lakshadweep",99.6],["Andaman & Nicobar Islands",98.33],["Karnataka",97.42],["Chandigarh",96.9],["Andhra Pradesh",96.85],["Telangana",96.7],["Dadra and Nagar Haveli & Daman and Diu",96.47],["Sikkim",96.45],["Haryana",95.77],["Rajasthan",95.28],["Ladakh",95.05],["Punjab",94.88],["Maharastra",94.79],["Gujarat",93.15],["Odisha",92.35],["West Bengal",92.04],["Jammu & Kashmir",91.68],["NCT of Delhi",91.61],["Madhya Pradesh",90.71],["Tripura",88.22],["Himachal Pradesh",87.81],["Assam",85.14],["Chhattisgarh",84.47],["Uttar Pradesh",84.04],["Uttarakhand",82.25],["Mizoram",81.08],["Arunachal Pradesh",80.05],["Bihar",77.84],["Jharkhand",76.18],["Manipur",71.24],["Meghalaya",62.84],["Nagaland",43.28]]},"fully_vaccinated_recall_pct":{"d":"% of children 12-23 months fully vaccinated (card or recall)","mean":77.68,"med":78.0,"min":38.3,"max":100.0,"lo":["Udalguri","Assam",38.3],"hi":["Dadra & Nagar Haveli","Dadra and Nagar Haveli & Daman and Diu",100.0],"n":693,"s":[["Odisha",91.77],["Sikkim",91.37],["Dadra and Nagar Haveli & Daman and Diu",90.4],["Tamil Nadu",89.32],["Himachal Pradesh",88.37],["Ladakh",88.2],["Jammu & Kashmir",87.12],["West Bengal",86.7],["Karnataka",86.42],["Lakshadweep",86.1],["Puducherry",86.0],["Uttarakhand",83.61],["Chandigarh",80.9],["Rajasthan",80.43],["Chhattisgarh",80.4],["Kerala",79.07],["Madhya Pradesh",78.92],["Goa",78.6],["Telangana",78.5],["Gujarat",78.08],["Haryana",77.47],["Maharastra",77.34],["NCT of Delhi",77.08],["Punjab",76.44],["Mizoram",75.28],["Jharkhand",75.2],["Andhra Pradesh",73.61],["Bihar",72.36],["Andaman & Nicobar Islands",70.25],["Uttar Pradesh",70.13],["Meghalaya",69.86],["Tripura",67.08],["Assam",66.8],["Arunachal Pradesh",66.48],["Manipur",64.81],["Nagaland",59.11]]},"improved_sanitation_pct":{"d":"% using improved sanitation facility","mean":71.93,"med":73.75,"min":29.2,"max":99.9,"lo":["Puruliya","West Bengal",29.2],"hi":["Malappuram","Kerala",99.9],"n":706,"s":[["Lakshadweep",99.8],["Kerala",98.6],["Mizoram",94.15],["Nagaland",88.2],["Puducherry",88.2],["Goa",87.95],["Sikkim",87.35],["Punjab",86.5],["Andaman & Nicobar Islands",86.4],["Haryana",85.03],["Chandigarh",85.0],["Arunachal Pradesh",84.54],["Meghalaya",83.38],["Uttarakhand",82.3],["NCT of Delhi",81.09],["Himachal Pradesh",80.91],["Andhra Pradesh",76.7],["Telangana",74.61],["Karnataka",74.6],["Jammu & Kashmir",73.75],["Dadra and Nagar Haveli & Daman and Diu",73.3],["Chhattisgarh",72.81],["Gujarat",71.73],["Maharastra",71.65],["Tripura",71.61],["Tamil Nadu",71.57],["Manipur",71.36],["Assam",70.11],["Uttar Pradesh",68.98],["Rajasthan",68.58],["West Bengal",67.28],["Madhya Pradesh",64.17],["Odisha",59.65],["Jharkhand",55.31],["Bihar",49.47],["Ladakh",42.35]]},"women_literacy_pct":{"d":"% of women aged 15-49 who are literate","mean":74.33,"med":75.1,"min":38.6,"max":99.7,"lo":["Jhabua","Madhya Pradesh",38.6],"hi":["Kottayam","Kerala",99.7],"n":706,"s":[["Kerala",97.88],["Lakshadweep",96.5],["Goa",93.1],["Mizoram",91.33],["Puducherry",91.08],["Himachal Pradesh",90.25],["Sikkim",86.92],["Andaman & Nicobar Islands",86.07],["Meghalaya",85.95],["Tamil Nadu",85.69],["NCT of Delhi",85.15],["Manipur",85.14],["Nagaland",84.51],["Uttarakhand",83.96],["Dadra and Nagar Haveli & Daman and Diu",83.17],["Chandigarh",83.0],["Maharastra",82.8],["Haryana",81.4],["Punjab",80.95],["Tripura",79.36],["Assam",77.4],["Ladakh",76.8],["Karnataka",75.83],["Jammu & Kashmir",75.05],["West Bengal",74.93],["Gujarat",74.75],["Arunachal Pradesh",73.1],["Odisha",70.3],["Chhattisgarh",70.11],["Uttar Pradesh",68.24],["Andhra Pradesh",67.65],["Madhya Pradesh",67.59],["Rajasthan",64.6],["Telangana",64.09],["Jharkhand",63.27],["Bihar",57.64]]},"anc_4plus_visits_pct":{"d":"% of mothers with 4 or more antenatal care visits","mean":60.47,"med":62.4,"min":4.4,"max":98.7,"lo":["Tuensang","Nagaland",4.4],"hi":["Theni","Tamil Nadu",98.7],"n":706,"s":[["Goa",93.65],["Tamil Nadu",90.6],["Lakshadweep",88.3],["Puducherry",85.03],["Dadra and Nagar Haveli & Daman and Diu",84.03],["Odisha",79.91],["Jammu & Kashmir",79.61],["NCT of Delhi",79.4],["Andaman & Nicobar Islands",78.93],["Ladakh",78.8],["Chandigarh",78.7],["Kerala",78.04],["Gujarat",77.58],["West Bengal",74.66],["Karnataka",72.58],["Himachal Pradesh",71.78],["Maharastra",71.09],["Manipur",70.64],["Telangana",70.0],["Andhra Pradesh",68.72],["Sikkim",64.53],["Chhattisgarh",61.64],["Haryana",60.57],["Uttarakhand",59.72],["Punjab",58.45],["Mizoram",58.38],["Madhya Pradesh",57.78],["Rajasthan",56.73],["Assam",52.32],["Tripura",49.77],["Meghalaya",46.11],["Uttar Pradesh",42.04],["Jharkhand",38.81],["Arunachal Pradesh",35.77],["Bihar",25.94],["Nagaland",18.35]]},"child_marriage_pct":{"d":"% of women aged 20-24 married before age 18 (child marriage rate)","mean":20.45,"med":18.25,"min":0.0,"max":57.6,"lo":["Pathanamthitta","Kerala",0.0],"hi":["Purba Medinipur","West Bengal",57.6],"n":706,"s":[["Bihar",41.07],["Tripura",39.67],["West Bengal",39.37],["Jharkhand",32.35],["Assam",30.51],["Andhra Pradesh",29.41],["Rajasthan",26.48],["Telangana",24.3],["Madhya Pradesh",23.26],["Gujarat",22.18],["Maharastra",21.71],["Karnataka",20.51],["Odisha",20.38],["Dadra and Nagar Haveli & Daman and Diu",18.37],["Arunachal Pradesh",18.21],["Meghalaya",17.71],["Uttar Pradesh",16.81],["Manipur",16.47],["Andaman & Nicobar Islands",14.63],["Chhattisgarh",13.65],["Tamil Nadu",12.87],["Sikkim",12.35],["Haryana",12.28],["Mizoram",11.88],["Chandigarh",9.7],["NCT of Delhi",9.61],["Uttarakhand",9.02],["Punjab",8.82],["Himachal Pradesh",8.24],["Puducherry",7.9],["Nagaland",7.37],["Goa",5.7],["Kerala",5.46],["Jammu & Kashmir",4.8],["Ladakh",2.5],["Lakshadweep",1.3]]},"fp_modern_method_pct":{"d":"% of currently married women using modern family planning methods","mean":54.83,"med":55.6,"min":10.6,"max":81.2,"lo":["East Khasi Hills","Meghalaya",10.6],"hi":["Nagpur","Maharastra",81.2],"n":706,"s":[["Andhra Pradesh",70.86],["Karnataka",68.0],["Maharastra",66.17],["Puducherry",66.1],["Telangana",65.65],["Madhya Pradesh",65.47],["Tamil Nadu",65.4],["Himachal Pradesh",65.22],["Rajasthan",61.56],["Goa",61.3],["Sikkim",60.55],["Uttarakhand",60.49],["West Bengal",60.46],["Andaman & Nicobar Islands",60.27],["Haryana",60.04],["Chhattisgarh",59.52],["NCT of Delhi",57.85],["Chandigarh",55.6],["Dadra and Nagar Haveli & Daman and Diu",55.13],["Kerala",54.54],["Gujarat",54.34],["Jammu & Kashmir",51.17],["Punjab",50.97],["Odisha",49.25],["Arunachal Pradesh",48.49],["Tripura",48.11],["Jharkhand",47.91],["Ladakh",47.9],["Nagaland",46.85],["Assam",45.39],["Bihar",44.8],["Uttar Pradesh",44.29],["Mizoram",34.36],["Lakshadweep",30.1],["Meghalaya",23.8],["Manipur",18.99]]},"clean_cooking_fuel_pct":{"d":"% using clean fuel for cooking","mean":54.12,"med":50.5,"min":8.6,"max":99.8,"lo":["West Khasi Hills","Meghalaya",8.6],"hi":["Shahdara","NCT of Delhi",99.8],"n":706,"s":[["NCT of Delhi",98.91],["Goa",96.45],["Chandigarh",95.8],["Puducherry",91.42],["Telangana",90.37],["Dadra and Nagar Haveli & Daman and Diu",83.9],["Andhra Pradesh",82.87],["Tamil Nadu",79.5],["Karnataka",76.09],["Ladakh",75.8],["Mizoram",75.7],["Punjab",74.73],["Maharastra",73.49],["Sikkim",72.45],["Kerala",70.21],["Andaman & Nicobar Islands",70.03],["Jammu & Kashmir",63.29],["Gujarat",59.85],["Lakshadweep",59.4],["Manipur",59.03],["Haryana",57.83],["Himachal Pradesh",53.65],["Arunachal Pradesh",52.28],["Uttarakhand",48.48],["Uttar Pradesh",47.08],["Tripura",40.71],["Assam",39.93],["West Bengal",39.67],["Rajasthan",38.31],["Madhya Pradesh",37.57],["Bihar",36.37],["Nagaland",33.49],["Odisha",32.34],["Chhattisgarh",28.28],["Jharkhand",28.04],["Meghalaya",26.65]]}}};
+/* SNAPSHOT:END */
 
-  async function checkApiHealth() {
-    const badge = document.getElementById('api-status');
-    try {
-      const res = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(3000) });
-      if (res.ok) {
-        const data = await res.json();
-        badge.textContent = `API Online · ${data.districts} Districts`;
-        badge.className = 'badge badge-emerald';
-        updateStats(data);
-      } else {
-        badge.textContent = 'API Offline';
-        badge.className = 'badge badge-indigo';
-      }
-    } catch {
-      badge.textContent = 'API Offline (start backend)';
-      badge.className = 'badge badge-indigo';
-    }
-  }
-
-  function updateStats(data) {
-    const grid = document.getElementById('stat-grid');
-    grid.innerHTML = `
-      <div class="stat-card"><div class="stat-value">${data.districts}</div><div class="stat-label">Districts</div></div>
-      <div class="stat-card"><div class="stat-value">${data.states}</div><div class="stat-label">States/UTs</div></div>
-      <div class="stat-card"><div class="stat-value">${data.columns}</div><div class="stat-label">Columns</div></div>
-      <div class="stat-card"><div class="stat-value">19–21</div><div class="stat-label">Survey Yr</div></div>
-    `;
-  }
-
-  async function loadStates() {
-    try {
-      const res = await fetch(`${API_BASE}/states`);
-      if (!res.ok) return;
-      const data = await res.json();
-      const sel = document.getElementById('state-select');
-      data.states.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.state;
-        opt.textContent = `${s.state} (${s.districts})`;
-        sel.appendChild(opt);
-      });
-    } catch { /* API offline — ignore */ }
-  }
-
-  // ── Query ─────────────────────────────────────────────────────────────────
-  function setQuery(text) {
-    const input = document.getElementById('query-input');
-    input.value = text;
-    input.focus();
-    switchTab('chat', document.querySelector('.tab-btn'));
-  }
-
-  function handleKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      runQuery();
-    }
-  }
-
-  async function runQuery() {
-    const question = document.getElementById('query-input').value.trim();
-    if (!question) return;
-
-    const model = document.getElementById('model-select').value;
-    const stateFilter = document.getElementById('state-select').value;
-
-    // Hide welcome
-    document.getElementById('welcome-screen').style.display = 'none';
-
-    // Disable button
-    const btn = document.getElementById('send-btn');
-    btn.disabled = true;
-    document.getElementById('send-icon').innerHTML = '<div class="spinner"></div>';
-    document.getElementById('send-label').textContent = 'Thinking…';
-
-    // Add loading card
-    const loadingId = `loading-${Date.now()}`;
-    const loadingHtml = `
-      <div class="loading-card" id="${loadingId}">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Analysing your question…</div>
-        <div class="loading-steps">
-          <div class="loading-step active"><div class="loading-dot"></div> Parsing query</div>
-          <div class="loading-step"><div class="loading-dot"></div> Running tools</div>
-          <div class="loading-step"><div class="loading-dot"></div> Generating answer</div>
-        </div>
-      </div>`;
-    prependResult(loadingHtml);
-
-    const startTime = Date.now();
-
-    try {
-      const body = { question, model };
-      if (stateFilter) body.state_filter = stateFilter;
-
-      const res = await fetch(`${API_BASE}/query`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      const data = await res.json();
-      const latency = ((Date.now() - startTime) / 1000).toFixed(1);
-
-      removeElement(loadingId);
-
-      if (data.status === 'success') {
-        renderResult(question, data, latency);
-      } else {
-        renderError(question, data.error || 'Unknown error', data.answer);
-      }
-    } catch (err) {
-      removeElement(loadingId);
-      if (err.message.includes('fetch') || err.message.includes('network') || err.name === 'TypeError') {
-        renderError(question, 'Cannot connect to backend. Make sure to run: python -m uvicorn backend.api.main:app --reload', '');
-      } else {
-        renderError(question, err.message, '');
-      }
-    } finally {
-      btn.disabled = false;
-      document.getElementById('send-icon').innerHTML = `
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-        </svg>`;
-      document.getElementById('send-label').textContent = 'Analyse';
-      document.getElementById('query-input').value = '';
-    }
-  }
-
-  function renderResult(question, data, latency) {
-    const toolChainHtml = data.tool_call_sequence && data.tool_call_sequence.length > 0
-      ? `<div class="tool-chain">
-          <span style="font-size:0.7rem;color:var(--text-3);">Tools used:</span>
-          ${data.tool_call_sequence.map((t, i) => `
-            ${i > 0 ? '<span class="tool-chain-arrow">→</span>' : ''}
-            <span class="tool-chip">${t}</span>
-          `).join('')}
-        </div>`
-      : '';
-
-    const answerHtml = formatAnswer(data.answer || '');
-
-    const chartHtml = data.chart_url
-      ? `<div class="chart-embed">
-          <iframe src="${API_BASE}${data.chart_url}" loading="lazy"></iframe>
-        </div>`
-      : '';
-
-    const html = `
-      <div class="result-card">
-        <div class="result-header">
-          <div class="result-question">💬 ${escHtml(question)}</div>
-          <div class="result-meta">
-            <span class="badge badge-indigo">${data.model_used}</span>
-            <span class="badge badge-cyan">${latency}s</span>
-          </div>
-        </div>
-        <div class="result-body">
-          ${toolChainHtml}
-          <div class="answer-text">${answerHtml}</div>
-          ${chartHtml}
-        </div>
-      </div>`;
-
-    prependResult(html);
-  }
-
-  function renderError(question, error, answer) {
-    const html = `
-      <div class="result-card">
-        <div class="result-header">
-          <div class="result-question">💬 ${escHtml(question)}</div>
-          <div class="result-meta"><span class="badge badge-indigo" style="color:var(--rose);border-color:rgba(244,63,94,0.3);">Error</span></div>
-        </div>
-        <div class="result-body">
-          ${answer ? `<div class="answer-text" style="margin-bottom:1rem;">${formatAnswer(answer)}</div>` : ''}
-          <div class="error-card">
-            <div class="error-title">⚠ Error</div>
-            <div class="error-msg">${escHtml(error)}</div>
-          </div>
-        </div>
-      </div>`;
-    prependResult(html);
-  }
-
-  function formatAnswer(text) {
-    if (!text) return '';
-    return escHtml(text)
-      .replace(/```json\n?([\s\S]*?)```/g, '<div style="background:rgba(99,102,241,0.05);border:1px solid rgba(99,102,241,0.15);border-radius:6px;padding:12px;margin:8px 0;font-family:\'JetBrains Mono\',monospace;font-size:0.78rem;color:var(--indigo-light);overflow-x:auto;white-space:pre;">$1</div>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--text-1);">$1</strong>')
-      .replace(/`([^`]+)`/g, '<code>$1</code>');
-  }
-
-  function escHtml(s) {
-    return String(s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  }
-
-  function prependResult(html) {
-    const list = document.getElementById('results-list');
-    const div = document.createElement('div');
-    div.innerHTML = html;
-    list.prepend(div.firstElementChild);
-  }
-
-  function removeElement(id) {
-    const el = document.getElementById(id);
-    if (el) el.remove();
-  }
-
-  // ── Tab switching ─────────────────────────────────────────────────────────
-  function switchTab(tab, btn) {
-    currentTab = tab;
-
-    // Update active tab button
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    if (btn) btn.classList.add('active');
-    // If called from welcome cards, also update sidebar tab btn
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    tabBtns.forEach(b => {
-      if ((tab === 'chat' && b.textContent === 'Chat') ||
-          (tab === 'explorer' && b.textContent === 'Explorer') ||
-          (tab === 'correlate' && b.textContent === 'Correlate')) {
-        b.classList.add('active');
-      }
-    });
-
-    // Show/hide panels
-    const welcome = document.getElementById('welcome-screen');
-    const resultsList = document.getElementById('results-list');
-    const explorerPanel = document.getElementById('explorer-panel');
-    const correlatePanel = document.getElementById('correlate-panel');
-    const queryBar = document.querySelector('.query-bar');
-
-    if (tab === 'chat') {
-      welcome.style.display = resultsList.children.length === 0 ? 'flex' : 'none';
-      resultsList.style.display = '';
-      explorerPanel.style.display = 'none';
-      correlatePanel.style.display = 'none';
-      queryBar.style.display = '';
-    } else if (tab === 'explorer') {
-      welcome.style.display = 'none';
-      resultsList.style.display = 'none';
-      explorerPanel.style.display = '';
-      correlatePanel.style.display = 'none';
-      queryBar.style.display = 'none';
-      loadExplorer();
-    } else if (tab === 'correlate') {
-      welcome.style.display = 'none';
-      resultsList.style.display = 'none';
-      explorerPanel.style.display = 'none';
-      correlatePanel.style.display = '';
-      queryBar.style.display = 'none';
-    }
-  }
-
-  // ── Explorer ──────────────────────────────────────────────────────────────
-  async function loadExplorer() {
-    const grid = document.getElementById('explorer-grid');
-    if (nationalData) { renderExplorer(nationalData); return; }
-
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-3);padding:2rem;">Loading national data…</div>';
-    try {
-      const res = await fetch(`${API_BASE}/national-summary`);
-      if (!res.ok) throw new Error('API error');
-      nationalData = await res.json();
-      renderExplorer(nationalData);
-    } catch {
-      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--rose);padding:2rem;">Could not load data — make sure backend is running.</div>';
-    }
-  }
-
-  const CLUSTER_ICONS = {
-    child_nutrition: '🍎', anaemia: '🩸', maternal_health: '🤱',
-    vaccination: '💉', sanitation: '🚿', ncd: '❤️',
-    women_empowerment: '👩', family_planning: '🏠', lifestyle: '🚬',
+  const THEMES = {
+    nutrition: 'Child nutrition',
+    anaemia: 'Anaemia',
+    mothers: 'Maternal care',
+    immunisation: 'Immunisation',
+    household: 'Household',
+    women: 'Women',
   };
 
-  function renderExplorer(data) {
-    const grid = document.getElementById('explorer-grid');
-    const indicators = data.indicators;
-    grid.innerHTML = '';
-    for (const [col, info] of Object.entries(indicators)) {
-      const cluster = col.includes('anaemia') ? 'anaemia'
-        : col.includes('stunt') || col.includes('wast') || col.includes('underweight') ? 'child_nutrition'
-        : col.includes('delivery') || col.includes('anc') || col.includes('postnatal') ? 'maternal_health'
-        : col.includes('vaccin') ? 'vaccination'
-        : col.includes('sanit') || col.includes('water') || col.includes('cook') ? 'sanitation'
-        : col.includes('sugar') || col.includes('hypert') || col.includes('overweight') ? 'ncd'
-        : 'other';
+  // lower: true when a lower value is the healthier outcome. phrase: used in "districts with higher …" sentences.
+  const IND = {
+    stunting_pct: { name: 'Child stunting', theme: 'nutrition', lower: true, phrase: 'child stunting', def: 'Children under 5 who are too short for their age — a sign of chronic undernutrition.' },
+    wasting_pct: { name: 'Child wasting', theme: 'nutrition', lower: true, phrase: 'child wasting', def: 'Children under 5 who are too thin for their height — a sign of acute undernutrition.' },
+    underweight_pct: { name: 'Underweight children', theme: 'nutrition', lower: true, phrase: 'underweight rates', def: 'Children under 5 who weigh too little for their age.' },
+    anaemia_children_pct: { name: 'Anaemia in children', theme: 'anaemia', lower: true, phrase: 'anaemia in children', def: 'Children aged 6–59 months with haemoglobin below 11 g/dl.' },
+    anaemia_all_women_pct: { name: 'Anaemia in women', theme: 'anaemia', lower: true, phrase: 'anaemia in women', def: 'All women aged 15–49 who are anaemic.' },
+    institutional_delivery_pct: { name: 'Births in a facility', theme: 'mothers', lower: false, phrase: 'facility births', def: 'Births that took place in a hospital or other health facility.' },
+    anc_4plus_visits_pct: { name: '4+ antenatal check-ups', theme: 'mothers', lower: false, phrase: 'antenatal care coverage', def: 'Mothers who had at least four antenatal care visits.' },
+    fully_vaccinated_recall_pct: { name: 'Full immunisation', theme: 'immunisation', lower: false, phrase: 'immunisation coverage', def: 'Children aged 12–23 months who are fully vaccinated (by card or recall).' },
+    improved_sanitation_pct: { name: 'Improved sanitation', theme: 'household', lower: false, phrase: 'improved sanitation', def: 'People using an improved sanitation facility.' },
+    clean_cooking_fuel_pct: { name: 'Clean cooking fuel', theme: 'household', lower: false, phrase: 'clean-fuel use', def: 'People using clean fuel such as LPG or electricity for cooking.' },
+    women_literacy_pct: { name: "Women's literacy", theme: 'women', lower: false, phrase: "women's literacy", def: 'Women aged 15–49 who are literate.' },
+    child_marriage_pct: { name: 'Child marriage', theme: 'women', lower: true, phrase: 'child marriage', def: 'Women aged 20–24 who were married before age 18.' },
+    fp_modern_method_pct: { name: 'Modern contraception', theme: 'women', lower: false, phrase: 'modern contraceptive use', def: 'Currently married women using a modern family-planning method.' },
+    women_overweight_pct: { name: 'Overweight women', theme: 'women', lower: true, phrase: 'overweight among women', def: 'Women aged 15–49 who are overweight or obese.' },
+    men_high_blood_sugar_pct: { name: 'High blood sugar (men)', theme: 'household', lower: true, phrase: 'high blood sugar among men', def: 'Men aged 15+ with high or very high blood sugar.' },
+  };
 
-      const icon = CLUSTER_ICONS[cluster] || '📊';
-      const val = info.national_mean !== null ? `${info.national_mean}%` : 'N/A';
-      const range = info.min !== null ? `${info.min}% – ${info.max}%` : '';
+  const SUGGESTIONS = [
+    { theme: 'nutrition', q: 'Which 10 districts have the worst child stunting in India?' },
+    { theme: 'mothers', q: 'Compare institutional delivery rates across Bihar, Uttar Pradesh and Kerala.' },
+    { theme: 'household', q: 'Is improved sanitation linked to lower child stunting across districts?' },
+    { theme: 'anaemia', q: 'Which districts in Rajasthan have the highest anaemia among women?' },
+    { theme: 'immunisation', q: 'Which districts have the best full immunisation coverage?' },
+    { theme: 'women', q: 'How does child marriage vary across districts in West Bengal?' },
+  ];
 
-      grid.innerHTML += `
-        <div class="indicator-card" onclick="setQuery('Analyse ${info.description} across all districts'); switchTab('chat', document.querySelector('.tab-btn'))">
-          <div class="cluster-badge cluster-${cluster}">${icon} ${cluster.replace('_', ' ')}</div>
-          <h4>${info.description}</h4>
-          <div class="ind-val">${val}</div>
-          <div class="ind-label">National avg · Range: ${range}</div>
-        </div>`;
-    }
+  const PRESETS = [
+    ['improved_sanitation_pct', 'stunting_pct'],
+    ['women_literacy_pct', 'child_marriage_pct'],
+    ['clean_cooking_fuel_pct', 'anaemia_children_pct'],
+    ['anc_4plus_visits_pct', 'institutional_delivery_pct'],
+  ];
+
+  const TOOL_LABELS = {
+    pandas_query: 'data query', sql_query: 'SQL query', trend_analyser: 'ranking & spread',
+    correlation_finder: 'correlation', chart_generator: 'chart', insight_writer: 'insight writer',
+    semantic_search: 'district search',
+  };
+
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const app = { online: null, busy: false, controller: null, recheck: null, lastCorr: null };
+  const INDICATORS = Object.keys(SNAPSHOT.ind).filter(c => IND[c]);
+
+  // ── Small utilities ──────────────────────────────────────────────────────
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
+  function icon(name, cls = 'icon') { return `<svg class="${cls}" aria-hidden="true"><use href="#i-${name}"/></svg>`; }
+  function fromHTML(html) { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; }
+  function pct(v, digits = 1) { return v == null || Number.isNaN(v) ? '—' : `${Number(v).toFixed(digits)}%`; }
+  function announce(msg) { const a = $('#announcer'); a.textContent = ''; setTimeout(() => { a.textContent = msg; }, 50); }
+  function timeoutSignal(ms) {
+    if (AbortSignal.timeout) return AbortSignal.timeout(ms);
+    const c = new AbortController(); setTimeout(() => c.abort(), ms); return c.signal;
+  }
+  function themeDot(theme) { return `<span class="dot" style="background:var(--t-${theme})"></span>`; }
+  const motion = () => (window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
 
-  // ── Correlation tool ──────────────────────────────────────────────────────
-  async function runCorrelation() {
-    const a = document.getElementById('corr-a').value;
-    const b = document.getElementById('corr-b').value;
-    const resultDiv = document.getElementById('corr-result');
+  // ── Markdown → safe HTML ─────────────────────────────────────────────────
+  // Everything is HTML-escaped before any tag is added; only http(s) links survive.
+  const TEX = { '\\rho': 'ρ', '\\sigma': 'σ', '\\mu': 'μ', '\\alpha': 'α', '\\beta': 'β', '\\leq': '≤', '\\le': '≤', '\\geq': '≥', '\\ge': '≥',
+    '\\times': '×', '\\approx': '≈', '\\pm': '±', '\\cdot': '·', '\\%': '%', '\\neq': '≠', '\\to': '→', '\\rightarrow': '→' };
+  function texToText(s) {
+    let out = s.replace(/\\text\{([^}]*)\}/g, '$1');
+    for (const [k, v] of Object.entries(TEX)) out = out.split(k).join(v);
+    return out.replace(/[{}]/g, '').replace(/\^2/g, '²');
+  }
+  function inline(src) {
+    const code = [];
+    let s = src.replace(/`([^`]+)`/g, (_, c) => { code.push(c); return `\u0000${code.length - 1}\u0000`; });
+    s = esc(s);
+    s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, t, u) => `<a href="${u}" target="_blank" rel="noopener noreferrer">${t}</a>`);
+    s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/(^|[^*\w])\*(?!\s)([^*]+?)\*(?![*\w])/g, '$1<em>$2</em>');
+    s = s.replace(/\$(?=\S)([^$\n]{1,48}?)\$/g, (m, t) => (/[a-zA-Z\\]/.test(t) && !/\s$/.test(t) ? `<span class="math">${texToText(t)}</span>` : m));
+    s = s.replace(/\[(NFHS-[45][^\]]{0,20})\]/g, '<span class="src">$1</span>');
+    return s.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${esc(code[i])}</code>`);
+  }
+  const RX = {
+    fence: /^\s*```/,
+    hr: /^\s{0,3}([-*_])(\s*\1){2,}\s*$/,
+    heading: /^\s{0,3}(#{1,6})\s+(.*?)\s*#*\s*$/,
+    item: /^(\s*)([-*+]|\d+[.)])\s+(.*)$/,
+    quote: /^\s*>\s?/,
+    tableSep: /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/,
+  };
+  function splitRow(line) {
+    let s = line.trim();
+    if (s.startsWith('|')) s = s.slice(1);
+    if (s.endsWith('|')) s = s.slice(0, -1);
+    return s.split('|').map(c => c.trim());
+  }
+  function renderMarkdown(text) {
+    const lines = text.replace(/\r\n?/g, '\n').split('\n');
+    const out = [];
+    let i = 0;
+    const isTableStart = (k) => lines[k] && lines[k].includes('|') && RX.tableSep.test(lines[k + 1] || '');
+    const isBlockStart = (k) => {
+      const l = lines[k];
+      return RX.fence.test(l) || RX.hr.test(l) || RX.heading.test(l) || RX.item.test(l) || RX.quote.test(l) || isTableStart(k);
+    };
 
-    resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-3);">Running correlation…</div>';
+    while (i < lines.length) {
+      const line = lines[i];
+      if (!line.trim()) { i++; continue; }
 
-    try {
-      const res = await fetch(`${API_BASE}/query/direct`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tool: 'correlation_finder', params: { indicator_a: a, indicator_b: b } }),
-      });
-      const data = await res.json();
-
-      if (data.status !== 'success') {
-        resultDiv.innerHTML = `<div style="color:var(--rose);padding:1rem;">${escHtml(data.error)}</div>`;
-        return;
+      if (RX.fence.test(line)) {
+        const buf = []; i++;
+        while (i < lines.length && !RX.fence.test(lines[i])) buf.push(lines[i++]);
+        i++;
+        out.push(`<pre><code>${esc(buf.join('\n'))}</code></pre>`);
+        continue;
       }
 
-      // Plot scatter
-      const scatter = data.scatter_data || [];
-      const xs = scatter.map(d => d.x_value);
-      const ys = scatter.map(d => d.y_value);
-      const labels = scatter.map(d => `${d.district}, ${d.state}`);
+      if (isTableStart(i)) {
+        const head = splitRow(line);
+        const align = splitRow(lines[i + 1]).map(c => (c.startsWith(':') && c.endsWith(':') ? 'center' : c.endsWith(':') ? 'num' : ''));
+        i += 2;
+        const rows = [];
+        while (i < lines.length && lines[i].trim() && lines[i].includes('|')) rows.push(splitRow(lines[i++]));
+        const numeric = head.map((_, c) => {
+          const vals = rows.map(r => (r[c] || '').replace(/\*\*/g, '').trim()).filter(v => v && v !== '—' && v !== '-');
+          return vals.length > 0 && vals.every(v => /^[-+−]?[\d,]*\.?\d+\s*%?$/.test(v));
+        });
+        const cls = (c) => (numeric[c] ? 'num' : align[c] || '');
+        const th = head.map((h, c) => `<th class="${cls(c)}" scope="col">${inline(h)}</th>`).join('');
+        const tb = rows.map(r => `<tr>${head.map((_, c) => `<td class="${cls(c)}">${inline(r[c] || '')}</td>`).join('')}</tr>`).join('');
+        out.push(`<div class="table-wrap"><table><thead><tr>${th}</tr></thead><tbody>${tb}</tbody></table></div>`);
+        continue;
+      }
 
-      const layout = {
-        paper_bgcolor: '#111d35', plot_bgcolor: '#0d1526',
-        font: { family: 'Inter', color: '#e2e8f0' },
-        title: { text: `${data.indicator_a_description} vs ${data.indicator_b_description}`, font: { size: 14 } },
-        xaxis: { title: data.indicator_a_description, gridcolor: 'rgba(99,102,241,0.1)' },
-        yaxis: { title: data.indicator_b_description, gridcolor: 'rgba(99,102,241,0.1)' },
-        margin: { l: 60, r: 20, t: 50, b: 60 },
-        showlegend: false,
-      };
+      if (RX.hr.test(line)) { out.push('<hr>'); i++; continue; }
 
-      const trace = {
-        x: xs, y: ys, text: labels, mode: 'markers',
-        marker: { color: '#6366f1', size: 6, opacity: 0.7 },
-        type: 'scatter', hovertemplate: '<b>%{text}</b><br>X: %{x:.1f}%<br>Y: %{y:.1f}%<extra></extra>',
-      };
+      const h = line.match(RX.heading);
+      if (h) {
+        const level = Math.min(6, h[1].length + 2);
+        out.push(`<h${level}>${inline(h[2])}</h${level}>`);
+        i++;
+        continue;
+      }
 
-      resultDiv.innerHTML = `
-        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;">
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1rem;">
-            <div class="stat-card">
-              <div class="stat-value" style="font-size:1.6rem;color:${Math.abs(data.pearson_r)>0.5?'var(--emerald)':'var(--amber)'}">
-                ${data.pearson_r}
-              </div>
-              <div class="stat-label">Pearson r</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-value" style="font-size:1.6rem;color:var(--cyan)">${data.spearman_r}</div>
-              <div class="stat-label">Spearman ρ</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-value" style="font-size:1.1rem;color:var(--text-2)">${data.pearson_p_value < 0.001 ? '<0.001' : data.pearson_p_value}</div>
-              <div class="stat-label">p-value</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-value" style="font-size:1.1rem;color:var(--text-2)">${data.n_districts}</div>
-              <div class="stat-label">Districts</div>
-            </div>
-          </div>
-          <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:1rem;">${data.interpretation}</p>
-          <div id="corr-chart" style="height:380px;"></div>
-        </div>`;
+      if (RX.quote.test(line)) {
+        const buf = [];
+        while (i < lines.length && RX.quote.test(lines[i])) buf.push(lines[i++].replace(RX.quote, ''));
+        out.push(`<blockquote>${renderMarkdown(buf.join('\n'))}</blockquote>`);
+        continue;
+      }
 
-      Plotly.newPlot('corr-chart', [trace], layout, { responsive: true, displayModeBar: false });
+      if (RX.item.test(line)) {
+        const items = [];
+        while (i < lines.length) {
+          const l = lines[i];
+          const m = l.match(RX.item);
+          if (m) {
+            items.push({ indent: m[1].replace(/\t/g, '    ').length, ordered: /\d/.test(m[2]), start: parseInt(m[2], 10), text: m[3] });
+            i++;
+            continue;
+          }
+          if (!l.trim()) {
+            let j = i + 1;
+            while (j < lines.length && !lines[j].trim()) j++;
+            if (j < lines.length && RX.item.test(lines[j])) { i = j; continue; }
+            break;
+          }
+          if (/^\s+\S/.test(l) && items.length && !isBlockStart(i)) { items[items.length - 1].text += ' ' + l.trim(); i++; continue; }
+          break;
+        }
+        let html = '';
+        const stack = [];
+        for (const it of items) {
+          const tag = it.ordered ? 'ol' : 'ul';
+          if (!stack.length || it.indent > stack[stack.length - 1].indent) {
+            const start = it.ordered && it.start > 1 ? ` start="${it.start}"` : '';
+            html += `<${tag}${start}>`;
+            stack.push({ indent: it.indent, tag });
+          } else {
+            while (stack.length > 1 && it.indent < stack[stack.length - 1].indent) html += `</li></${stack.pop().tag}>`;
+            html += '</li>';
+          }
+          html += `<li>${inline(it.text)}`;
+        }
+        while (stack.length) html += `</li></${stack.pop().tag}>`;
+        out.push(html);
+        continue;
+      }
 
-    } catch (err) {
-      resultDiv.innerHTML = `<div style="color:var(--rose);padding:1rem;">Error: ${escHtml(err.message)}</div>`;
+      const buf = [line.trim()];
+      i++;
+      while (i < lines.length && lines[i].trim() && !isBlockStart(i)) buf.push(lines[i++].trim());
+      out.push(`<p>${inline(buf.join(' '))}</p>`);
+    }
+    return out.join('');
+  }
+
+  // The agent ends answers with a JSON block that duplicates the response's
+  // `structured` field — show that as key facts and a data note instead of raw JSON.
+  function splitAnswer(answer, structured) {
+    let text = (answer || '').trim();
+    let meta = structured && typeof structured === 'object' && Object.keys(structured).length ? structured : null;
+    const tryTrailing = (re) => {
+      const m = text.match(re);
+      if (!m) return false;
+      try {
+        const obj = JSON.parse(m[1]);
+        if (obj && typeof obj === 'object' && ('answer' in obj || 'key_facts' in obj)) {
+          text = text.slice(0, m.index).trim();
+          if (!meta) meta = obj;
+          return true;
+        }
+      } catch (e) { /* not the metadata block */ }
+      return false;
+    };
+    tryTrailing(/```(?:json)?\s*(\{[\s\S]*\})\s*```\s*$/) || tryTrailing(/(\{\s*"answer"[\s\S]*\})\s*$/);
+    if (!text && meta && typeof meta.answer === 'string') text = meta.answer;
+    return { text, meta };
+  }
+
+  // ── Theme ────────────────────────────────────────────────────────────────
+  function setTheme(t, persist) {
+    document.documentElement.dataset.theme = t;
+    $('meta[name="theme-color"]').setAttribute('content', t === 'dark' ? '#121413' : '#f5f3ee');
+    if (persist) { try { localStorage.setItem('bha-theme', t); } catch (e) { /* storage blocked */ } }
+    if (app.lastCorr && !$('#view-correlate').hidden) drawScatter(app.lastCorr);
+  }
+  function initTheme() {
+    setTheme(document.documentElement.dataset.theme || 'light', false);
+    $('#theme-toggle').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark', true));
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      let stored = null;
+      try { stored = localStorage.getItem('bha-theme'); } catch (err) { /* ignore */ }
+      if (!stored) setTheme(e.matches ? 'dark' : 'light', false);
+    });
+  }
+
+  // ── Routing between views ────────────────────────────────────────────────
+  const VIEWS = { ask: 'Ask', explore: 'Explore', correlate: 'Correlate' };
+  function currentView() { const v = location.hash.slice(1); return VIEWS[v] ? v : 'ask'; }
+  function showView(v) {
+    for (const name of Object.keys(VIEWS)) {
+      $(`#view-${name}`).hidden = name !== v;
+      const tab = $(`#tab-${name}`);
+      tab.setAttribute('aria-selected', String(name === v));
+      tab.tabIndex = name === v ? 0 : -1;
+    }
+    $('#site-foot').hidden = v === 'ask';
+    document.title = v === 'ask' ? "BharatHealth Analyst — ask India's district health data" : `${VIEWS[v]} · BharatHealth Analyst`;
+    if (v === 'correlate' && app.lastCorr) drawScatter(app.lastCorr);
+  }
+  function initRouting() {
+    const tabs = [...document.querySelectorAll('.tab')];
+    tabs.forEach((tab, idx) => {
+      tab.addEventListener('click', () => {
+        const v = tab.dataset.view;
+        if (currentView() === v) { showView(v); return; }
+        location.hash = v;
+        window.scrollTo(0, 0);
+      });
+      tab.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        const next = tabs[(idx + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+        next.focus();
+        next.click();
+      });
+    });
+    window.addEventListener('hashchange', () => showView(currentView()));
+    showView(currentView());
+  }
+
+  // ── Server status ────────────────────────────────────────────────────────
+  function setStatus(state) {
+    app.online = state === 'online' ? true : state === 'offline' ? false : null;
+    const el = $('#status');
+    el.dataset.state = state;
+    $('.status-text', el).textContent = state === 'online' ? 'Live' : state === 'offline' ? 'Offline' : 'Connecting';
+    el.title = state === 'online' ? 'The live analysis server is online.'
+      : state === 'offline' ? "The live analysis server is offline — it runs on the author's machine and isn't always on. Explore still works."
+      : 'Checking the live analysis server…';
+    $('#offline-banner').hidden = state !== 'offline';
+    clearTimeout(app.recheck);
+    if (state === 'offline') app.recheck = setTimeout(checkHealth, 30000);
+  }
+  async function checkHealth() {
+    if (app.online === null) setStatus('checking');
+    try {
+      const res = await fetch(`${API}/health`, { signal: timeoutSignal(8000) });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await res.json();
+      setStatus('online');
+    } catch (e) {
+      setStatus('offline');
     }
   }
 
-  // Start
-  init();
+  // ── Ask ──────────────────────────────────────────────────────────────────
+  const stateOptions = () => SNAPSHOT.states.map(([s, n]) => `<option value="${esc(s)}">${esc(s)} (${n})</option>`).join('');
+
+  function buildAsk() {
+    const s = SNAPSHOT;
+    $('#facts-strip').innerHTML = [
+      [s.districts, 'districts'], [s.states_n, 'states & union territories'], ['100+', 'health indicators'], ['2019–21', 'survey years'],
+    ].map(([v, l]) => `<li><b>${esc(v)}</b><span>${esc(l)}</span></li>`).join('');
+    $('#suggestions').innerHTML = SUGGESTIONS.map(x => `
+      <button type="button" class="suggest" data-q="${esc(x.q)}">
+        <span class="suggest-topic">${themeDot(x.theme)}${esc(THEMES[x.theme])}</span>
+        <span class="suggest-q">${esc(x.q)}</span>
+      </button>`).join('');
+    $('#suggestions').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-q]');
+      if (b) fillQuestion(b.dataset.q);
+    });
+    $('#scope').insertAdjacentHTML('beforeend', stateOptions());
+
+    const q = $('#question');
+    q.addEventListener('input', () => { autosize(); syncSend(); });
+    q.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (!app.busy) submitQuestion(); }
+    });
+    $('#composer').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (app.busy) { if (app.controller) app.controller.abort('stopped'); return; }
+      submitQuestion();
+    });
+    $('#clear-btn').addEventListener('click', clearThread);
+  }
+  function autosize() { const q = $('#question'); q.style.height = 'auto'; q.style.height = `${Math.min(q.scrollHeight, 200)}px`; }
+  function syncSend() {
+    const btn = $('#send-btn');
+    btn.disabled = !app.busy && !$('#question').value.trim();
+    btn.classList.toggle('stop', app.busy);
+    btn.setAttribute('aria-label', app.busy ? 'Stop waiting for this answer' : 'Send question');
+    btn.title = app.busy ? 'Stop' : 'Send';
+    btn.innerHTML = icon(app.busy ? 'stop' : 'send');
+  }
+  function fillQuestion(text, scope) {
+    if (currentView() !== 'ask') location.hash = 'ask';
+    const q = $('#question');
+    q.value = text;
+    if (scope !== undefined) $('#scope').value = scope;
+    autosize();
+    syncSend();
+    q.focus();
+    q.setSelectionRange(q.value.length, q.value.length);
+  }
+  function submitQuestion() {
+    const q = $('#question');
+    const text = q.value.trim();
+    if (!text) return;
+    q.value = '';
+    autosize();
+    ask(text, $('#scope').value);
+  }
+  function clearThread() {
+    if (app.busy && app.controller) app.controller.abort('stopped');
+    [...$('#thread').children].forEach(el => { if (el.id !== 'empty') el.remove(); });
+    $('#empty').hidden = false;
+    $('#clear-btn').hidden = true;
+    window.scrollTo({ top: 0, behavior: motion() });
+    $('#question').focus();
+  }
+
+  function classifyError(text) {
+    if (/RESOURCE_EXHAUSTED|quota|exceeded your current|daily limit/i.test(text)) return 'quota';
+    if (/\b429\b|rate.?limit|too many requests/i.test(text)) return 'rate';
+    return 'agent';
+  }
+
+  async function ask(question, scope) {
+    if (app.busy) return;
+    $('#empty').hidden = true;
+    $('#clear-btn').hidden = false;
+    const thread = $('#thread');
+    const scopeTag = scope ? `<span class="msg-scope">${icon('pin')}${esc(scope)}</span>` : '';
+    const userEl = fromHTML(`<div class="msg-user"><div class="bubble">${esc(question)}</div>${scopeTag}</div>`);
+    const card = fromHTML(`
+      <article class="answer pending" aria-busy="true">
+        <div class="answer-head">
+          <span class="analyst"><svg aria-hidden="true"><use href="#i-mark"/></svg>Analyst</span>
+          <span class="answer-meta"><span class="chip" data-el="elapsed">0 s</span></span>
+        </div>
+        <div class="answer-body">
+          <p class="pending-title"><span class="spinner" aria-hidden="true"></span>Working on it…</p>
+          <p class="pending-sub" data-el="sub">Most answers take 30–90 seconds while the analyst queries the data and checks its numbers.</p>
+          <div class="skeleton" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        </div>
+      </article>`);
+    thread.append(userEl, card);
+    userEl.scrollIntoView({ behavior: motion(), block: 'start' });
+    announce('Working on your question.');
+
+    app.busy = true;
+    syncSend();
+    const ctrl = new AbortController();
+    app.controller = ctrl;
+    const timeout = setTimeout(() => ctrl.abort('timeout'), QUERY_TIMEOUT_MS);
+    const started = Date.now();
+    const elapsedEl = $('[data-el="elapsed"]', card);
+    const tick = setInterval(() => {
+      const secs = Math.round((Date.now() - started) / 1000);
+      elapsedEl.textContent = `${secs} s`;
+      if (secs === 100) $('[data-el="sub"]', card).textContent = 'Taking longer than usual — harder questions can need a couple of minutes.';
+    }, 1000);
+
+    try {
+      const body = { question, model: MODEL };
+      if (scope) body.state_filter = scope;
+      const res = await fetch(`${API}/query`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctrl.signal,
+      });
+      let data = null;
+      try { data = await res.json(); } catch (e) { /* non-JSON error page */ }
+      if (res.status === 429) throw Object.assign(new Error('rate'), { kind: 'rate', detail: data && data.detail });
+      // Cloudflare answers with its own 5xx page when the tunnel is up but the backend behind it is down
+      if (!data && res.status >= 500) throw Object.assign(new Error('offline'), { kind: 'network', detail: `HTTP ${res.status}` });
+      if (!res.ok || !data) throw Object.assign(new Error('server'), { kind: 'agent', detail: (data && (data.detail || data.error)) || `HTTP ${res.status}` });
+      if (data.status !== 'success') {
+        const detail = data.error || data.answer || 'The analyst returned no answer.';
+        throw Object.assign(new Error('agent'), { kind: classifyError(detail), detail });
+      }
+      if (app.online !== true) setStatus('online');
+      renderAnswer(card, data, (Date.now() - started) / 1000);
+      announce('Answer ready.');
+    } catch (err) {
+      let kind = err.kind;
+      if (ctrl.signal.aborted) kind = ctrl.signal.reason === 'timeout' ? 'timeout' : 'stopped';
+      else if (!kind) kind = 'network';
+      if (kind === 'network') setStatus('offline');
+      renderError(card, kind, err.detail, question, scope);
+      announce(kind === 'stopped' ? 'Stopped.' : 'The question could not be answered.');
+    } finally {
+      clearTimeout(timeout);
+      clearInterval(tick);
+      app.busy = false;
+      app.controller = null;
+      syncSend();
+    }
+  }
+
+  function renderAnswer(card, data, seconds) {
+    const { text, meta } = splitAnswer(data.answer, data.structured);
+    const conf = meta && typeof meta.confidence === 'string' ? meta.confidence.toLowerCase() : '';
+    const confChip = { high: 'chip-good', medium: 'chip-warn', low: 'chip-bad' }[conf];
+    const facts = meta && Array.isArray(meta.key_facts) ? meta.key_facts.filter(f => typeof f === 'string' && f.trim()) : [];
+    const limitation = meta && typeof meta.data_limitation === 'string' ? meta.data_limitation.trim() : '';
+    const tools = Array.isArray(data.tool_call_sequence) ? data.tool_call_sequence : [];
+    const chartOk = typeof data.chart_url === 'string' && /^\/charts\/[\w.\-]+$/.test(data.chart_url);
+    const chartSrc = chartOk ? `${API}${data.chart_url}` : '';
+
+    card.classList.remove('pending');
+    card.removeAttribute('aria-busy');
+    card.innerHTML = `
+      <div class="answer-head">
+        <span class="analyst"><svg aria-hidden="true"><use href="#i-mark"/></svg>Analyst</span>
+        <span class="answer-meta">
+          ${confChip ? `<span class="chip ${confChip}">${esc(conf[0].toUpperCase() + conf.slice(1))} confidence</span>` : ''}
+          <span class="chip">${Math.round(seconds)} s</span>
+        </span>
+      </div>
+      <div class="answer-body prose">${renderMarkdown(text || 'The analyst returned an empty answer.')}</div>
+      ${facts.length ? `<div class="answer-section"><div class="facts"><h4>Key facts</h4><ul>${facts.map(f => `<li>${inline(f)}</li>`).join('')}</ul></div></div>` : ''}
+      ${chartOk ? `<div class="answer-section"><figure class="chart">
+          <div class="chart-bar"><span>Chart</span><a href="${esc(chartSrc)}" target="_blank" rel="noopener noreferrer">Open full size${icon('external')}</a></div>
+          <iframe src="${esc(chartSrc)}" title="Chart for: ${esc(data.question || '')}" loading="lazy"></iframe>
+        </figure></div>` : ''}
+      ${limitation ? `<div class="answer-section"><p class="note">${icon('info')}<span><b>Data note</b>${inline(limitation)}</span></p></div>` : ''}
+      <div class="answer-foot">
+        <button type="button" class="btn btn-quiet" data-act="copy">${icon('copy')}<span>Copy answer</span></button>
+        ${tools.length ? `<span class="steps"><span>Steps:</span>${tools.map(t => `<span class="step">${esc(TOOL_LABELS[t] || t)}</span>`).join('<span aria-hidden="true">→</span>')}</span>` : ''}
+      </div>`;
+    $('[data-act="copy"]', card).addEventListener('click', (e) => copyText(text, e.currentTarget));
+  }
+
+  const ERRORS = {
+    network: { icon: 'plug', title: "Couldn't reach the analyst", text: "The live server runs on the author's own machine through a tunnel, so it isn't always online. Try again later — the Explore tab works offline in the meantime." },
+    rate: { icon: 'alert', title: 'Too many questions in a short time', text: 'The server allows 10 requests a minute per visitor. Wait a moment, then try again.' },
+    quota: { icon: 'alert', title: "Today's free AI quota is used up", text: 'This demo runs on free-tier AI quota, which resets daily. Try again later — Explore works without it.' },
+    timeout: { icon: 'alert', title: 'This took too long', text: 'No answer after 5 minutes. The server may be busy — try again, or ask a narrower question.' },
+    stopped: { icon: 'x', title: 'Stopped', text: 'You stopped waiting for this answer.', mild: true },
+    agent: { icon: 'alert', title: 'The analysis failed', text: 'Something went wrong while answering. Rephrasing the question often helps.' },
+  };
+  function renderError(card, kind, detail, question, scope) {
+    const e = ERRORS[kind] || ERRORS.agent;
+    card.classList.remove('pending');
+    card.removeAttribute('aria-busy');
+    card.innerHTML = `
+      <div class="error-body">
+        <span class="error-icon${e.mild ? ' mild' : ''}">${icon(e.icon)}</span>
+        <div>
+          <p class="error-title">${esc(e.title)}</p>
+          <p class="error-text">${esc(e.text)}</p>
+          ${detail && kind !== 'stopped' ? `<details><summary>Technical details</summary><pre>${esc(String(detail).slice(0, 2000))}</pre></details>` : ''}
+          <div class="error-actions">
+            <button type="button" class="btn" data-act="retry">${icon('retry')}Try again</button>
+            ${kind === 'network' || kind === 'quota' ? '<a class="btn btn-quiet" href="#explore">Open Explore</a>' : ''}
+          </div>
+        </div>
+      </div>`;
+    $('[data-act="retry"]', card).addEventListener('click', () => {
+      card.previousElementSibling.remove();
+      card.remove();
+      ask(question, scope);
+    });
+  }
+
+  async function copyText(text, btn) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      const ta = Object.assign(document.createElement('textarea'), { value: text });
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (err) { /* clipboard unavailable */ }
+      ta.remove();
+    }
+    const label = $('span', btn);
+    btn.querySelector('use').setAttribute('href', '#i-check');
+    label.textContent = 'Copied';
+    setTimeout(() => { btn.querySelector('use').setAttribute('href', '#i-copy'); label.textContent = 'Copy answer'; }, 1800);
+  }
+
+  // ── Explore ──────────────────────────────────────────────────────────────
+  const explore = { theme: 'all', query: '' };
+
+  function buildExplore() {
+    const counts = {};
+    INDICATORS.forEach(c => { counts[IND[c].theme] = (counts[IND[c].theme] || 0) + 1; });
+    $('#filters').innerHTML = [`<button type="button" class="filter" data-theme="all" aria-pressed="true">All <span>${INDICATORS.length}</span></button>`]
+      .concat(Object.entries(THEMES).filter(([k]) => counts[k]).map(([k, label]) =>
+        `<button type="button" class="filter" data-theme="${k}" aria-pressed="false">${themeDot(k)}${esc(label)}</button>`)).join('');
+
+    $('#ind-grid').innerHTML = INDICATORS.map(col => {
+      const d = SNAPSHOT.ind[col];
+      const m = IND[col];
+      const lo = Math.max(0, d.min), hi = Math.min(100, d.max);
+      return `
+        <button type="button" class="ind-card" data-ind="${col}" data-theme="${m.theme}" data-search="${esc(`${m.name} ${m.def} ${THEMES[m.theme]} ${d.d}`.toLowerCase())}">
+          <span class="ind-theme">
+            <span>${themeDot(m.theme)}${esc(THEMES[m.theme])}</span>
+            <span class="direction">${icon(m.lower ? 'down' : 'up')}${m.lower ? 'lower is better' : 'higher is better'}</span>
+          </span>
+          <span class="ind-name">${esc(m.name)}</span>
+          <span class="ind-def">${esc(m.def)}</span>
+          <span class="ind-value"><b>${pct(d.mean)}</b><span>average district</span></span>
+          <span>
+            <span class="range-track" aria-hidden="true">
+              <span class="range-fill" style="left:${lo}%;width:${Math.max(hi - lo, 1)}%"></span>
+              <span class="range-mean" style="left:${d.mean}%"></span>
+            </span>
+            <span class="range-labels"><span>Lowest ${pct(d.min)}</span><span>Highest ${pct(d.max)}</span></span>
+          </span>
+        </button>`;
+    }).join('') + '<p class="empty-filter" id="empty-filter" hidden>No indicators match that search.</p>';
+
+    $('#ind-grid').addEventListener('click', (e) => {
+      const card = e.target.closest('[data-ind]');
+      if (card) openIndicator(card.dataset.ind, card);
+    });
+    $('#filters').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-theme]');
+      if (!b) return;
+      explore.theme = b.dataset.theme;
+      document.querySelectorAll('#filters .filter').forEach(f => f.setAttribute('aria-pressed', String(f === b)));
+      filterIndicators();
+    });
+    $('#ind-search').addEventListener('input', (e) => { explore.query = e.target.value.trim().toLowerCase(); filterIndicators(); });
+  }
+  function filterIndicators() {
+    let shown = 0;
+    document.querySelectorAll('#ind-grid .ind-card').forEach(card => {
+      const ok = (explore.theme === 'all' || card.dataset.theme === explore.theme) && (!explore.query || card.dataset.search.includes(explore.query));
+      card.hidden = !ok;
+      if (ok) shown++;
+    });
+    $('#empty-filter').hidden = shown > 0;
+  }
+
+  let drawerReturnFocus = null;
+  function openIndicator(col, origin) {
+    const d = SNAPSHOT.ind[col];
+    const m = IND[col];
+    const ranked = [...d.s].sort((a, b) => (m.lower ? a[1] - b[1] : b[1] - a[1]));
+    const top = Math.max(...ranked.map(r => r[1]), d.mean);
+    const scale = Math.min(100, Math.ceil(top / 10) * 10) || 100;
+    const n = ranked.length;
+    const rows = ranked.map(([state, v], idx) => {
+      const cls = idx < 3 ? 'best' : idx >= n - 3 ? 'worst' : '';
+      return `<li class="rank-row ${cls}">
+          <span class="rank-n">${idx + 1}</span>
+          <span><span class="rank-name">${esc(state)}</span>
+            <span class="rank-track" aria-hidden="true"><span class="rank-fill" style="width:${(v / scale) * 100}%"></span><span class="rank-mean" style="left:${(d.mean / scale) * 100}%"></span></span>
+          </span>
+          <span class="rank-val">${pct(v)}</span>
+        </li>`;
+    }).join('');
+    const question = m.lower
+      ? `Which districts have the highest ${m.phrase}, and how does it vary across states?`
+      : `Which districts have the lowest ${m.phrase}, and how does it vary across states?`;
+
+    $('#drawer-inner').innerHTML = `
+      <div class="drawer-head">
+        <span class="suggest-topic">${themeDot(m.theme)}${esc(THEMES[m.theme])} · ${m.lower ? 'lower is better' : 'higher is better'}</span>
+        <h3 id="drawer-title">${esc(m.name)}</h3>
+        <p>${esc(m.def)}</p>
+        <button type="button" class="icon-btn drawer-close" data-act="close" aria-label="Close">${icon('x')}</button>
+      </div>
+      <div class="drawer-body">
+        <div class="stat-row">
+          <div class="stat"><b>${pct(d.mean)}</b><span>Average district</span></div>
+          <div class="stat"><b>${pct(d.med)}</b><span>Median district</span></div>
+          <div class="stat"><b>${pct(d.min)}</b><span>Lowest district</span><small title="${esc(`${d.lo[0]}, ${d.lo[1]}`)}">${esc(d.lo[0])}, ${esc(d.lo[1])}</small></div>
+          <div class="stat"><b>${pct(d.max)}</b><span>Highest district</span><small title="${esc(`${d.hi[0]}, ${d.hi[1]}`)}">${esc(d.hi[0])}, ${esc(d.hi[1])}</small></div>
+        </div>
+        <div class="drawer-actions">
+          <button type="button" class="btn btn-primary" data-act="ask">${icon('chat')}Ask the analyst about this</button>
+          <button type="button" class="btn" data-act="corr">${icon('scatter')}Correlate with…</button>
+        </div>
+        <div class="rank-head"><h4>States, ${m.lower ? 'best (lowest) first' : 'best (highest) first'}</h4><span>${n} states &amp; UTs</span></div>
+        <div class="rank-legend">
+          <span><span class="dot" style="background:var(--accent)"></span>Best 3</span>
+          <span><span class="dot" style="background:var(--worse)"></span>Worst 3</span>
+          <span><span class="legend-line"></span>District average ${pct(d.mean)}</span>
+        </div>
+        <ol class="rank-list">${rows}</ol>
+        <p class="drawer-foot">State figures average that state's districts, each counted equally. Survey definition: ${esc(d.d)}. ${d.n < SNAPSHOT.districts ? `Data available for ${d.n} of ${SNAPSHOT.districts} districts.` : ''}</p>
+      </div>`;
+
+    const dlg = $('#drawer');
+    drawerReturnFocus = origin || document.activeElement;
+    $('[data-act="close"]', dlg).addEventListener('click', () => dlg.close());
+    $('[data-act="ask"]', dlg).addEventListener('click', () => { dlg.close(); fillQuestion(question, ''); });
+    $('[data-act="corr"]', dlg).addEventListener('click', () => {
+      dlg.close();
+      $('#corr-a').value = col;
+      if ($('#corr-b').value === col) $('#corr-b').value = INDICATORS.find(c => c !== col);
+      location.hash = 'correlate';
+      $('#corr-b').focus();
+    });
+    dlg.showModal();
+    $('.drawer-body', dlg).scrollTop = 0;
+  }
+  function initDrawer() {
+    const dlg = $('#drawer');
+    dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+    dlg.addEventListener('close', () => {
+      if (drawerReturnFocus && document.contains(drawerReturnFocus) && currentView() === 'explore') drawerReturnFocus.focus();
+    });
+  }
+
+  // ── Correlate ────────────────────────────────────────────────────────────
+  function buildCorrelate() {
+    const opts = INDICATORS.map(c => `<option value="${c}">${esc(IND[c].name)}</option>`).join('');
+    $('#corr-a').innerHTML = opts;
+    $('#corr-b').innerHTML = opts;
+    $('#corr-a').value = 'improved_sanitation_pct';
+    $('#corr-b').value = 'stunting_pct';
+    $('#corr-scope').insertAdjacentHTML('beforeend', stateOptions());
+    $('#presets').insertAdjacentHTML('beforeend', PRESETS.filter(([a, b]) => IND[a] && IND[b] && SNAPSHOT.ind[a] && SNAPSHOT.ind[b])
+      .map(([a, b]) => `<button type="button" class="filter" data-a="${a}" data-b="${b}">${esc(IND[a].name)} ↔ ${esc(IND[b].name)}</button>`).join(''));
+    $('#presets').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-a]');
+      if (!b) return;
+      $('#corr-a').value = b.dataset.a;
+      $('#corr-b').value = b.dataset.b;
+      runCorrelation();
+    });
+    $('#corr-swap').addEventListener('click', () => {
+      const a = $('#corr-a').value;
+      $('#corr-a').value = $('#corr-b').value;
+      $('#corr-b').value = a;
+    });
+    $('#corr-form').addEventListener('submit', (e) => { e.preventDefault(); runCorrelation(); });
+    ['#corr-a', '#corr-b'].forEach(s => $(s).addEventListener('change', () => { $('#corr-error').hidden = true; }));
+  }
+
+  function describeR(r, a, b) {
+    const s = Math.abs(r);
+    // same cut-offs as the backend's _interpret_correlation, so the two never disagree
+    if (s < 0.2) return { label: 'Very weak or no relationship', sentence: `Across districts, ${IND[a].phrase} and ${IND[b].phrase} barely move together.` };
+    const strength = s < 0.4 ? 'Weak' : s < 0.7 ? 'Moderate' : 'Strong';
+    return {
+      label: `${strength} ${r < 0 ? 'negative' : 'positive'} relationship`,
+      sentence: `Districts with higher ${IND[a].phrase} tend to have ${r < 0 ? 'lower' : 'higher'} ${IND[b].phrase}.`,
+    };
+  }
+
+  async function runCorrelation() {
+    const a = $('#corr-a').value;
+    const b = $('#corr-b').value;
+    const scope = $('#corr-scope').value;
+    const err = $('#corr-error');
+    if (a === b) { err.textContent = 'Pick two different indicators.'; err.hidden = false; return; }
+    err.hidden = true;
+    const btn = $('#corr-run');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" aria-hidden="true"></span>Calculating…';
+    const out = $('#corr-out');
+    try {
+      const params = { indicator_a: a, indicator_b: b };
+      if (scope) params.state_filter = scope;
+      const res = await fetch(`${API}/query/direct`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tool: 'correlation_finder', params }), signal: timeoutSignal(30000),
+      });
+      let data = null;
+      try { data = await res.json(); } catch (e) { /* non-JSON */ }
+      if (res.status === 429) throw Object.assign(new Error(ERRORS.rate.text), { known: true });
+      if (!res.ok || !data) throw Object.assign(new Error((data && data.detail) || `The server returned HTTP ${res.status}.`), { known: true });
+      if (data.status !== 'success') {
+        const msg = /not enough data/i.test(data.error || '') ? `${scope} has too few districts with data for both indicators to measure a relationship. Try a larger state or All India.` : (data.error || 'The calculation failed.');
+        throw Object.assign(new Error(msg), { known: true });
+      }
+      if (app.online !== true) setStatus('online');
+      app.lastCorr = { data, a, b, scope };
+      renderCorrelation(app.lastCorr);
+    } catch (e) {
+      if (!e.known) setStatus('offline');
+      out.innerHTML = `<div class="panel"><div class="error-body" style="padding:0">
+          <span class="error-icon">${icon(e.known ? 'alert' : 'plug')}</span>
+          <div><p class="error-title">${e.known ? "Couldn't calculate that" : "Couldn't reach the server"}</p>
+          <p class="error-text">${esc(e.known ? e.message : "Correlations are calculated live, and the server runs on the author's machine, so it isn't always online. Explore works offline in the meantime.")}</p></div>
+        </div></div>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Calculate';
+    }
+  }
+
+  function renderCorrelation({ data, a, b, scope }) {
+    const r = Number(data.pearson_r);
+    const rho = Number(data.spearman_r);
+    const p = Number(data.pearson_p_value);
+    const { label, sentence } = describeR(r, a, b);
+    const pText = p < 0.001 ? '< 0.001' : p.toFixed(3);
+    $('#corr-out').innerHTML = `
+      <div class="corr-result">
+        <div class="panel">
+          <div class="r-label">Correlation (Pearson r)${scope ? ` · within ${esc(scope)}` : ''}</div>
+          <div class="r-big">${r > 0 ? '+' : r < 0 ? '−' : ''}${Math.abs(r).toFixed(2)}</div>
+          <div class="r-strength">${esc(label)}</div>
+          <p class="r-sentence">${esc(sentence)}</p>
+          <div class="meter" aria-hidden="true"><span class="meter-mark" style="left:${((r + 1) / 2) * 100}%"></span></div>
+          <div class="meter-labels"><span>−1 opposite</span><span>0 none</span><span>+1 together</span></div>
+          <dl class="corr-stats">
+            <div><dt>Spearman ρ</dt><dd>${rho > 0 ? '+' : rho < 0 ? '−' : ''}${Math.abs(rho).toFixed(2)}</dd></div>
+            <div><dt>p-value</dt><dd>${esc(pText)}</dd></div>
+            <div><dt>Districts</dt><dd>${esc(String(data.n_districts))}</dd></div>
+          </dl>
+          <p class="caveat">${p < 0.05 ? 'Statistically significant' : 'Not statistically significant'} at the 5% level. Correlation shows a pattern across districts — not that one causes the other.</p>
+        </div>
+        <div class="panel plot-panel">
+          <p class="plot-title">${esc(IND[a].name)} vs ${esc(IND[b].name)}</p>
+          <div class="plot" id="corr-plot" role="img" aria-label="Scatter plot of ${esc(IND[a].name)} against ${esc(IND[b].name)} by district"></div>
+          <p class="plot-note">${esc(data.scatter_data_note ? `Each dot is a district — a sample is plotted for speed; the correlation uses all ${data.n_districts}.` : 'Each dot is a district.')}</p>
+        </div>
+      </div>`;
+    drawScatter(app.lastCorr);
+  }
+
+  let plotlyLoading = null;
+  function loadPlotly() {
+    if (window.Plotly) return Promise.resolve();
+    if (!plotlyLoading) {
+      plotlyLoading = new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.plot.ly/plotly-basic-2.27.0.min.js';
+        s.onload = resolve;
+        s.onerror = () => { plotlyLoading = null; reject(new Error('chart library failed to load')); };
+        document.head.appendChild(s);
+      });
+    }
+    return plotlyLoading;
+  }
+  async function drawScatter({ data, a, b }) {
+    const el = $('#corr-plot');
+    if (!el) return;
+    try { await loadPlotly(); } catch (e) { el.innerHTML = '<p class="plot-note">The chart library could not load, so the scatter plot is unavailable.</p>'; return; }
+    const css = getComputedStyle(document.documentElement);
+    const v = (name) => css.getPropertyValue(name).trim();
+    const pts = Array.isArray(data.scatter_data) ? data.scatter_data : [];
+    const axis = (title) => ({
+      title: { text: title, font: { size: 12, color: v('--ink-2') } }, gridcolor: v('--line'), linecolor: v('--line-2'),
+      zeroline: false, ticksuffix: '%', tickfont: { color: v('--ink-3'), size: 11 }, automargin: true,
+    });
+    window.Plotly.react(el, [{
+      type: 'scatter', mode: 'markers',
+      x: pts.map(pt => pt.x_value), y: pts.map(pt => pt.y_value),
+      text: pts.map(pt => `${esc(pt.district)}, ${esc(pt.state)}`),
+      marker: { size: 10, color: v('--accent'), opacity: 0.78, line: { width: 1.5, color: v('--surface') } },
+      hovertemplate: `<b>%{text}</b><br>${esc(IND[a].name)}: %{x:.1f}%<br>${esc(IND[b].name)}: %{y:.1f}%<extra></extra>`,
+    }], {
+      paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+      font: { family: "'Public Sans', system-ui, sans-serif", color: v('--ink-2') },
+      margin: { l: 8, r: 12, t: 12, b: 8 }, showlegend: false,
+      xaxis: axis(IND[a].name), yaxis: axis(IND[b].name),
+      hoverlabel: { bgcolor: v('--surface'), bordercolor: v('--line-2'), font: { color: v('--ink'), family: "'Public Sans', system-ui, sans-serif" } },
+    }, { responsive: true, displayModeBar: false });
+  }
+
+  // ── Start ────────────────────────────────────────────────────────────────
+  initTheme();
+  buildAsk();
+  buildExplore();
+  buildCorrelate();
+  initDrawer();
+  initRouting();
+  syncSend();
+  checkHealth();
 </script>
 </body>
 </html>
