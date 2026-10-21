@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import React from 'react';
-import { QueryResponse } from '@/lib/api';
+import { QueryResponse, getApiBase } from '@/lib/api';
 
 interface ResultCardProps {
   question: string;
@@ -35,6 +35,8 @@ const formatAnswer = (text: string) => {
 export default function ResultCard({ question, data, latency }: ResultCardProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const chartUrl = data.chart_url;
+  const [apiBase, setApiBase] = useState('');
+  useEffect(() => { getApiBase().then(setApiBase); }, []);
 
   useEffect(() => {
     if (chartUrl && chartRef.current) {
@@ -66,10 +68,10 @@ export default function ResultCard({ question, data, latency }: ResultCardProps)
       <div className="result-body">
         {toolChainHtml}
         <div className="answer-text" dangerouslySetInnerHTML={{ __html: formatAnswer(data.answer || '') }} />
-        {chartUrl && (
+        {chartUrl && apiBase && (
           <div className="chart-embed">
             <iframe
-              src={`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000'}${chartUrl}`}
+              src={`${apiBase}${chartUrl}`}
               loading="lazy"
               style={{ width: '100%', height: '100%', border: 'none' }}
             />

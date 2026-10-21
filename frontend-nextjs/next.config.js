@@ -7,6 +7,7 @@ const basePath = process.env.GH_PAGES_BASE_PATH || '';
 const nextConfig = {
   output: 'export',
   basePath,
+  env: { NEXT_PUBLIC_BASE_PATH: basePath },
   images: { unoptimized: true },
   experimental: { cpus: 1, workerThreads: false },
 };

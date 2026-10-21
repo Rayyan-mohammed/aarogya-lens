@@ -103,18 +103,27 @@ try {
             # crashing mid-deploy) — prune first and use a unique path so a stale
             # registration can never block `git worktree add` again.
             git worktree prune 2>&1 | Out-Null
+            # Deploy on top of GitHub's gh-pages, not the local branch: a manual deploy from
+            # elsewhere leaves the local branch behind, and every push here was then rejected.
+            git fetch origin gh-pages 2>&1 | Out-Null
+            git branch -f gh-pages origin/gh-pages 2>&1 | Out-Null
             $tmpWorktree = "$env:TEMP\watchdog-gh-pages-$(Get-Date -Format 'yyyyMMddHHmmss')"
             Remove-Item -Recurse -Force $tmpWorktree -ErrorAction SilentlyContinue
             git worktree add $tmpWorktree gh-pages 2>&1 | Out-Null
             Copy-Item $indexPath "$tmpWorktree\index.html" -Force
+            # The Next.js build at /next reads the live API address from this at runtime,
+            # so it never needs rebuilding when the tunnel rotates.
+            Set-Content -Path "$tmpWorktree\api.json" -Value "{`"api`":`"$newUrl`"}" -NoNewline
             Push-Location $tmpWorktree
-            git add index.html 2>&1 | Out-Null
+            git add index.html api.json 2>&1 | Out-Null
             git commit -m "watchdog: tunnel url rotated to $newUrl" 2>&1 | Out-Null
             git push origin gh-pages 2>&1 | Out-Null
+            $pushed = $LASTEXITCODE -eq 0
             Pop-Location
             git worktree remove $tmpWorktree --force 2>&1 | Out-Null
 
-            Log "frontend redeployed with new url"
+            if ($pushed) { Log "frontend redeployed with new url" }
+            else { Log "ERROR: push to gh-pages failed - the live site still points at the old url" }
         } else {
             Log "ERROR: could not capture new tunnel url from cloudflared output"
         }
