@@ -1,4 +1,5 @@
 """Tests for the 7 agent tools — all run against real data, no LLM/API key needed."""
+import json
 import math
 from pathlib import Path
 
@@ -118,8 +119,32 @@ def test_chart_generator_creates_html_file(tmp_path, monkeypatch):
     r = chart_generator("bar", "Test Chart", data, x_col="district", y_col="value",
                          filename="pytest_test_chart")
     assert r["status"] == "success"
-    assert Path(r["chart_path"]).exists()
-    Path(r["chart_path"]).unlink()  # clean up after ourselves
+    html_path = Path(r["chart_path"])
+    json_path = html_path.with_suffix(".json")
+    assert html_path.exists()
+    assert json_path.exists()  # the web app renders charts from this, themed to match
+    assert json.loads(json_path.read_text(encoding="utf-8"))["data"][0]["type"] == "bar"
+    html_path.unlink()  # clean up after ourselves
+    json_path.unlink()
+
+
+def test_chart_generator_scatter_has_trend_line():
+    # regression: trendline="ols" needed statsmodels (not a dependency), so every scatter failed
+    data = [{"district": d, "x": x, "y": y} for d, x, y in [("A", 1, 10), ("B", 2, 8), ("C", 3, 7), ("D", 4, 3)]]
+    r = chart_generator("scatter", "Scatter", data, x_col="x", y_col="y", filename="pytest_scatter_chart")
+    assert r["status"] == "success", r.get("error")
+    fig = json.loads(Path(r["chart_path"]).with_suffix(".json").read_text(encoding="utf-8"))
+    assert [t.get("mode") for t in fig["data"]] == ["markers", "lines"]
+    Path(r["chart_path"]).unlink()
+    Path(r["chart_path"]).with_suffix(".json").unlink()
+
+
+def test_chart_generator_strips_extension_the_llm_adds(tmp_path):
+    data = [{"district": "A", "value": 1}]
+    r = chart_generator("bar", "T", data, x_col="district", y_col="value", filename="pytest_ext_chart.json")
+    assert r["chart_filename"] == "pytest_ext_chart.html"
+    Path(r["chart_path"]).unlink()
+    Path(r["chart_path"]).with_suffix(".json").unlink()
 
 
 def test_chart_generator_empty_data_errors():

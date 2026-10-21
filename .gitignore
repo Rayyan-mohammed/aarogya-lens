@@ -50,6 +50,7 @@ Thumbs.db
 # Project Specific
 charts_output/*.png
 charts_output/*.html
+charts_output/*.json
 logs/
 *.log
 

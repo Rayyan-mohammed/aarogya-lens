@@ -260,8 +260,15 @@ def chart_generator(
                 color=color_col, hover_name=df_chart.columns[0] if "district" in df_chart.columns else None,
                 title=title, template=PLOTLY_TEMPLATE,
                 color_discrete_sequence=BRAND_COLORS,
-                trendline="ols",
             )
+            # Fit the trend line with numpy: px's trendline="ols" needs statsmodels, which
+            # isn't a dependency, so every scatter chart used to fail outright.
+            xy = df_chart[[x_col, y_col]].apply(pd.to_numeric, errors="coerce").dropna()
+            if len(xy) >= 2 and xy[x_col].nunique() > 1:
+                slope, intercept = np.polyfit(xy[x_col], xy[y_col], 1)
+                xs = np.array([xy[x_col].min(), xy[x_col].max()])
+                fig.add_trace(go.Scatter(x=xs, y=slope * xs + intercept, mode="lines",
+                                         name="Linear fit", hoverinfo="skip", showlegend=False))
 
         elif chart_type == "heatmap":
             pivot = df_chart.pivot_table(index=x_col, columns=color_col or y_col, values=y_col, aggfunc="mean")
@@ -294,9 +301,12 @@ def chart_generator(
 
         # Save
         fname = filename or re.sub(r"[^\w]+", "_", title.lower())[:40]
-        fname = re.sub(r"\.html$", "", fname, flags=re.IGNORECASE)  # the LLM sometimes already includes it
+        fname = re.sub(r"(\.(html?|json|png|svg))+$", "", fname, flags=re.IGNORECASE)  # the LLM sometimes adds one
         out_path = CHARTS_DIR / f"{fname}.html"
         fig.write_html(str(out_path))
+        # The web app draws charts itself from this JSON so they match its light/dark theme;
+        # the HTML stays as the standalone "open full size" page.
+        fig.write_json(str(CHARTS_DIR / f"{fname}.json"))
 
         return {
             "status": "success",
