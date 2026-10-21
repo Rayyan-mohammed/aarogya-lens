@@ -1,21 +1,33 @@
 # BharatHealth Analyst
 
-**A natural-language LLM agent over India's NFHS-5 district health data — 706 districts, 448 indicators, queryable in plain English.**
+**Ask India's district health data anything.** A natural-language AI analyst over the NFHS-5 survey (2019–21): 706 districts, 36 states and union territories, 72 health indicators — queryable in plain English, with grounded answers, charts, key facts and caveats.
+
+### [Try it live → rayyan-mohammed.github.io/aarogya-lens](https://rayyan-mohammed.github.io/aarogya-lens/)
 
 [![tests](https://github.com/Rayyan-mohammed/aarogya-lens/actions/workflows/tests.yml/badge.svg)](https://github.com/Rayyan-mohammed/aarogya-lens/actions/workflows/tests.yml)
+[![Live demo](https://img.shields.io/badge/live%20demo-GitHub%20Pages-0e6b63)](https://rayyan-mohammed.github.io/aarogya-lens/)
 [![Coverage](https://img.shields.io/badge/API%20coverage-93%25-brightgreen)](tests/test_api.py)
 [![Python](https://img.shields.io/badge/python-3.11-blue)](requirements.txt)
 [![FastAPI](https://img.shields.io/badge/backend-FastAPI-009688)](backend/api/main.py)
-[![Next.js](https://img.shields.io/badge/frontend-Next.js%2014-black)](frontend-nextjs/)
 [![License](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
+
+![BharatHealth Analyst home screen](docs/screenshots/home.png)
+
+> **Status: working prototype, in progress since 2026-06-02 (~20 weeks).** The data pipeline, vector store, agent, API, web app and the full 200-question accuracy benchmark are all built, tested and running — benchmark scores **EA 71.1%, AF 82.0%, HR 5.0%, RCQ 64.7%** overall. The live Q&A backend runs on the author's own machine behind a Cloudflare Tunnel, so it is sometimes offline; the site says so when it is, and its Explore tab keeps working regardless. See [Results](#results) for exactly what is and isn't proven.
 
 ---
 
-## The pitch
+## What you can do on the site
 
-BharatHealth Analyst is a LangGraph ReAct agent that answers questions like *"which 10 districts have the worst child anaemia?"* or *"is sanitation correlated with stunting in Bihar?"* directly against India's NFHS-5 district health survey — no SQL, no pivot tables. The agent has **7 real tools (semantic search, pandas/SQL query, chart generation, trend and correlation analysis) verified end-to-end against a live LLM**, sitting on top of a data pipeline that merges 706 districts × 448 indicators with real NFHS-4 (2015-16) trend data for 62 of them.
+| | |
+|---|---|
+| **Ask** — type a question such as *"Which 10 districts have the worst child stunting?"* or *"Compare institutional delivery across Bihar, Uttar Pradesh and Kerala"*. The agent picks its own tools, queries all 706 districts and answers with formatted tables, a key-facts list, a confidence badge, a chart and the survey's data limitations. Optionally scope a question to one state. Typical answers take 30–90 seconds. | ![Ask view with a real answer](docs/screenshots/ask.png) |
+| **Explore** — the national picture for 13 headline indicators: average district, lowest and highest district (by name), and whether higher or lower is better. Select one to rank all 36 states against the national average. This data ships inside the page, so it loads instantly and works even when the backend is offline. | ![Explore view with the state ranking drawer](docs/screenshots/explore.png) |
+| **Correlate** — pick any two indicators (optionally within one state) to measure how closely they move together across districts: Pearson r and Spearman ρ, p-value, a plain-English reading such as *"districts with higher women's literacy tend to have lower child marriage"*, and a scatter plot. Strength labels use the same cut-offs as the backend, and every result carries the reminder that correlation is not causation. | ![Correlate view](docs/screenshots/correlate.png) |
 
-> **Status: working prototype, in progress since 2026-06-02 (~19 weeks).** The data pipeline, vector store, agent, API, both frontends, and the full 200-question accuracy benchmark are all built, tested, and complete — **EA 71.1%, AF 82.0%, HR 5.0%, RCQ 64.7%** overall. One of five question categories has since been re-validated against a prompt fix that raised its RCQ from 37.2% to 89.2%; the other four have not, so 64.7% is a confirmed floor for RCQ, not the final number. See [Results](#results) for exactly what is and isn't proven, and exactly which numbers are current versus pending re-validation.
+The site works on phones (all three views, full navigation) and follows your system's light or dark setting, with a manual toggle.
+
+<p align="center"><img src="docs/screenshots/mobile-dark.png" alt="The site on a phone in dark mode" width="300"></p>
 
 ---
 
@@ -42,23 +54,26 @@ flowchart TB
         MW["rate limiting +<br/>request logging"]
     end
 
-    subgraph CLIENT["Client Layer"]
-        HTML["HTML/JS UI<br/>(GitHub Pages)"]
-        NEXT["Next.js 14<br/>(GitHub Pages /next)"]
+    subgraph CLIENT["Client Layer (GitHub Pages)"]
+        HTML["Main site: one self-contained<br/>index.html — Ask / Explore / Correlate"]
+        SNAP["Explore data snapshot<br/>(baked into the page)"]
+        NEXT["Next.js 14 at /next<br/>(older build, not maintained)"]
     end
 
     subgraph OPS["Ops (this machine)"]
         WATCHDOG["Windows Scheduled Task<br/>watchdog.ps1, every 10 min"]
-        TUNNEL["Cloudflare Tunnel<br/>(rotates on restart)"]
+        TUNNEL["Cloudflare Tunnel<br/>(URL rotates on restart)"]
     end
 
     subgraph EVAL["Evaluation"]
         BENCH["eval_runner.py<br/>200-question benchmark"]
-        LLM[("Groq / Gemini<br/>free tier")]
+        LLM[("Gemini 3.6 Flash<br/>free tier, rotating keys")]
     end
 
     PARQUET --> TOOLS
     CHROMA --> TOOLS
+    PARQUET -. build_frontend_snapshot.py .-> SNAP
+    SNAP --> HTML
     FASTAPI --> REACT
     FASTAPI --> MW
     REACT --> LLM
@@ -67,7 +82,7 @@ flowchart TB
     NEXT --> TUNNEL
     WATCHDOG -.keeps alive.-> TUNNEL
     WATCHDOG -.keeps alive.-> FASTAPI
-    WATCHDOG -.keeps alive.-> BENCH
+    WATCHDOG -.redeploys new URL.-> HTML
 
     style CSV fill:#dbeafe,stroke:#3b82f6
     style PIPE fill:#dbeafe,stroke:#3b82f6
@@ -78,20 +93,21 @@ flowchart TB
     style FASTAPI fill:#dcfce7,stroke:#22c55e
     style MW fill:#dcfce7,stroke:#22c55e
     style HTML fill:#fef9c3,stroke:#eab308
-    style NEXT fill:#fef9c3,stroke:#eab308
+    style SNAP fill:#fef9c3,stroke:#eab308
+    style NEXT fill:#f3f4f6,stroke:#9ca3af
     style WATCHDOG fill:#fee2e2,stroke:#ef4444
     style TUNNEL fill:#fee2e2,stroke:#ef4444
     style BENCH fill:#ffedd5,stroke:#f97316
     style LLM fill:#ffedd5,stroke:#f97316
 ```
 
-Both frontends and the evaluation harness converge on a single FastAPI process running on one physical machine, reachable only through a Cloudflare Tunnel that a Windows Scheduled Task restarts and re-points every 10 minutes — there is no independent cloud backend, which is both the cheapest possible deployment and the biggest single point of failure (see [Honest limitations](#honest-limitations)).
+The site and the evaluation harness converge on a single FastAPI process running on one physical machine, reachable only through a Cloudflare Tunnel that a Windows Scheduled Task checks every 10 minutes. There is no independent cloud backend — the cheapest possible deployment, and the biggest single point of failure (see [Honest limitations](#honest-limitations)). The page is designed around that: it shows a live/offline indicator, explains failures in plain language, and keeps Explore fully usable from data bundled into the page.
 
 ---
 
 ## The problem
 
-India's NFHS-5 survey covers 707 districts across 36 states/UTs with 448+ health, nutrition, and sanitation indicators per district — but it ships as raw CSV factsheets and hundred-page-per-state PDF reports. Answering something as simple as "which districts have the worst child anaemia" means manually cross-referencing a column out of 448 across every district row, and a trend question ("which districts improved most since 2015-16") means separately pulling and aligning an entirely different NFHS-4 dataset by hand. There's no query interface between "I have a health-policy question" and "I have the raw survey files."
+India's NFHS-5 survey publishes district-level health factsheets for over 700 districts across 36 states and union territories — but as raw CSV files and hundred-page-per-state PDF reports. Answering something as simple as "which districts have the worst child anaemia" means manually finding the right column and sorting every district by hand, and a trend question ("which districts improved most since 2015-16") means separately pulling and aligning an entirely different NFHS-4 dataset. There's no query interface between "I have a health-policy question" and "I have the raw survey files."
 
 ---
 
@@ -99,15 +115,16 @@ India's NFHS-5 survey covers 707 districts across 36 states/UTs with 448+ health
 
 | Layer / Component | What it does |
 |---|---|
-| **Data pipeline** (`backend/data/pipeline.py`) | Cleans the raw NFHS-5 factsheet CSV into 706 districts × 448 columns and generates `schema.json`, verified byte-for-byte in sync with the data. |
-| **NFHS-4 trend merge** (`backend/data/nfhs4_integration.py`) | Merges real 2015-16 state-level NFHS-4 values for 62 indicators as a trend baseline, fallback-fills 2,286 missing NFHS-5 cells, and flags every imputed value with `_is_imputed`. |
+| **Data pipeline** (`backend/data/pipeline.py`) | Cleans the raw NFHS-5 factsheet CSV into 706 districts and generates `schema.json`, verified byte-for-byte in sync with the data. |
+| **NFHS-4 trend merge** (`backend/data/nfhs4_integration.py`) | Merges real 2015-16 state-level NFHS-4 values for 62 indicators as a trend baseline, fallback-fills 2,286 missing NFHS-5 cells, and flags every imputed value with `_is_imputed`. The result is 448 columns: 72 NFHS-5 indicators, 341 NFHS-4 trend columns, 29 derived columns (ranks, percentiles, scores) and 6 identifier/sample columns. |
 | **Vector store** (`backend/vector_store/`) | Embeds all 706 district summaries into ChromaDB with `all-MiniLM-L6-v2` — local, no API key required. |
-| **Agent** (`backend/agent/agent.py`) | A LangGraph ReAct agent that plans and calls 7 tools (semantic search, pandas/SQL query, chart generation, insight writing, trend analysis, correlation) to answer a question. |
+| **Agent** (`backend/agent/agent.py`) | A LangGraph ReAct agent that plans and calls 7 tools (semantic search, pandas/SQL query, chart generation, insight writing, trend analysis, correlation). Runs on Gemini 3.6 Flash, rotating across several free-tier keys when one hits its daily quota. |
 | **Sandboxed execution** (`backend/agent/tools/tools.py`) | `pandas_query` runs LLM-generated pandas code inside a restricted `exec()` with a whitelisted globals dict and a forbidden-token filter (blocks `import`, `open(`, `__`, `os.`, `sys.`, `subprocess`) — a custom sandbox, not the `RestrictedPython` library. |
-| **API** (`backend/api/main.py`) | FastAPI, 11 endpoints, with rate-limiting and request-logging middleware. |
-| **Frontends** (`frontend/`, `frontend-nextjs/`) | An original single-page HTML/JS UI and a Next.js 14 App Router rewrite, both static, both deployed on GitHub Pages, both talking to the same tunneled API. |
-| **Evaluation harness** (`backend/evaluation/eval_runner.py`) | Runs a 200-question benchmark with programmatically computed ground truth and 5 metrics (EA, AF, HR, RCQ, latency), checkpointing after every question. |
-| **Ops** (`scripts/watchdog.ps1`) | A Windows Scheduled Task, every 10 minutes, that restarts the backend/tunnel if down and pushes the new tunnel URL straight to the `gh-pages` branch. |
+| **API** (`backend/api/main.py`) | FastAPI, 11 endpoints, with request logging and a rate limiter (10 requests/minute per visitor; `/health` and chart files exempt). |
+| **Web app** (`frontend/index.html`) | One self-contained HTML file, no build step — it has to be, because the watchdog deploys it by rewriting a single `const API_BASE = '…'` line and copying the file to the `gh-pages` branch. Renders the agent's markdown (tables, headings, lists) safely, with every string HTML-escaped before any tag is added. Loads the charting library only when Correlate is opened. |
+| **Explore snapshot** (`scripts/build_frontend_snapshot.py`) | Bakes national and state-level figures for 13 indicators (~14 KB) into the page, so Explore needs zero API calls. NFHS-5 is a fixed survey, so the numbers never go stale; re-run the script only if the processed dataset changes. |
+| **Evaluation harness** (`backend/evaluation/eval_runner.py`) | Runs a 200-question benchmark with programmatically computed ground truth and 5 metrics (EA, AF, HR, RCQ, latency), checkpointing after every question. `--query-type` re-runs a single category. |
+| **Ops** (`scripts/watchdog.ps1`) | A Windows Scheduled Task, every 10 minutes: restarts the backend and tunnel if down, writes the new tunnel URL into the site, commits it, and pushes the page straight to `gh-pages`. Also resumes an unfinished benchmark run. |
 
 ---
 
@@ -117,7 +134,7 @@ India's NFHS-5 survey covers 707 districts across 36 states/UTs with 448+ health
 
 | Check | Result |
 |---|---|
-| District coverage | 706 districts × 448 columns |
+| District coverage | 706 districts × 448 columns (72 NFHS-5 indicators + NFHS-4 trend, derived and identifier columns) |
 | NFHS-4 trend columns | 62 indicators merged, matching `schema.json` exactly (448/448 columns, zero drift) |
 | Imputed cells | 2,286 missing NFHS-5 values fallback-filled, each flagged `_is_imputed` |
 | DVC reproducibility | `dvc repro` — every regenerated output hashed **byte-for-byte identical** to what was already on disk; `dvc status` clean |
@@ -126,16 +143,16 @@ India's NFHS-5 survey covers 707 districts across 36 states/UTs with 448+ health
 
 ### 2. Automated test suite passes, with measured (not estimated) coverage
 
-Verified locally on 2026-08-19:
+Measured locally on 2026-10-21:
 
 | Module | Coverage |
 |---|---|
 | `backend/api/main.py` (11 endpoints) | 93% |
 | `backend/agent/tools/tools.py` (7 tools) | 72% |
-| `backend/evaluation/eval_runner.py` | 47% |
-| **Total, 63 tests** | **all passing, 67% combined** |
+| `backend/evaluation/eval_runner.py` | 42% |
+| **Total, 63 tests** | **all passing, 62% combined** |
 
-> **Honest scope:** the untested 53% of `eval_runner.py` is almost entirely the live LLM-calling orchestration loop — it can only be exercised by an actual model run, not a unit test with a mocked response.
+> **Honest scope:** the untested part of `eval_runner.py` is almost entirely the live LLM-calling loop (key rotation, quota-exhaustion stops, resume logic) — it can only be exercised by an actual model run, not a unit test with a mocked response. It grew in September with the multi-key and single-category features, which is why its coverage fell from 47% to 42%. The scoring functions themselves are covered by `tests/test_eval_scoring.py`.
 
 ### 3. Full 200-question benchmark complete, with one category re-validated after a prompt fix
 
@@ -155,7 +172,7 @@ The 200-question benchmark (`benchmark_questions.json`: 59 factual, 52 ranking/a
 | AF (answer faithfulness) | 82.0% |
 | HR (hallucination rate) | 5.0% |
 | RCQ (reasoning chain quality) | 64.7% |
-| Mean latency | 120s/question |
+| Mean latency | 120 s/question |
 
 **By category:**
 
@@ -179,23 +196,27 @@ The 200-question benchmark (`benchmark_questions.json`: 59 factual, 52 ranking/a
 
 > **Honest scope:** EA/AF/HR above are rescored with every fix found to date; RCQ and the underlying answers for 4 of 5 categories still reflect the prompt before the routing fix. `AF` is known to still undercount markdown-bullet-formatted answers (`**Label:** value%`) that don't match any of the claim-extraction regex patterns — most visible in `trend_analysis`'s still-low 68.4% AF despite high EA. See [docs/COMPLETION_SUMMARY.md](docs/COMPLETION_SUMMARY.md) for the full bug list and dates.
 
-### 4. Both frontends are deployed, not just built
+### 4. The web app is deployed, tested and built for an unreliable backend
 
-| Frontend | URL | Last deployed |
+The main site was redesigned on 2026-10-21. Before that, the agent's answers rendered as raw markdown (tables appeared as `| :--- |` pipe text, followed by a raw JSON block), the whole sidebar — and with it Explore, Correlate and the state filter — was hidden on phones, and the page was unusable whenever the tunnel was down. The redesign was checked in a real browser (Playwright/Chromium) at desktop and phone sizes in light and dark mode, against a real agent answer, with no console errors or horizontal overflow, including each failure path: backend offline, Cloudflare's 5xx page when the tunnel is up but the backend isn't, the API's rate limit, an exhausted AI quota, the 5-minute timeout, and a user pressing Stop.
+
+| Site | URL | Status |
 |---|---|---|
-| Original HTML/JS | [rayyan-mohammed.github.io/aarogya-lens](https://rayyan-mohammed.github.io/aarogya-lens/) | auto-redeployed by the watchdog whenever the tunnel URL rotates |
-| Next.js 14 (App Router) | [rayyan-mohammed.github.io/aarogya-lens/next](https://rayyan-mohammed.github.io/aarogya-lens/next/) | 2026-08-19 |
+| Main site (`frontend/index.html`) | [rayyan-mohammed.github.io/aarogya-lens](https://rayyan-mohammed.github.io/aarogya-lens/) | Live; redeployed automatically whenever the tunnel URL rotates |
+| Next.js 14 build (`frontend-nextjs/`) | [rayyan-mohammed.github.io/aarogya-lens/next](https://rayyan-mohammed.github.io/aarogya-lens/next/) | Older UI, last deployed 2026-08-10 — see limitations |
 
-> **Honest scope:** both are static exports pointed at a tunneled API on a personal machine, not a persistent cloud backend. Render, Hugging Face Spaces, and Vercel were each tried for the API and each hit a real platform wall (billing requirement, billing requirement, 250MB serverless function size limit) — not a config mistake. If this machine is off, both frontends' live-query feature is down, though the static pages themselves still load.
+> **Honest scope:** the site is static; the live Q&A and Correlate need the tunneled backend on the author's machine. Render, Hugging Face Spaces and Vercel were each tried for the API and each hit a real platform wall (billing requirement, billing requirement, and Vercel's 250 MB serverless limit — `pandas` + `numpy` + `scipy` + `plotly` alone are ~267 MB) — not a config mistake. Details in [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md).
 
 ---
 
 ## Honest limitations
 
-- **Benchmark RCQ is a confirmed floor, not a final number.** The 200-question run completed and EA/AF/HR are rescored with every known scoring-harness fix (EA 71.1%, AF 82.0%, HR 5.0%), but only 1 of 5 categories (`trend_analysis`, 38/200) has been re-run against the prompt fix that raised its RCQ from 37.2% to 89.2%. The other four categories' RCQ (and the raw answers behind it) still reflect the prompt before that fix — the true current RCQ is likely higher than the reported 64.7% but unconfirmed at full scale.
-- **AF still undercounts one answer format.** The claim-extraction regex used for answer faithfulness doesn't match markdown-bullet-style claims (`**Label:** value%`), which is common in longer answers — visible as `trend_analysis` scoring 68.4% AF despite 84.5% EA on the re-validated prompt. A real gap, not yet fixed.
-- **Single point of failure by design.** The API only exists as long as this one Windows machine is on and the Cloudflare Tunnel is up. A watchdog auto-restarts it, but there is no redundancy.
-- **No production LLM key.** Of five configured providers (Groq, Gemini, OpenRouter, Grok, DeepSeek), none is a paid tier — Claude and GPT-4o code paths in `agent.py` exist but have never been run against a real key.
+- **The live backend is one laptop.** Q&A and Correlate exist only while this Windows machine is on, awake and online, and the Cloudflare Tunnel is up. The watchdog task is set not to start on battery power, so while the laptop is unplugged nothing restarts the backend after a sleep or crash — once it's back on mains power, the site recovers within about 11 minutes. Explore works either way.
+- **The Next.js build at `/next` is stale.** It was last built on 2026-08-10, and its API address is baked in at build time. The watchdog deliberately doesn't rebuild it (too memory-heavy to run unattended), so its live-query feature points at a long-dead tunnel URL. The static pages still load; questions there won't go through. The main site is the maintained one.
+- **Benchmark RCQ is a confirmed floor, not a final number.** Only 1 of 5 categories (`trend_analysis`, 38/200) has been re-run against the prompt fix that raised its RCQ from 37.2% to 89.2%. The other four still reflect the prompt before that fix — the true current RCQ is likely higher than 64.7% but unconfirmed at full scale.
+- **AF still undercounts one answer format.** The claim-extraction regex used for answer faithfulness doesn't match markdown-bullet-style claims (`**Label:** value%`), which is common in longer answers. A real gap, not yet fixed.
+- **Free-tier AI quota.** Every live answer spends shared free-tier Gemini quota, which resets daily; heavy use can exhaust it, and the site then says so rather than failing silently. Of five configured providers (Groq, Gemini, OpenRouter, Grok, DeepSeek), none is a paid tier — Claude and GPT-4o code paths in `agent.py` exist but have never been run against a real key.
+- **Agent-generated charts don't follow the site's theme.** They are standalone Plotly pages produced by the backend's `chart_generator` with its own dark style, embedded as-is.
 - **CI runs against fixture data, not the DVC pipeline.** `.github/workflows/tests.yml` rebuilds the processed dataset from two small CSV copies checked into `.github/ci-fixtures/` because the configured DVC remote is a local-only folder on the author's machine — `dvc pull` can't reach it from a GitHub Actions runner. See [.github/ci-fixtures/README.md](.github/ci-fixtures/README.md).
 - **Trend data is a state-level approximation.** NFHS-4 comparisons are disclosed as state-baseline, not true district-level, because the source data is state-level.
 - **The benchmark question generator isn't fully reproducible.** 119 of the 200 questions come from a seeded script; the remaining 81 come from a second script using unseeded `random.choice()`, so the full set can't be regenerated byte-for-byte — it's tracked as data, not pipeline output.
@@ -217,11 +238,15 @@ aarogya-lens/
 │   ├── evaluation/eval_runner.py   # 200-question benchmark runner, 5 metrics
 │   ├── evaluation/benchmark_questions.json
 │   └── vector_store/               # ChromaDB build + index
-├── frontend/index.html             # original single-page UI (deployed)
-├── frontend-nextjs/                # Next.js 14 rewrite (deployed as static export)
+├── frontend/index.html             # the live site — one self-contained file
+├── frontend-nextjs/                # Next.js 14 rewrite (older, deployed at /next)
 ├── tests/                          # 63 pytest tests
-├── scripts/                        # watchdog, manual demo/smoke scripts (not pytest)
-├── docs/                           # blueprint, technical report, deployment guide
+├── scripts/
+│   ├── watchdog.ps1                # keeps backend + tunnel alive, redeploys the site
+│   ├── run_watchdog.bat            # what the scheduled task runs
+│   ├── build_frontend_snapshot.py  # bakes Explore's data into frontend/index.html
+│   └── …                           # manual demo/smoke scripts (not pytest)
+├── docs/                           # blueprint, technical report, deployment guide, screenshots
 ├── dataset/                        # raw source CSVs/PDFs (DVC-tracked)
 ├── dvc.yaml, .dvc/                 # data versioning, verified with dvc repro
 ├── Dockerfile, docker-compose.yml  # verified locally
@@ -241,17 +266,25 @@ pip install -r requirements.txt
 pytest
 ```
 
-That exercises the data pipeline, all 7 agent tools, and every API endpoint against fixtures — the fastest way to see the core system actually work.
+That exercises the data pipeline, all 7 agent tools, the scoring functions and every API endpoint against fixtures — the fastest way to see the core system actually work.
 
 ---
 
-## Reproduce everything else
+## Run it locally
 
 ```bash
-# local dev — full stack with a live agent (needs GROQ_API_KEY or GEMINI_API_KEY in .env)
+# backend — needs GEMINI_API_KEY in .env (optionally GEMINI_API_KEY_2, _3, … for key rotation)
 python -m uvicorn backend.api.main:app --reload --port 8000
-python -m http.server 3000 --directory frontend          # original UI, new terminal
-cd frontend-nextjs && npm install && npm run dev          # or the Next.js UI, new terminal
+
+# site, in a second terminal — open http://localhost:3000
+python -m http.server 3000 --directory frontend
+```
+
+A copy of the site served from `localhost` automatically talks to the backend on `http://localhost:8000`. To point any copy of the page at a different backend, add `?api=<url>` to its address.
+
+```bash
+# after changing the processed dataset, refresh Explore's bundled figures
+python scripts/build_frontend_snapshot.py
 ```
 
 ```bash
@@ -278,7 +311,22 @@ curl http://localhost:8000/health
 
 ## Operational notes
 
-There's no cloud billing risk here — everything runs on free-tier API quotas and a local machine, so there's no runaway-cost scenario to guard against. The actual operational risk is the opposite: a background process silently burning through a free-tier daily quota. To stop everything cleanly:
+**How the live site stays up.** A Windows Scheduled Task (`BharatHealthWatchdog`) runs `scripts/run_watchdog.bat` every 10 minutes. Each run takes about 35 seconds: if the backend or tunnel is down it restarts them, writes the new tunnel URL into `frontend/index.html`, commits and pushes that to `main`, and copies the page to the `gh-pages` branch, which GitHub Pages serves 10–30 seconds later. To bring the site back immediately instead of waiting for the next run:
+
+```powershell
+scripts\run_watchdog.bat
+```
+
+**Deploying a change to the site.** Commit `frontend/index.html` to `main`; the watchdog ships it on the next tunnel rotation. To ship it right away, copy it to `gh-pages` through a worktree of the **local** `gh-pages` branch — the watchdog pushes from that local branch, so it must never fall behind GitHub's copy, or its pushes are rejected (and, because its git output is silenced, the log still says "redeployed"):
+
+```bash
+git worktree add ../ghp gh-pages
+cp frontend/index.html ../ghp/index.html
+(cd ../ghp && git commit -am "deploy site" && git push origin gh-pages)
+git worktree remove ../ghp
+```
+
+**Cost and quota.** There's no cloud billing risk — everything runs on free-tier API quotas and a local machine. The real operational risk is the opposite: a background process silently burning through a free-tier daily quota. To stop everything cleanly:
 
 ```powershell
 # stop the watchdog scheduled task (backend, tunnel, and benchmark stop restarting)
@@ -289,31 +337,34 @@ schtasks /delete /tn BharatHealthWatchdog /f
 Get-Process uvicorn, cloudflared -ErrorAction SilentlyContinue | Stop-Process
 ```
 
-The watchdog exists precisely because early runs of the benchmark got silently killed by machine sleep and had to be restarted from question 1 more than once — it trades "runs unattended" for "you must remember it's running."
+The watchdog exists because early benchmark runs got silently killed by machine sleep and had to be restarted from question 1 more than once — it trades "runs unattended" for "you must remember it's running."
 
 ---
 
 ## Roadmap
 
-| Phase | Data pipeline | Agent + tools | API | Frontends | Evaluation | Deployment |
+| Phase | Data pipeline | Agent + tools | API | Web app | Evaluation | Deployment |
 |---|---|---|---|---|---|---|
 | Weeks 1-4 (Jun 2026) | ✅ NFHS-5 clean + schema | ✅ 7 tools built | — | — | — | — |
 | Weeks 5-8 (Jul 2026) | ✅ NFHS-4 trend merge | ✅ ReAct agent wired up | ✅ 11 endpoints + middleware | ✅ HTML/JS UI | ✅ 200-Q set + 5 metrics | ✅ Docker local |
-| Weeks 9-11 (Aug 2026) | ✅ DVC pipeline verified | ✅ sandboxed pandas_query | ✅ 93% test coverage, ✅ CI on every push | ✅ Next.js rewrite deployed | ⏳ blocked on free-tier quota (2 attempts) | ✅ GitHub Pages (both), tunnel + watchdog |
+| Weeks 9-11 (Aug 2026) | ✅ DVC pipeline verified | ✅ sandboxed pandas_query | ✅ 93% test coverage, ✅ CI on every push | ✅ Next.js rewrite deployed | ⏳ blocked on free-tier quota (2 attempts) | ✅ GitHub Pages, tunnel + watchdog |
 | Weeks 12-19 (Sep-Oct 2026) | — | ✅ trend_analyser/chart_generator routing fix (RCQ 37.2%→89.2% on re-validated category) | — | — | ✅ 200/200 run complete, 4 scoring bugs fixed, 1/5 categories re-validated | — |
-| Next | Real DVC remote (CI still uses fixture CSVs) | Claude/GPT-4o path, untested; re-validate routing fix on remaining 4 categories | — | — | Full fresh 200-Q run once a paid API key removes the free-tier quota ceiling | Persistent (non-tunnel) API host |
+| Week 20 (Oct 2026) | ✅ Explore snapshot baked into the site | — | — | ✅ Main site redesigned: rendered answers, mobile, dark mode, offline Explore | — | ✅ Watchdog matches only this project's benchmark runner |
+| Next | Real DVC remote (CI still uses fixture CSVs) | Claude/GPT-4o path, untested; re-validate routing fix on remaining 4 categories | — | Agent charts that follow the site theme | Full fresh 200-Q run once a paid API key removes the free-tier quota ceiling | Persistent (non-tunnel) API host, e.g. an always-free cloud VM running the existing Docker image |
 
 ---
 
-## Authors
+## Author
 
-- **Mohammed Rayyan** ([rayyan1652@gmail.com](mailto:rayyan1652@gmail.com)) — sole author and owner of the entire system: data pipeline, agent and tools, API, both frontends, evaluation harness, and deployment/ops. B.Tech CSE (Data Science), NMIMS University, Hyderabad.
+- **Mohammed Rayyan** ([rayyan1652@gmail.com](mailto:rayyan1652@gmail.com)) — sole author and owner of the entire system: data pipeline, agent and tools, API, web app, evaluation harness, and deployment/ops. B.Tech CSE (Data Science), NMIMS University, Hyderabad.
+
+Data: National Family Health Survey (NFHS-5), 2019–21, International Institute for Population Sciences (IIPS) and the Ministry of Health and Family Welfare, Government of India.
 
 ---
 
 ## Documentation index
 
-- [docs/COMPLETION_SUMMARY.md](docs/COMPLETION_SUMMARY.md) — continuously-updated, ground-truth status of every component
+- [docs/COMPLETION_SUMMARY.md](docs/COMPLETION_SUMMARY.md) — detailed status log and full bug history, with dates
 - [docs/BharatHealth_Project_Blueprint.md](docs/BharatHealth_Project_Blueprint.md) — original project scope and design intent
 - [docs/TECHNICAL_REPORT.md](docs/TECHNICAL_REPORT.md) — architecture and implementation write-up
 - [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) — what was tried (Render, HF Spaces, Vercel) and why each didn't stick
