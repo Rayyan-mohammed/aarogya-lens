@@ -9,8 +9,10 @@
 #   powershell -ExecutionPolicy Bypass -File scripts\register_watchdog.ps1
 
 $TaskName = "BharatHealthWatchdog"
-# run_watchdog.bat runs watchdog.ps1 and keeps its raw output in scripts\.raw_stdout
-$Command = "E:\aarogya-lens\scripts\run_watchdog.bat"
+# run_watchdog.vbs starts watchdog.ps1 with no console window, so nothing can close or
+# Ctrl+C it mid-run (run_watchdog.bat is for running it by hand). No spaces in these
+# paths, so no quoting is needed inside schtasks' /tr.
+$Command = "$env:SystemRoot\System32\wscript.exe E:\aarogya-lens\scripts\run_watchdog.vbs"
 
 schtasks /create /tn $TaskName /tr $Command /sc minute /mo 10 /f
 if ($LASTEXITCODE -ne 0) {
