@@ -15,6 +15,12 @@ function Log($msg) {
 # the task actually fired under Task Scheduler and a way to see where it died.
 Log "watchdog fired"
 
+# Raw output (including uncaught errors) goes to scripts\.raw_stdout via a transcript,
+# not a cmd redirect in run_watchdog.bat: a redirect's file handle is inheritable, so any
+# child started with a -Redirect* switch kept it open and locked it for its whole life —
+# every later run then failed on its first line. .NET opens the transcript non-inheritable.
+Start-Transcript -Path "$Root\scripts\.raw_stdout" -Force | Out-Null
+
 Set-Location $Root
 
 # Each section gets its own try/catch — a failure redeploying the frontend must not
@@ -68,16 +74,12 @@ try {
         # --protocol http2 (TCP) instead of the default quic (UDP) — this network has
         # blocked outbound UDP to Cloudflare's edge before, which leaves quic retrying
         # forever with no error, just silence. http2 routes around that.
-        #
-        # Launched through cmd, which writes the log file itself: Start-Process with any
-        # -Redirect* switch makes the child inherit every handle this script has open,
-        # including run_watchdog.bat's redirect into scripts\.raw_stdout. cloudflared then
-        # kept that file locked for its whole life, so every later watchdog run failed on
-        # its very first line and nothing restarted the tunnel when it died.
-        Start-Process -FilePath $env:ComSpec -WorkingDirectory $Root -WindowStyle Hidden `
-            -ArgumentList "/c `"`"$CloudflaredExe`" tunnel --protocol http2 --url http://localhost:8000 2> `"$tunnelLog`"`""
+        # cloudflared writes its own log (--logfile) instead of a -RedirectStandardError
+        # pipe, so it is launched like the backend and inherits none of this script's handles.
+        Start-Process -FilePath $CloudflaredExe -WorkingDirectory $Root -WindowStyle Hidden `
+            -ArgumentList "tunnel", "--protocol", "http2", "--logfile", "`"$tunnelLog`"", "--url", "http://localhost:8000"
 
-        # cloudflared prints the URL to stderr within a few seconds of starting
+        # cloudflared logs the URL within a few seconds of starting
         $newUrl = $null
         for ($i = 0; $i -lt 15; $i++) {
             Start-Sleep -Seconds 2
@@ -152,9 +154,10 @@ try {
 
     if (-not $evalRunning -and (Test-Path $checkpointPath)) {
         Log "benchmark not running and checkpoint shows unfinished work, restarting (will resume)"
-        # through cmd for the same handle-inheritance reason as cloudflared above
-        Start-Process -FilePath $env:ComSpec -WorkingDirectory $Root -WindowStyle Hidden `
-            -ArgumentList "/c `"`"$Root\.venv\Scripts\python.exe`" -u -m backend.evaluation.eval_runner --model gemini > `"$Root\scripts\.eval_stdout`"`""
+        Start-Process -FilePath "$Root\.venv\Scripts\python.exe" `
+            -ArgumentList "-u", "-m", "backend.evaluation.eval_runner", "--model", "gemini" `
+            -WorkingDirectory $Root -WindowStyle Hidden `
+            -RedirectStandardOutput "$Root\scripts\.eval_stdout"
     } elseif ($evalRunning) {
         Log "benchmark ok"
     } else {
@@ -165,3 +168,4 @@ try {
 }
 
 Log "watchdog done"
+Stop-Transcript | Out-Null
