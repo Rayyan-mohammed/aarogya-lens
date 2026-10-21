@@ -258,6 +258,8 @@
   .chart-bar a { font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; font-weight: 500; }
   .chart-bar a .icon { width: 14px; height: 14px; }
   .chart iframe { display: block; width: 100%; height: 440px; border: 0; background: #fff; }
+  .chart-plot { height: 440px; }
+  .chart-loading { height: 100%; display: grid; place-items: center; color: var(--ink-3); font-size: 0.86rem; }
   .note { display: flex; gap: 10px; font-size: 0.85rem; color: var(--ink-2); line-height: 1.5; }
   .note .icon { width: 17px; height: 17px; color: var(--ink-3); margin-top: 2px; }
   .note b { display: block; margin-bottom: 2px; }
@@ -475,7 +477,7 @@
     .answer-section { padding: 0 16px 16px; }
     .answer-head { padding: 11px 14px; }
     .answer-foot .steps { margin-left: 0; width: 100%; }
-    .chart iframe { height: 340px; }
+    .chart iframe, .chart-plot { height: 340px; }
     .search { flex: 1 1 100%; }
     .corr-controls { grid-template-columns: minmax(0, 1fr); }
     .corr-controls .field-scope { grid-column: auto; }
@@ -658,7 +660,7 @@
 <div class="sr-only" id="announcer" aria-live="polite"></div>
 
 <script>
-  const API_BASE = 'https://unlikely-der-directories-vision.trycloudflare.com';
+  const API_BASE = 'https://pgp-permission-reaction-drums.trycloudflare.com';
   // Local dev: a page served from localhost talks to a local backend; ?api=<url> overrides either.
   const IS_LOCAL = ['localhost', '127.0.0.1'].includes(location.hostname);
   const API = (new URLSearchParams(location.search).get('api') || (IS_LOCAL ? 'http://localhost:8000' : API_BASE)).replace(/\/+$/, '');
@@ -903,6 +905,7 @@ const SNAPSHOT = {"districts":706,"states_n":36,"states":[["Andaman & Nicobar Is
     $('meta[name="theme-color"]').setAttribute('content', t === 'dark' ? '#121413' : '#f5f3ee');
     if (persist) { try { localStorage.setItem('bha-theme', t); } catch (e) { /* storage blocked */ } }
     if (app.lastCorr && !$('#view-correlate').hidden) drawScatter(app.lastCorr);
+    document.querySelectorAll('.chart-plot').forEach((el) => { if (el._fig) drawAgentChart(el); });
   }
   function initTheme() {
     setTheme(document.documentElement.dataset.theme || 'light', false);
@@ -927,6 +930,8 @@ const SNAPSHOT = {"districts":706,"states_n":36,"states":[["Andaman & Nicobar Is
     $('#site-foot').hidden = v === 'ask';
     document.title = v === 'ask' ? "BharatHealth Analyst — ask India's district health data" : `${VIEWS[v]} · BharatHealth Analyst`;
     if (v === 'correlate' && app.lastCorr) drawScatter(app.lastCorr);
+    // charts drawn while their view was hidden were laid out at zero width
+    if (v === 'ask' && window.Plotly) document.querySelectorAll('.chart-plot').forEach((el) => { if (el._fig) window.Plotly.Plots.resize(el); });
   }
   function initRouting() {
     const tabs = [...document.querySelectorAll('.tab')];
@@ -1126,6 +1131,7 @@ const SNAPSHOT = {"districts":706,"states_n":36,"states":[["Andaman & Nicobar Is
     const tools = Array.isArray(data.tool_call_sequence) ? data.tool_call_sequence : [];
     const chartOk = typeof data.chart_url === 'string' && /^\/charts\/[\w.\-]+$/.test(data.chart_url);
     const chartSrc = chartOk ? `${API}${data.chart_url}` : '';
+    const chartJson = chartSrc.replace(/\.html?$/i, '.json');
 
     card.classList.remove('pending');
     card.removeAttribute('aria-busy');
@@ -1141,7 +1147,7 @@ const SNAPSHOT = {"districts":706,"states_n":36,"states":[["Andaman & Nicobar Is
       ${facts.length ? `<div class="answer-section"><div class="facts"><h4>Key facts</h4><ul>${facts.map(f => `<li>${inline(f)}</li>`).join('')}</ul></div></div>` : ''}
       ${chartOk ? `<div class="answer-section"><figure class="chart">
           <div class="chart-bar"><span>Chart</span><a href="${esc(chartSrc)}" target="_blank" rel="noopener noreferrer">Open full size${icon('external')}</a></div>
-          <iframe src="${esc(chartSrc)}" title="Chart for: ${esc(data.question || '')}" loading="lazy"></iframe>
+          <div class="chart-plot" data-json="${esc(chartJson)}" data-html="${esc(chartSrc)}" data-title="${esc(data.question || '')}"><p class="chart-loading">Loading chart…</p></div>
         </figure></div>` : ''}
       ${limitation ? `<div class="answer-section"><p class="note">${icon('info')}<span><b>Data note</b>${inline(limitation)}</span></p></div>` : ''}
       <div class="answer-foot">
@@ -1149,6 +1155,8 @@ const SNAPSHOT = {"districts":706,"states_n":36,"states":[["Andaman & Nicobar Is
         ${tools.length ? `<span class="steps"><span>Steps:</span>${tools.map(t => `<span class="step">${esc(TOOL_LABELS[t] || t)}</span>`).join('<span aria-hidden="true">→</span>')}</span>` : ''}
       </div>`;
     $('[data-act="copy"]', card).addEventListener('click', (e) => copyText(text, e.currentTarget));
+    const plot = $('.chart-plot', card);
+    if (plot) loadAgentChart(plot);
   }
 
   const ERRORS = {
@@ -1443,7 +1451,8 @@ const SNAPSHOT = {"districts":706,"states_n":36,"states":[["Andaman & Nicobar Is
     if (!plotlyLoading) {
       plotlyLoading = new Promise((resolve, reject) => {
         const s = document.createElement('script');
-        s.src = 'https://cdn.plot.ly/plotly-basic-2.27.0.min.js';
+        // same plotly.js version the backend's chart_generator writes (plotly.py 6.x), cartesian build = bar/scatter/box/heatmap
+        s.src = 'https://cdn.plot.ly/plotly-cartesian-3.5.0.min.js';
         s.onload = resolve;
         s.onerror = () => { plotlyLoading = null; reject(new Error('chart library failed to load')); };
         document.head.appendChild(s);
@@ -1451,6 +1460,82 @@ const SNAPSHOT = {"districts":706,"states_n":36,"states":[["Andaman & Nicobar Is
     }
     return plotlyLoading;
   }
+  // ── Agent charts ─────────────────────────────────────────────────────────
+  // chart_generator saves each figure as JSON next to its standalone HTML page. Drawing it
+  // here lets it follow the site's colours and light/dark theme; charts made before the
+  // JSON existed (or any load failure) fall back to embedding the HTML page as before.
+  function prettyLabel(name) {
+    const key = String(name || '').trim();
+    if (IND[key]) return `${IND[key].name} (%)`;
+    const pctCol = /_pct$/.test(key);
+    const words = key.replace(/_pct$/, '').replace(/_/g, ' ').trim();
+    if (!words || !/^[\w ]+$/.test(key)) return name;
+    return `${words[0].toUpperCase()}${words.slice(1)}${pctCol ? ' (%)' : ''}`;
+  }
+  function themedFigure(fig) {
+    const css = getComputedStyle(document.documentElement);
+    const v = (n) => css.getPropertyValue(n).trim();
+    const palette = ['--accent', '--t-household', '--worse', '--t-mothers', '--t-anaemia', '--t-women'].map(v);
+    const font = "'Public Sans', system-ui, sans-serif";
+    let series = 0;
+    const data = (fig.data || []).map((src) => {
+      const t = JSON.parse(JSON.stringify(src));
+      const isTrend = t.type === 'scatter' && t.mode === 'lines';
+      if (isTrend) {
+        t.line = { ...(t.line || {}), color: v('--ink-2'), width: 2, dash: 'dash' };
+      } else if (['bar', 'scatter', 'box'].includes(t.type)) {
+        const c = palette[series++ % palette.length];
+        const m = t.marker || {};
+        // keep per-point or colour-scale colours; only restyle single-colour series
+        if (!m.color || typeof m.color === 'string') t.marker = { ...m, color: c, line: { ...(m.line || {}), color: v('--surface'), width: t.type === 'scatter' ? 1.5 : 0 } };
+        if (t.type === 'scatter' && !m.size) t.marker = { ...t.marker, size: 9, opacity: 0.85 };
+        if (t.type === 'box') t.line = { ...(t.line || {}), color: c };
+      }
+      if (typeof t.hovertemplate === 'string') t.hovertemplate = t.hovertemplate.replace(/([A-Za-z_][\w]*)=%\{/g, (_, k) => `${prettyLabel(k)}: %{`);
+      if (t.colorbar) t.colorbar = { ...t.colorbar, tickfont: { color: v('--ink-3') }, outlinewidth: 0 };
+      return t;
+    });
+    const L = JSON.parse(JSON.stringify(fig.layout || {}));
+    delete L.template; delete L.width; delete L.height;
+    const titleText = L.title && typeof L.title === 'object' ? L.title.text : L.title;
+    for (const k of Object.keys(L).filter((k) => /^[xy]axis\d*$/.test(k)).concat(['xaxis', 'yaxis'])) {
+      const ax = L[k] || {};
+      const at = ax.title && typeof ax.title === 'object' ? ax.title.text : ax.title;
+      L[k] = { ...ax, gridcolor: v('--line'), linecolor: v('--line-2'), zerolinecolor: v('--line-2'), automargin: true,
+        tickfont: { color: v('--ink-3'), size: 11 },
+        title: at ? { text: prettyLabel(at), font: { color: v('--ink-2'), size: 12 } } : undefined };
+    }
+    Object.assign(L, {
+      title: titleText ? { text: titleText, x: 0.01, xanchor: 'left', font: { family: "'Fraunces', Georgia, serif", size: 16, color: v('--ink') } } : undefined,
+      paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+      font: { family: font, color: v('--ink-2') }, colorway: palette, autosize: true,
+      margin: { l: 10, r: 16, t: titleText ? 46 : 14, b: 10 },
+      legend: { ...(L.legend || {}), font: { color: v('--ink-2') }, bgcolor: 'rgba(0,0,0,0)' },
+      hoverlabel: { bgcolor: v('--surface'), bordercolor: v('--line-2'), font: { color: v('--ink'), family: font } },
+    });
+    return { data, layout: L };
+  }
+  function embedChartPage(el) {
+    el.classList.remove('chart-plot');
+    el.innerHTML = `<iframe src="${esc(el.dataset.html)}" title="Chart for: ${esc(el.dataset.title)}" loading="lazy"></iframe>`;
+  }
+  async function loadAgentChart(el) {
+    try {
+      const [res] = await Promise.all([fetch(el.dataset.json, { signal: timeoutSignal(20000) }), loadPlotly()]);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      el._fig = await res.json();
+      if (!Array.isArray(el._fig.data)) throw new Error('not a figure');
+      el.innerHTML = '';
+      drawAgentChart(el);
+    } catch (e) {
+      embedChartPage(el);
+    }
+  }
+  function drawAgentChart(el) {
+    const { data, layout } = themedFigure(el._fig);
+    window.Plotly.react(el, data, layout, { responsive: true, displayModeBar: false });
+  }
+
   async function drawScatter({ data, a, b }) {
     const el = $('#corr-plot');
     if (!el) return;
