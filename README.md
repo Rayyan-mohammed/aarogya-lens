@@ -57,7 +57,7 @@ flowchart TB
     subgraph CLIENT["Client Layer (GitHub Pages)"]
         HTML["Main site: one self-contained<br/>index.html — Ask / Explore / Correlate"]
         SNAP["Explore data snapshot<br/>(baked into the page)"]
-        NEXT["Next.js 14 at /next<br/>(older build, not maintained)"]
+        NEXT["Next.js 14 at /next<br/>(earlier UI; reads API address from api.json)"]
     end
 
     subgraph OPS["Ops (this machine)"]
@@ -83,6 +83,7 @@ flowchart TB
     WATCHDOG -.keeps alive.-> TUNNEL
     WATCHDOG -.keeps alive.-> FASTAPI
     WATCHDOG -.redeploys new URL.-> HTML
+    WATCHDOG -.publishes api.json.-> NEXT
 
     style CSV fill:#dbeafe,stroke:#3b82f6
     style PIPE fill:#dbeafe,stroke:#3b82f6
@@ -121,10 +122,10 @@ India's NFHS-5 survey publishes district-level health factsheets for over 700 di
 | **Agent** (`backend/agent/agent.py`) | A LangGraph ReAct agent that plans and calls 7 tools (semantic search, pandas/SQL query, chart generation, insight writing, trend analysis, correlation). Runs on Gemini 3.6 Flash, rotating across several free-tier keys when one hits its daily quota. |
 | **Sandboxed execution** (`backend/agent/tools/tools.py`) | `pandas_query` runs LLM-generated pandas code inside a restricted `exec()` with a whitelisted globals dict and a forbidden-token filter (blocks `import`, `open(`, `__`, `os.`, `sys.`, `subprocess`) — a custom sandbox, not the `RestrictedPython` library. |
 | **API** (`backend/api/main.py`) | FastAPI, 11 endpoints, with request logging and a rate limiter (10 requests/minute per visitor; `/health` and chart files exempt). |
-| **Web app** (`frontend/index.html`) | One self-contained HTML file, no build step — it has to be, because the watchdog deploys it by rewriting a single `const API_BASE = '…'` line and copying the file to the `gh-pages` branch. Renders the agent's markdown (tables, headings, lists) safely, with every string HTML-escaped before any tag is added. Loads the charting library only when Correlate is opened. |
+| **Web app** (`frontend/index.html`) | One self-contained HTML file, no build step — it has to be, because the watchdog deploys it by rewriting a single `const API_BASE = '…'` line and copying the file to the `gh-pages` branch. Renders the agent's markdown (tables, headings, lists) safely, with every string HTML-escaped before any tag is added. Draws the agent's charts itself from the figure JSON that `chart_generator` saves, so they follow the site's light/dark theme. Loads the charting library (plotly.js 3.5, the same version the backend writes) only when a chart is needed. |
 | **Explore snapshot** (`scripts/build_frontend_snapshot.py`) | Bakes national and state-level figures for 13 indicators (~14 KB) into the page, so Explore needs zero API calls. NFHS-5 is a fixed survey, so the numbers never go stale; re-run the script only if the processed dataset changes. |
 | **Evaluation harness** (`backend/evaluation/eval_runner.py`) | Runs a 200-question benchmark with programmatically computed ground truth and 5 metrics (EA, AF, HR, RCQ, latency), checkpointing after every question. `--query-type` re-runs a single category. |
-| **Ops** (`scripts/watchdog.ps1`) | A Windows Scheduled Task, every 10 minutes: restarts the backend and tunnel if down, writes the new tunnel URL into the site, commits it, and pushes the page straight to `gh-pages`. Also resumes an unfinished benchmark run. |
+| **Ops** (`scripts/watchdog.ps1`) | A Windows Scheduled Task, every 10 minutes and on battery too, running hidden with no console window: restarts the backend and tunnel if down, writes the new tunnel URL into the site and into `api.json` (which the `/next` build reads at runtime), commits it, and pushes straight to `gh-pages`. Also resumes an unfinished benchmark run. |
 
 ---
 
@@ -148,9 +149,9 @@ Measured locally on 2026-10-21:
 | Module | Coverage |
 |---|---|
 | `backend/api/main.py` (11 endpoints) | 93% |
-| `backend/agent/tools/tools.py` (7 tools) | 72% |
+| `backend/agent/tools/tools.py` (7 tools) | 74% |
 | `backend/evaluation/eval_runner.py` | 42% |
-| **Total, 63 tests** | **all passing, 62% combined** |
+| **Total, 65 tests** | **all passing, 63% combined** |
 
 > **Honest scope:** the untested part of `eval_runner.py` is almost entirely the live LLM-calling loop (key rotation, quota-exhaustion stops, resume logic) — it can only be exercised by an actual model run, not a unit test with a mocked response. It grew in September with the multi-key and single-category features, which is why its coverage fell from 47% to 42%. The scoring functions themselves are covered by `tests/test_eval_scoring.py`.
 
@@ -200,10 +201,15 @@ The 200-question benchmark (`benchmark_questions.json`: 59 factual, 52 ranking/a
 
 The main site was redesigned on 2026-10-21. Before that, the agent's answers rendered as raw markdown (tables appeared as `| :--- |` pipe text, followed by a raw JSON block), the whole sidebar — and with it Explore, Correlate and the state filter — was hidden on phones, and the page was unusable whenever the tunnel was down. The redesign was checked in a real browser (Playwright/Chromium) at desktop and phone sizes in light and dark mode, against a real agent answer, with no console errors or horizontal overflow, including each failure path: backend offline, Cloudflare's 5xx page when the tunnel is up but the backend isn't, the API's rate limit, an exhausted AI quota, the 5-minute timeout, and a user pressing Stop.
 
+The same day's follow-up fixed three more things, each verified on the live site with a real question:
+- **The agent's charts now match the site.** `chart_generator` also saves each figure as JSON, and the site draws it in its own colours, fonts and light/dark theme, with readable axis names ("Child stunting (%)" rather than `stunting_pct`). Charts made before that change still show as before. This also surfaced a long-standing bug: every scatter chart had been failing, because `trendline="ols"` needs `statsmodels`, which was never a dependency — the trend line is now fitted with numpy.
+- **`/next` works again.** It had its API address baked in at build time, so it went dead on every tunnel rotation. It now reads the current address from `api.json` at runtime, and the watchdog republishes that file on each rotation. Fixing it also revealed that `frontend-nextjs/lib/api.ts` had never been committed (a Python `lib/` rule in `.gitignore` was hiding it), so the app couldn't be built from a fresh clone.
+- **The watchdog actually self-heals now.** It was set not to start on battery, but the bigger problem was that every time it restarted the tunnel, the new `cloudflared` process inherited the watchdog's open log file and kept it locked, so every later run failed on its first line until the tunnel died. On top of that, runs in a visible console window could be closed or Ctrl+C'd mid-restart. It now runs on battery, catches up straight after sleep, runs hidden, launches `cloudflared` without inheriting handles, and only logs "redeployed" when the push really succeeded.
+
 | Site | URL | Status |
 |---|---|---|
 | Main site (`frontend/index.html`) | [rayyan-mohammed.github.io/aarogya-lens](https://rayyan-mohammed.github.io/aarogya-lens/) | Live; redeployed automatically whenever the tunnel URL rotates |
-| Next.js 14 build (`frontend-nextjs/`) | [rayyan-mohammed.github.io/aarogya-lens/next](https://rayyan-mohammed.github.io/aarogya-lens/next/) | Older UI, last deployed 2026-08-10 — see limitations |
+| Next.js 14 build (`frontend-nextjs/`) | [rayyan-mohammed.github.io/aarogya-lens/next](https://rayyan-mohammed.github.io/aarogya-lens/next/) | Live; the earlier UI, rebuilt 2026-10-21 to read the API address at runtime |
 
 > **Honest scope:** the site is static; the live Q&A and Correlate need the tunneled backend on the author's machine. Render, Hugging Face Spaces and Vercel were each tried for the API and each hit a real platform wall (billing requirement, billing requirement, and Vercel's 250 MB serverless limit — `pandas` + `numpy` + `scipy` + `plotly` alone are ~267 MB) — not a config mistake. Details in [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md).
 
@@ -211,12 +217,11 @@ The main site was redesigned on 2026-10-21. Before that, the agent's answers ren
 
 ## Honest limitations
 
-- **The live backend is one laptop.** Q&A and Correlate exist only while this Windows machine is on, awake and online, and the Cloudflare Tunnel is up. The watchdog task is set not to start on battery power, so while the laptop is unplugged nothing restarts the backend after a sleep or crash — once it's back on mains power, the site recovers within about 11 minutes. Explore works either way.
-- **The Next.js build at `/next` is stale.** It was last built on 2026-08-10, and its API address is baked in at build time. The watchdog deliberately doesn't rebuild it (too memory-heavy to run unattended), so its live-query feature points at a long-dead tunnel URL. The static pages still load; questions there won't go through. The main site is the maintained one.
+- **The live backend is one laptop.** Q&A and Correlate exist only while this Windows machine is on, awake and online. When it is, the watchdog brings the backend and tunnel back within about 10 minutes of any failure (on battery too); while it's off or asleep, the live features are simply down. Explore works either way.
+- **`/next` is the earlier UI.** It works, but it predates the redesign (no rendered tables, no offline Explore, no dark mode). The main site is the maintained one.
 - **Benchmark RCQ is a confirmed floor, not a final number.** Only 1 of 5 categories (`trend_analysis`, 38/200) has been re-run against the prompt fix that raised its RCQ from 37.2% to 89.2%. The other four still reflect the prompt before that fix — the true current RCQ is likely higher than 64.7% but unconfirmed at full scale.
 - **AF still undercounts one answer format.** The claim-extraction regex used for answer faithfulness doesn't match markdown-bullet-style claims (`**Label:** value%`), which is common in longer answers. A real gap, not yet fixed.
 - **Free-tier AI quota.** Every live answer spends shared free-tier Gemini quota, which resets daily; heavy use can exhaust it, and the site then says so rather than failing silently. Of five configured providers (Groq, Gemini, OpenRouter, Grok, DeepSeek), none is a paid tier — Claude and GPT-4o code paths in `agent.py` exist but have never been run against a real key.
-- **Agent-generated charts don't follow the site's theme.** They are standalone Plotly pages produced by the backend's `chart_generator` with its own dark style, embedded as-is.
 - **CI runs against fixture data, not the DVC pipeline.** `.github/workflows/tests.yml` rebuilds the processed dataset from two small CSV copies checked into `.github/ci-fixtures/` because the configured DVC remote is a local-only folder on the author's machine — `dvc pull` can't reach it from a GitHub Actions runner. See [.github/ci-fixtures/README.md](.github/ci-fixtures/README.md).
 - **Trend data is a state-level approximation.** NFHS-4 comparisons are disclosed as state-baseline, not true district-level, because the source data is state-level.
 - **The benchmark question generator isn't fully reproducible.** 119 of the 200 questions come from a seeded script; the remaining 81 come from a second script using unseeded `random.choice()`, so the full set can't be regenerated byte-for-byte — it's tracked as data, not pipeline output.
@@ -240,10 +245,12 @@ aarogya-lens/
 │   └── vector_store/               # ChromaDB build + index
 ├── frontend/index.html             # the live site — one self-contained file
 ├── frontend-nextjs/                # Next.js 14 rewrite (older, deployed at /next)
-├── tests/                          # 63 pytest tests
+├── tests/                          # 65 pytest tests
 ├── scripts/
 │   ├── watchdog.ps1                # keeps backend + tunnel alive, redeploys the site
-│   ├── run_watchdog.bat            # what the scheduled task runs
+│   ├── run_watchdog.vbs            # what the scheduled task runs (hidden, no console)
+│   ├── run_watchdog.bat            # run the watchdog by hand
+│   ├── register_watchdog.ps1       # one-time scheduled task setup
 │   ├── build_frontend_snapshot.py  # bakes Explore's data into frontend/index.html
 │   └── …                           # manual demo/smoke scripts (not pytest)
 ├── docs/                           # blueprint, technical report, deployment guide, screenshots
@@ -311,15 +318,16 @@ curl http://localhost:8000/health
 
 ## Operational notes
 
-**How the live site stays up.** A Windows Scheduled Task (`BharatHealthWatchdog`) runs `scripts/run_watchdog.bat` every 10 minutes. Each run takes about 35 seconds: if the backend or tunnel is down it restarts them, writes the new tunnel URL into `frontend/index.html`, commits and pushes that to `main`, and copies the page to the `gh-pages` branch, which GitHub Pages serves 10–30 seconds later. To bring the site back immediately instead of waiting for the next run:
+**How the live site stays up.** A Windows Scheduled Task (`BharatHealthWatchdog`, set up by `scripts/register_watchdog.ps1`) runs `scripts/run_watchdog.vbs` every 10 minutes, on battery too, with no console window. Each run takes 5–35 seconds: if the backend or tunnel is down it restarts them, writes the new tunnel URL into `frontend/index.html` and `api.json`, commits and pushes that to `main`, and pushes the page to the `gh-pages` branch, which GitHub Pages serves 10–30 seconds later. It logs to `scripts/watchdog.log`, with full raw output of the last run in `scripts/.raw_stdout`. To bring the site back immediately instead of waiting for the next run:
 
 ```powershell
 scripts\run_watchdog.bat
 ```
 
-**Deploying a change to the site.** Commit `frontend/index.html` to `main`; the watchdog ships it on the next tunnel rotation. To ship it right away, copy it to `gh-pages` through a worktree of the **local** `gh-pages` branch — the watchdog pushes from that local branch, so it must never fall behind GitHub's copy, or its pushes are rejected (and, because its git output is silenced, the log still says "redeployed"):
+**Deploying a change to the site.** Commit `frontend/index.html` to `main`; the watchdog ships it on the next tunnel rotation. To ship it right away, copy it to `gh-pages` through a worktree (the watchdog syncs its local `gh-pages` with GitHub before each deploy, so this can't block it):
 
 ```bash
+git fetch origin gh-pages && git branch -f gh-pages origin/gh-pages
 git worktree add ../ghp gh-pages
 cp frontend/index.html ../ghp/index.html
 (cd ../ghp && git commit -am "deploy site" && git push origin gh-pages)
@@ -349,8 +357,8 @@ The watchdog exists because early benchmark runs got silently killed by machine 
 | Weeks 5-8 (Jul 2026) | ✅ NFHS-4 trend merge | ✅ ReAct agent wired up | ✅ 11 endpoints + middleware | ✅ HTML/JS UI | ✅ 200-Q set + 5 metrics | ✅ Docker local |
 | Weeks 9-11 (Aug 2026) | ✅ DVC pipeline verified | ✅ sandboxed pandas_query | ✅ 93% test coverage, ✅ CI on every push | ✅ Next.js rewrite deployed | ⏳ blocked on free-tier quota (2 attempts) | ✅ GitHub Pages, tunnel + watchdog |
 | Weeks 12-19 (Sep-Oct 2026) | — | ✅ trend_analyser/chart_generator routing fix (RCQ 37.2%→89.2% on re-validated category) | — | — | ✅ 200/200 run complete, 4 scoring bugs fixed, 1/5 categories re-validated | — |
-| Week 20 (Oct 2026) | ✅ Explore snapshot baked into the site | — | — | ✅ Main site redesigned: rendered answers, mobile, dark mode, offline Explore | — | ✅ Watchdog matches only this project's benchmark runner |
-| Next | Real DVC remote (CI still uses fixture CSVs) | Claude/GPT-4o path, untested; re-validate routing fix on remaining 4 categories | — | Agent charts that follow the site theme | Full fresh 200-Q run once a paid API key removes the free-tier quota ceiling | Persistent (non-tunnel) API host, e.g. an always-free cloud VM running the existing Docker image |
+| Week 20 (Oct 2026) | ✅ Explore snapshot baked into the site | ✅ Scatter charts fixed (no statsmodels needed) | — | ✅ Main site redesigned: rendered answers, mobile, dark mode, offline Explore, themed agent charts; `/next` working again | — | ✅ Watchdog self-heals: runs hidden and on battery, no more file-lock lockouts |
+| Next | Real DVC remote (CI still uses fixture CSVs) | Claude/GPT-4o path, untested; re-validate routing fix on remaining 4 categories | — | — | Full fresh 200-Q run once a paid API key removes the free-tier quota ceiling | Persistent (non-tunnel) API host, e.g. an always-free cloud VM running the existing Docker image |
 
 ---
 
