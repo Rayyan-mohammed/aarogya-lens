@@ -128,7 +128,7 @@ try {
 # ── 3. Benchmark eval runner ────────────────────────────────────────────────
 try {
     $evalRunning = Get-CimInstance Win32_Process -Filter "Name='python.exe'" -ErrorAction SilentlyContinue |
-        Where-Object { $_.CommandLine -match "eval_runner" }
+        Where-Object { $_.CommandLine -match "backend\.evaluation\.eval_runner" }
 
     # eval_runner.py deletes the checkpoint file only on genuine full completion, so its
     # presence is the reliable "still has work to do" signal — not eval_results.json,
